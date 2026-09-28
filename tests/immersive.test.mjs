@@ -152,7 +152,7 @@ test('the tours page carries the section and loads the engine before the control
   assert.ok(at('/cabana-tours.js') < at('/cabana-immersive.js'), 'tours must exist before worlds badge them');
   assert.match(tours, /<link rel="stylesheet" href="\/cabana-immersive\.css\?v=\d+"\/>/);
   // The section sits between the meridian and the reel.
-  assert.ok(at('id="ct-mrd"') < at('id="immersive"') && at('id="immersive"') < at('id="ct-reel"'));
+  assert.ok(at('id="ct-spotlight"') < at('id="departures"') && at('id="departures"') < at('id="immersive"') && at('id="immersive"') < at('id="ct-grid"'));
 });
 
 test('the console loads the engine before the studio, and the studio uses resumable 6 MB chunks', () => {

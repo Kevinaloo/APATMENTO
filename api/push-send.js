@@ -626,7 +626,7 @@ export default async function handler(req, res) {
       if (message.visible_to || !['text', 'offer', 'suggestion', undefined, null].includes(message.kind)) {
         return res.status(200).json({ sent: 0, skipped: 'not_deliverable' });
       }
-      const conversations = await supa(`chat_conversations?id=eq.${message.conversation_id}&select=id,host_id,guest_id,listing_title&limit=1`);
+      const conversations = await supa(`chat_conversations?id=eq.${message.conversation_id}&select=id,host_id,guest_id,listing_title,tour_id&limit=1`);
       const conversation = conversations?.[0];
       if (!conversation || ![conversation.host_id, conversation.guest_id].includes(message.sender_id)
           || (chatCaller && message.sender_id !== chatCaller.id)) {
@@ -653,7 +653,9 @@ export default async function handler(req, res) {
         user_id: recipient,
         title: `New message${conversation.listing_title ? ` about ${String(conversation.listing_title).slice(0, 80)}` : ''}`,
         body: preview || 'Open Cabana to read the message.',
-        url: `/dashboard.html?inbox=1&c=${conversation.id}`,
+        /* A tour conversation opens in the tours messenger, beside the tour. */
+        url: conversation.tour_id ? `/tours?inbox=1&c=${conversation.id}`
+                                  : `/dashboard.html?inbox=1&c=${conversation.id}`,
         kind: 'message',
         persist: !existing?.[0],
         meta: deliveryMeta,

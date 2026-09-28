@@ -14,6 +14,10 @@
                                               quote the booking trigger trusts
    "Suggest other stays" (can't host)         cabana_chat_suggest (pre-payment)
                                               /api/match-guest (after payment)
+   Tours: a guide and a traveller, a date     cabana_chat_start_tour / _set_tour_trip
+   and a group size, private tour offers      / _send_tour_offer / _tour_offer_respond
+                                              (the booking trigger honours an offer
+                                              that matches its date and group exactly)
    Get help from Cabana / report              /api/support op chat.escalate
    Block, archive, read receipts, trip dates  cabana_chat_set_state / mark_read
                                               / set_trip
@@ -41,6 +45,23 @@ const CabanaChat = window.CabanaChat = (() => {
     listing:      ['The listing is not as described', 'We check the listing and help you decide what to do next.'],
   };
   const GUEST_CHIPS = ['Is it available for my dates?', 'Is there parking?', 'Can I check in early?', 'How reliable is the Wi-Fi?'];
+  const TOUR_CHIPS = ['Is this date still on?', 'Where do we meet?', 'Is it good for children?', 'Can you do a private group?'];
+  const isTour = a => a?.meta?.kind === 'tour' || !!a?.meta?.tour;
+  const tourBookable = () => !!(window.CabanaTourBook && window.CabanaTours && window.CabanaTours.tour);
+  function dayShort(iso) { try { return new Date(String(iso).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }); } catch (_) { return iso || ''; } }
+  function bookTour(tour, date, people) {
+    if (!tour) return;
+    const t = window.CabanaTours && window.CabanaTours.tour && window.CabanaTours.tour(tour.id);
+    if (t && window.CabanaTourBook) { close(); window.CabanaTourBook.open(t, { date: date || null, people: Number(people) || null }); return; }
+    const q = new URLSearchParams({ book: tour.id }); if (date) q.set('date', date); if (people) q.set('people', people);
+    location.href = '/tours?' + q;
+  }
+  const TOUR_STARTERS = [
+    ['It’s on', 'Yes, that date is on. You can book it here on Cabana, and the meeting point and my number unlock as soon as it is paid.'],
+    ['What to bring', 'Bring comfortable shoes, a warm layer for the early start, water, sunscreen and your camera.'],
+    ['Private group', 'Happy to run a private day for your group. Tell me the date and how many of you, and I will send you a private offer here.'],
+    ['Thank you', 'Thank you for booking. See you on the day, and message me here if anything changes.'],
+  ];
   const HOST_STARTERS = [
     ['Available', 'Yes, it is available for your dates. You can book securely on Cabana and your check-in details unlock as soon as it is paid.'],
     ['Check-in', 'Check-in is from {checkin} and check-out is by {checkout}. Your code and directions appear in your booking once it is paid.'],
@@ -499,7 +520,7 @@ const CabanaChat = window.CabanaChat = (() => {
     if (!list.length) {
       rows.innerHTML = S.inbox.length
         ? `<div class="empty">${IC.search}<b>Nothing here</b>${S.query ? 'No conversations match your search.' : 'You are all caught up.'}</div>`
-        : `<div class="empty">${IC.home}<b>No messages yet</b>When you ask a host about a stay, or a guest asks about yours, the conversation appears here.<br><br><a class="btn sm" href="apartments.html" style="text-decoration:none;display:inline-block">Find a stay</a></div>`;
+        : `<div class="empty">${IC.home}<b>No messages yet</b>When you ask a host about a stay or a guide about a tour, or someone asks about yours, the conversation appears here.<br><br><a class="btn sm" href="${/tour/.test(location.pathname) ? '/tours' : 'apartments.html'}" style="text-decoration:none;display:inline-block">${/tour/.test(location.pathname) ? 'Find a tour' : 'Find a stay'}</a></div>`;
       return;
     }
     rows.innerHTML = list.map(c => {
@@ -508,13 +529,13 @@ const CabanaChat = window.CabanaChat = (() => {
       if (c.blocked) tag = '<span class="tagpill warn">Closed</span>';
       else if (c.booked) tag = '<span class="tagpill ok">Booked</span>';
       else if (c.offer === 'sent') tag = '<span class="tagpill">Offer</span>';
-      else if (c.role === 'host' && c.checkin) tag = `<span class="tagpill">${esc(range(c.checkin, c.checkout))}</span>`;
+      else if (c.role === 'host' && c.checkin) tag = `<span class="tagpill">${esc(c.tour_id ? dayShort(c.checkin) : range(c.checkin, c.checkout))}</span>`;
       const prev = (c.last_from_me ? 'You: ' : '') + (c.last_message || 'Say hello');
       return `<button class="row${c.unread ? ' unread' : ''}" data-act="open" data-id="${esc(c.id)}" aria-current="${S.active?.id === c.id}">
         <span class="ava">${c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=ph>🏠</span>'">` : '<span class="ph">🏠</span>'}<span class="who"${c.counterpart?.id ? ` data-cp-avatar="${esc(c.counterpart.id)}" data-cp-size="24"` : ''}>${initial(who)}</span></span>
         <span class="r-body">
           <span class="r-top"><span class="r-name">${esc(who)}${c.counterpart?.id ? `<span data-cp-tick="${esc(c.counterpart.id)}" data-cp-size="14"></span>` : (c.counterpart?.verified ? IC.verified : '')}</span><span class="r-time">${esc(ago(c.last_message_at))}</span></span>
-          <span class="r-sub">${c.role === 'host' ? 'Guest · ' : ''}${esc(c.listing_title || 'Stay')}</span>
+          <span class="r-sub">${c.tour_id ? (c.role === 'host' ? 'Traveller · ' : 'Tour · ') : (c.role === 'host' ? 'Guest · ' : '')}${esc(c.listing_title || (c.tour_id ? 'Tour' : 'Stay'))}</span>
           <span class="r-prev"><span class="pv">${esc(prev)}</span>${tag}${c.unread ? `<span class="badge">${c.unread > 99 ? '99+' : c.unread}</span>` : ''}</span>
         </span>
       </button>`;
@@ -543,6 +564,34 @@ const CabanaChat = window.CabanaChat = (() => {
       if (seq !== S.openSeq) return;
       threadError(friendly(e));
     }
+  }
+
+  /* A traveller asking a guide about a tour: one conversation per tour and
+     traveller, with the date and group size they are thinking of. */
+  async function openTour(opts = {}) {
+    const { tourId } = opts;
+    if (!tourId) return openInbox();
+    if (!(await ensureUser())) return;
+    show();
+    const seq = ++S.openSeq;
+    threadLoading(opts.title);
+    try {
+      const conv = await rpc('cabana_chat_start_tour', { p_tour: tourId, p_date: opts.date || null, p_people: opts.people || null });
+      if (seq !== S.openSeq) return;
+      loadInbox();
+      await openConversation(conv.id);
+      if (opts.draft && seq === S.openSeq) { const ta = $('#cbx-ta'); if (ta && !ta.value) { ta.value = String(opts.draft).slice(0, 600); ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); } }
+    } catch (e) {
+      if (seq !== S.openSeq) return;
+      threadError(/own tour/i.test(e.message) ? 'This is your own tour. Your travellers’ messages arrive in your inbox.' : friendly(e));
+    }
+  }
+
+  async function openForTourBooking(bookingId) {
+    if (!(await ensureUser())) return;
+    show(); threadLoading();
+    try { const id = await rpc('cabana_chat_for_tour_booking', { p_booking: bookingId }); loadInbox(); await openConversation(id); }
+    catch (e) { threadError(friendly(e)); }
   }
 
   async function openForBooking(bookingId) {
@@ -670,9 +719,12 @@ const CabanaChat = window.CabanaChat = (() => {
   }
 
   function renderHeader() {
-    const { meta } = S.active, cp = meta.counterpart || {}, l = meta.listing || {};
-    const host = meta.role === 'host';
-    const sub = host
+    const { meta } = S.active, cp = meta.counterpart || {}, l = meta.listing || meta.tour || {};
+    const host = meta.role === 'host', tour = isTour(S.active);
+    const sub = tour
+      ? (host ? `Traveller · ${esc(l.title || '')}${cp.trips ? ` · ${cp.trips} tour${cp.trips > 1 ? 's' : ''} on Cabana` : ''}`
+              : `${cp.operator?.persona === 'guide' ? 'Guide' : 'Tour operator'}${cp.operator?.name && cp.operator.name !== cp.name ? ' · ' + esc(cp.operator.name) : ''} · ${esc(responseLabel(meta.response) || l.title || '')}`)
+      : host
       ? `Guest · ${esc(l.title || '')}${cp.stays ? ` · ${cp.stays} stay${cp.stays > 1 ? 's' : ''} on Cabana` : ''}`
       : `Host · ${esc(responseLabel(meta.response) || l.title || '')}`;
     $('#cbx-head').innerHTML = `
@@ -689,8 +741,31 @@ const CabanaChat = window.CabanaChat = (() => {
     return offers.filter(o => o.status === 'sent').slice(-1)[0] || null;
   }
 
+  function renderTourContext() {
+    const { meta } = S.active, c = meta.conversation, t = meta.tour, b = meta.booking, host = meta.role === 'host';
+    const trip = c.checkin ? `${dayShort(c.checkin)} · ${c.guests || 1} ${(c.guests || 1) > 1 ? 'people' : 'person'}` : '';
+    let status = '', cta = '';
+    if (b?.paid) status = `<b style="color:var(--mint)">✓ Booked</b>${b.date ? ' · ' + esc(dayShort(b.date)) : ''}`;
+    else if (b) status = '<b style="color:var(--amber)">Awaiting payment</b>';
+    else if (trip) status = `<b>${esc(trip)}</b>`;
+    if (!host) {
+      if (!trip && !b) status += `<button data-act="trip">Add your date</button>`;
+      else if (!b) status += `<button data-act="trip">Change</button>`;
+      if (!b?.paid && t.live) cta = `<button class="btn sm" data-act="book">${liveOffer() ? 'Book with offer' : 'Book'}</button>`;
+    } else if (!b?.paid && t.live && !meta.blocked) {
+      cta = `<button class="btn sm soft" data-act="offer">${IC.tag}&nbsp;Offer</button>`;
+    }
+    const per = t.price_basis === 'per_group' ? '/group' : '/person';
+    $('#cbx-ctx').innerHTML = `<div class="ctx">
+      ${t.photo ? `<img src="${esc(t.photo)}" alt="" loading="lazy">` : '<span class="ph"></span>'}
+      <div class="ctx-b"><div class="ctx-t">${esc(t.title)}</div>
+        <div class="ctx-s"><span>${Number(t.price) > 0 ? `<b>${money(t.price)}</b>${per}` : '<b>Free</b>'}${t.duration ? ' · ' + esc(t.duration) : ''}${t.destination ? ' · ' + esc(t.destination) : ''}</span><span>${status}</span></div>
+      </div>${cta}</div>`;
+  }
+
   function renderContext() {
     const { meta } = S.active, c = meta.conversation, l = meta.listing, b = meta.booking, host = meta.role === 'host';
+    if (isTour(S.active) && meta.tour) return renderTourContext();
     if (!l) { $('#cbx-ctx').innerHTML = ''; return; }
     const trip = c.checkin ? `${range(c.checkin, c.checkout)} · ${c.guests || 1} guest${(c.guests || 1) > 1 ? 's' : ''}` : '';
     let status = '', cta = '';
@@ -717,7 +792,7 @@ const CabanaChat = window.CabanaChat = (() => {
   function renderSafety() {
     const key = 'safety:' + S.active.id, box = $('#cbx-safety');
     if (store.get(key) || S.active.meta.contact_allowed) { box.innerHTML = ''; return; }
-    box.innerHTML = `<div class="safety">${IC.shield}<span>Pay and chat only on Cabana. It is what keeps your money and your stay protected.</span><button data-act="safety-ok" aria-label="Dismiss">${IC.close}</button></div>`;
+    box.innerHTML = `<div class="safety">${IC.shield}<span>Pay and chat only on Cabana. It is what keeps your money and your ${isTour(S.active) ? 'trip' : 'stay'} protected.</span><button data-act="safety-ok" aria-label="Dismiss">${IC.close}</button></div>`;
   }
 
   function renderMessages(stick) {
@@ -732,7 +807,7 @@ const CabanaChat = window.CabanaChat = (() => {
     if (!msgs.length) {
       html += `<div class="blank" style="padding:28px 16px">${IC.reply}<b>${host ? 'Say hello' : 'Start the conversation'}</b>${host
         ? 'A quick, warm reply is the biggest reason guests book.'
-        : `Ask ${esc(cpName.split(' ')[0] || 'the host')} anything about the stay. Everything stays safely on Cabana.`}</div>`;
+        : `Ask ${esc(cpName.split(' ')[0] || (isTour(a) ? 'the guide' : 'the host'))} anything about the ${isTour(a) ? 'tour' : 'stay'}. Everything stays safely on Cabana.`}</div>`;
     }
     for (const m of msgs) {
       const day = dayLabel(m.created_at);
@@ -760,7 +835,7 @@ const CabanaChat = window.CabanaChat = (() => {
         html += `<div class="note case">${IC.flag}<span>${esc(m.content)} <em style="opacity:.7">Only you can see this.</em></span></div>`;
       } else if (kind === 'booking') {
         const cancel = m.payload?.event === 'cancelled';
-        const link = host ? 'partner-bookings.html' : 'my-bookings.html';
+        const link = isTour(a) ? (host ? '/tours-studio?tab=bookings' : 'my-bookings.html') : (host ? 'partner-bookings.html' : 'my-bookings.html');
         html += `<div class="booked${cancel ? ' cancel' : ''}">${cancel ? IC.close : IC.check}<span>${esc(m.content)}</span>${cancel ? '' : `<a href="${link}">View</a>`}</div>`;
       } else if (kind === 'offer') {
         html += `<div class="m ${mine ? 'me' : 'them'} gap">${offerCard(m, mine)}<div class="meta">${clock(m.created_at)}</div></div>`;
@@ -784,7 +859,36 @@ const CabanaChat = window.CabanaChat = (() => {
 
   function offerStatus(id) { return (S.active.meta.offers || []).find(o => o.id === id)?.status || 'sent'; }
 
+  function tourOfferCard(m, mine) {
+    const p = m.payload || {}, st = offerStatus(p.offer_id);
+    const host = S.active.meta.role === 'host';
+    const labels = { sent: 'Live', accepted: 'Booked', declined: 'Declined', withdrawn: 'Withdrawn', expired: 'Expired', superseded: 'Replaced' };
+    const saving = Number(p.list_total || 0) - Number(p.total || 0);
+    const hrs = Math.max(0, Math.round((new Date(p.expires_at) - Date.now()) / 36e5));
+    const dep = Number(p.deposit_pct) > 0 && Number(p.deposit_pct) < 100 ? Math.round(Number(p.total) * Number(p.deposit_pct) / 100) : Number(p.total);
+    let acts = '';
+    if (st === 'sent') {
+      acts = host
+        ? `<div class="acts"><button class="btn sm ghost" data-act="offer-withdraw" data-id="${esc(p.offer_id)}" data-tour="1">Withdraw</button></div>`
+        : `<div class="acts"><button class="btn sm ghost" data-act="offer-decline" data-id="${esc(p.offer_id)}" data-tour="1">Decline</button><button class="btn sm" data-act="offer-book" data-date="${esc(p.date)}" data-g="${esc(p.people)}">Book now</button></div>`;
+    }
+    return `<div class="card" style="text-align:left">
+      <div class="hd">${IC.tag} Private tour offer<span class="st">${labels[st] || st}</span></div>
+      <div class="bd">
+        <div class="ttl">${esc(p.title || 'This tour')}</div>
+        <div class="price"><b>${money(p.price)}</b><span>${p.price_basis === 'per_group' ? '/ group' : '/ person'}</span>${Number(p.list_price) > Number(p.price) ? `<s>${money(p.list_price)}</s>` : ''}</div>
+        <div class="kv"><span>${esc(dayShort(p.date))}</span><span>${p.people} ${p.people > 1 ? 'people' : 'person'}</span></div>
+        <div class="kv tot"><span>Tour total</span><span>${money(p.total)}</span></div>
+        ${dep < Number(p.total) ? `<div class="kv"><span>Pay now to confirm</span><span>${money(dep)}</span></div><div class="kv"><span>To the guide on the day</span><span>${money(Number(p.total) - dep)}</span></div>` : ''}
+        ${saving > 0 && st === 'sent' ? `<div class="kv" style="color:var(--mint);font-weight:700"><span>${host ? 'Traveller saves' : 'You save'}</span><span>${money(saving)}</span></div>` : ''}
+        ${p.note ? `<div class="quote">“${esc(p.note)}”</div>` : ''}
+        ${st === 'sent' ? `<div class="exp">Expires in ${hrs < 1 ? 'under an hour' : hrs + ' hour' + (hrs > 1 ? 's' : '')} · for this date and group size only</div>` : ''}
+        ${acts}
+      </div></div>`;
+  }
+
   function offerCard(m, mine) {
+    if (m.payload?.kind === 'tour') return tourOfferCard(m, mine);
     const p = m.payload || {}, st = offerStatus(p.offer_id);
     const host = S.active.meta.role === 'host';
     const labels = { sent: 'Live', accepted: 'Booked', declined: 'Declined', withdrawn: 'Withdrawn', expired: 'Expired', superseded: 'Replaced' };
@@ -831,7 +935,13 @@ const CabanaChat = window.CabanaChat = (() => {
     const a = S.active, host = a.meta.role === 'host';
     const msgs = a.order.map(id => a.msgs.get(id)).filter(m => ['text', 'offer', 'suggestion'].includes(m.kind || 'text'));
     const last = msgs[msgs.length - 1];
-    if (!host && msgs.filter(m => m.sender_id === S.me).length === 0) return GUEST_CHIPS.map(t => ['text', t]);
+    if (!host && msgs.filter(m => m.sender_id === S.me).length === 0) return (isTour(a) ? TOUR_CHIPS : GUEST_CHIPS).map(t => ['text', t]);
+    if (host && last && last.sender_id !== S.me && !a.meta.booking?.paid && isTour(a)) {
+      const chips = [['text', 'Yes, it’s on ✓']];
+      if (a.meta.tour?.live) chips.push(['act:offer', 'Send a private offer']);
+      chips.push(['act:saved', 'Saved replies']);
+      return chips;
+    }
     if (host && last && last.sender_id !== S.me && !a.meta.booking?.paid) {
       const chips = [['text', 'Yes, it is available ✓']];
       if (a.meta.listing?.live) chips.push(['act:offer', 'Send an offer']);
@@ -877,6 +987,10 @@ const CabanaChat = window.CabanaChat = (() => {
   function anchorsFor(a) {
     const G = window.CabanaChatGuard, l = a?.meta?.listing || {}, c = a?.meta?.conversation || {};
     if (!G || !G.anchorTokens) return [];
+    /* A tour is named after a place anyone may talk about ("meet at the Mara
+       gate"), so for tours only the operator and the host are anchors, the
+       same as the database guard. */
+    if (isTour(a)) return G.anchorTokens([a?.meta?.tour?.operator, a?.meta?.counterpart?.operator?.name, a?.meta?.counterpart?.name]);
     return G.anchorTokens([l.title || c.listing_title, l.area, l.city, a?.meta?.counterpart?.name]);
   }
 
@@ -1035,6 +1149,13 @@ const CabanaChat = window.CabanaChat = (() => {
   function actionsSheet() {
     const m = S.active.meta, host = m.role === 'host', paid = m.booking?.paid;
     let items = '';
+    if (isTour(S.active)) {
+      if (host && m.tour?.live && !paid) items += mi('offer', IC.tag, 'Send a private offer', 'A price for this traveller, their date and their group. They book it in one tap.');
+      if (!host && !paid) items += mi('trip', IC.cal, 'Share your date', 'Guides answer faster, and can send a private offer, when they know your day and group size.');
+      items += mi('saved', IC.bolt, 'Saved replies', host ? 'Meeting points, what to bring, pick-up times: answer in one tap.' : 'Reuse messages you send often.');
+      items += mi('help', IC.help, 'Get help from Cabana', 'Ask our team to step in, or report something that isn’t right.');
+      return sheet(sheetHead('Actions') + `<div class="menu">${items}</div>`);
+    }
     if (host) {
       if (m.listing?.live && !paid) items += mi('offer', IC.tag, 'Send a special offer', 'A private price for this guest and their dates. They book it in one tap.');
       items += paid
@@ -1054,6 +1175,7 @@ const CabanaChat = window.CabanaChat = (() => {
     const l = m.listing;
     let items = '';
     if (l) items += mi('view-listing', IC.home, 'View listing', esc(l.title));
+    else if (m.tour) items += mi('view-listing', IC.home, 'View tour', esc(m.tour.title));
     items += mi('profile', IC.user, 'View profile', esc(m.counterpart?.name));
     items += c?.archived ? mi('unarchive', IC.archive, 'Move back to inbox', '') : mi('archive', IC.archive, 'Archive', 'Hide it until there is a new message.');
     items += m.blocked
@@ -1063,7 +1185,36 @@ const CabanaChat = window.CabanaChat = (() => {
     sheet(sheetHead('Conversation') + `<div class="menu">${items}</div>`);
   }
 
+  function tourDetailsSheet() {
+    const m = S.active.meta, cp = m.counterpart || {}, t = m.tour || {}, b = m.booking, host = m.role === 'host';
+    const resp = responseLabel(m.response);
+    sheet(sheetHead(esc(cp.name || 'Member')) + `
+      <div class="sum">
+        <div class="kv"><span>${host ? 'Traveller' : (cp.operator?.persona === 'guide' ? 'Guide' : 'Operator')}</span><span>${cp.verified || cp.operator?.verified ? 'Verified ✓' : 'Not yet verified'}</span></div>
+        <div class="kv"><span>On Cabana since</span><span>${esc(cp.member_since || '')}</span></div>
+        ${host ? `<div class="kv"><span>Tours taken</span><span>${cp.trips || 0}</span></div>` : `<div class="kv"><span>Tours listed</span><span>${cp.tours || 0}</span></div>`}
+        ${resp ? `<div class="kv"><span>Responsiveness</span><span>${esc(resp)}</span></div>` : ''}
+      </div>
+      <div class="sum"><div class="kv"><b>${esc(t.title || '')}</b></div>
+        ${Number(t.price) > 0 ? `<div class="kv"><span>Price</span><span>${money(t.price)} ${t.price_basis === 'per_group' ? 'a group' : 'a person'}</span></div>` : ''}
+        ${Number(t.deposit_pct) > 0 && Number(t.deposit_pct) < 100 ? `<div class="kv"><span>To confirm</span><span>${t.deposit_pct}% now, the rest on the day</span></div>` : ''}
+        ${t.duration ? `<div class="kv"><span>Length</span><span>${esc(t.duration)}</span></div>` : ''}
+        ${t.departure_time ? `<div class="kv"><span>Leaves at</span><span>${esc(String(t.departure_time).slice(0, 5))}</span></div>` : ''}
+        ${t.group_max ? `<div class="kv"><span>Group</span><span>${t.group_min || 1}–${t.group_max} people</span></div>` : ''}
+        ${b?.paid && t.meeting_point ? `<div class="kv"><span>Meeting point</span><span>${esc(t.meeting_point)}</span></div>` : ''}</div>
+      ${b ? `<div class="sum"><div class="kv"><b>Booking</b><span>${b.paid ? 'Paid' : 'Awaiting payment'}</span></div>
+        <div class="kv"><span>Date</span><span>${esc(dayShort(b.date))}</span></div>
+        <div class="kv"><span>People</span><span>${b.people || 1}</span></div>
+        ${b.grand_total ? `<div class="kv"><span>Paid on Cabana</span><span>${money(b.amount_paid || 0)}</span></div>` : ''}</div>` : ''}
+      <div class="sum" style="background:#EEF1FF;color:#2F3FAE">
+        <div style="font:700 13px var(--f);margin-bottom:4px">${IC.shield} Staying safe</div>
+        <div style="font:400 12.5px/1.55 var(--f)">Pay only through Cabana, never to a person’s till, paybill or bank. The guide’s number and the exact meeting point unlock automatically once the booking is paid.</div>
+      </div>
+      <div class="sticky-go"><button class="btn ghost" data-act="help">Get help</button><button class="btn" data-act="view-listing">View tour</button></div>`);
+  }
+
   function detailsSheet() {
+    if (isTour(S.active)) return tourDetailsSheet();
     const m = S.active.meta, cp = m.counterpart || {}, l = m.listing, b = m.booking, host = m.role === 'host';
     const resp = responseLabel(m.response);
     sheet(sheetHead(esc(cp.name || 'Member')) + `
@@ -1144,6 +1295,80 @@ const CabanaChat = window.CabanaChat = (() => {
       });
       closeSheet(); toast('Offer sent'); await refreshMeta(); catchUp();
     } catch (e) { g('of-err').textContent = friendly(e); btn.disabled = false; btn.textContent = 'Send offer'; }
+  }
+
+  /* ── Private tour offer (guide) ─────────────────────────────────────────── */
+  function tourOfferSheet() {
+    const m = S.active.meta, c = m.conversation, t = m.tour;
+    const perGroup = t.price_basis === 'per_group';
+    const day = c.checkin && c.checkin >= todayISO() ? c.checkin : '';
+    sheet(sheetHead('Send a private offer', `A price for ${esc(m.counterpart?.name?.split(' ')[0] || 'this traveller')}, their date and their group only. It shows here as a card, and the moment they book that date for that group, Cabana charges your offer. Everyone else still sees your listed price.`) + `
+      <div class="grid2">
+        <label class="fld"><span>Date</span><input type="date" id="to-d" min="${todayISO()}" value="${esc(day)}"></label>
+        <label class="fld"><span>People</span><input type="number" id="to-n" min="${t.group_min || 1}" max="${t.group_max || 50}" value="${c.guests || t.group_min || 1}"></label>
+      </div>
+      <label class="fld"><span>Your price ${perGroup ? 'for the group' : 'per person'} (listed at ${money(t.price)})</span><input type="number" id="to-p" inputmode="numeric" min="1" max="${Math.max(1, t.price - 1)}" value="${Math.round(t.price * 0.9)}"></label>
+      <div class="seg">${[5, 10, 15, 20, 25].map(p => `<button class="chip" data-act="to-pct" data-p="${p}">−${p}%</button>`).join('')}</div>
+      <label class="fld"><span>Offer valid for</span><select id="to-h"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">3 days</option><option value="168">7 days</option></select></label>
+      <div class="sum" id="to-sum"></div>
+      <label class="fld"><span>Add a note (optional)</span><textarea id="to-note" rows="2" maxlength="500" placeholder="e.g. A group price for the four of you."></textarea></label>
+      <div class="err" id="to-err" role="alert"></div>
+      <div class="sticky-go"><button class="btn ghost" data-act="sheet-close">Cancel</button><button class="btn" id="to-go" data-act="offer-send">Send offer</button></div>`, root => {
+      ['to-d', 'to-n', 'to-p', 'to-note'].forEach(id => root.querySelector('#' + id).addEventListener('input', tourOfferSummary));
+      tourOfferSummary();
+    });
+  }
+  function tourOfferSummary() {
+    const t = S.active.meta.tour, g = id => S.root.querySelector('#' + id);
+    const d = g('to-d').value, n = Math.max(1, Math.round(Number(g('to-n').value) || 1)), p = Math.round(Number(g('to-p').value) || 0);
+    const perGroup = t.price_basis === 'per_group';
+    const total = perGroup ? p : p * n, list = perGroup ? t.price : t.price * n;
+    const dep = Number(t.deposit_pct) > 0 && Number(t.deposit_pct) < 100 ? Math.round(total * t.deposit_pct / 100) : total;
+    let err = '';
+    if (p >= t.price) err = `Offer a price below your listed ${money(t.price)}.`;
+    else if (p && p < Math.ceil(t.price * 0.2)) err = `That is more than 80% off. The lowest you can offer is ${money(Math.ceil(t.price * 0.2))}.`;
+    else if (t.group_max && n > t.group_max) err = `This tour takes up to ${t.group_max} people.`;
+    const note = g('to-note').value;
+    const why = note.trim() && window.CabanaChatGuard ? CabanaChatGuard.check(note, { contactAllowed: S.active.meta.contact_allowed, anchors: anchorsFor(S.active) }).reason : null;
+    if (why) err = why;
+    g('to-err').textContent = err;
+    g('to-go').disabled = !!err || !d || !p;
+    g('to-sum').innerHTML = d && p ? `
+      <div class="kv"><span>${perGroup ? money(p) + ' for the group' : money(p) + ' × ' + n}</span><span>${money(total)}</span></div>
+      ${dep < total ? `<div class="kv"><span>Traveller pays now</span><span>${money(dep)}</span></div><div class="kv"><span>You collect on the day</span><span>${money(total - dep)}</span></div>` : ''}
+      <div class="kv" style="color:var(--mint);font-weight:700"><span>Traveller saves</span><span>${money(list - total)}</span></div>
+      <div class="kv"><span>Cabana commission</span><span>KES 0</span></div>` : '<div class="kv"><span>Choose a date and a price to see the totals. The server checks the tour runs that day.</span></div>';
+  }
+  async function sendTourOffer() {
+    const g = id => S.root.querySelector('#' + id), btn = g('to-go');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      await rpc('cabana_chat_send_tour_offer', {
+        p_conversation: S.active.id, p_date: g('to-d').value, p_people: Number(g('to-n').value) || 1,
+        p_price: Number(g('to-p').value), p_note: g('to-note').value || null, p_valid_hours: Number(g('to-h').value) || 48,
+      });
+      closeSheet(); toast('Offer sent'); await refreshMeta(); catchUp();
+    } catch (e) { g('to-err').textContent = friendly(e); btn.disabled = false; btn.textContent = 'Send offer'; }
+  }
+
+  /* ── Tour date (traveller) ─────────────────────────────────────────────── */
+  function tourTripSheet() {
+    const c = S.active.meta.conversation, t = S.active.meta.tour || {};
+    const deps = (window.CabanaTours && window.CabanaTours.departures) ? window.CabanaTours.departures(t.id).filter(d => !d.closes_at || new Date(d.closes_at) > Date.now()) : [];
+    sheet(sheetHead('Your date', 'The guide sees it at the top of the conversation, so they can answer, and even send you a private offer.') + `
+      ${deps.length
+        ? `<label class="fld"><span>Departure</span><select id="tt-d">${deps.slice(0, 20).map(d => `<option value="${esc(d.departs_on)}"${d.departs_on === c.checkin ? ' selected' : ''}>${esc(dayShort(d.departs_on))}${d.seats_left != null ? ' · ' + d.seats_left + ' seats left' : ''}</option>`).join('')}</select></label>`
+        : `<label class="fld"><span>Date</span><input type="date" id="tt-d" min="${todayISO()}" value="${esc(c.checkin && c.checkin >= todayISO() ? c.checkin : '')}"></label>`}
+      <label class="fld"><span>People</span><input type="number" id="tt-n" min="${t.group_min || 1}" max="${t.group_max || 50}" value="${c.guests || t.group_min || 1}"></label>
+      <div class="err" id="tt-err" role="alert"></div>
+      <div class="sticky-go"><button class="btn ghost" data-act="sheet-close">Cancel</button><button class="btn" data-act="trip-save">Save</button></div>`);
+  }
+  async function saveTourTrip() {
+    const g = id => S.root.querySelector('#' + id);
+    try {
+      await rpc('cabana_chat_set_tour_trip', { p_conversation: S.active.id, p_date: g('tt-d').value || null, p_people: Number(g('tt-n').value) || 1 });
+      closeSheet(); await refreshMeta(); catchUp();
+    } catch (e) { g('tt-err').textContent = friendly(e); }
   }
 
   /* ── Suggest / rehome (host) ───────────────────────────────────────────── */
@@ -1271,7 +1496,7 @@ const CabanaChat = window.CabanaChat = (() => {
     try {
       const { data, error } = await sb().from('chat_saved_replies').select('id,title,body').order('created_at');
       if (error) throw error;
-      const starters = (data || []).length ? [] : (host ? HOST_STARTERS : []);
+      const starters = (data || []).length ? [] : (host ? (isTour(S.active) ? TOUR_STARTERS : HOST_STARTERS) : []);
       S.root.querySelector('#sv-list').innerHTML =
         (data || []).map(r => `<div class="saved"><button class="use" data-act="saved-use" data-b="${esc(r.body)}"><b>${esc(r.title)}</b><span>${esc(r.body)}</span></button><button class="ib" style="width:32px;height:32px" data-act="saved-del" data-id="${esc(r.id)}" aria-label="Delete ${esc(r.title)}">${IC.close}</button></div>`).join('')
         + (starters.length ? '<p class="sh-p" style="margin:4px 0 8px">Starters to get you going:</p>' + starters.map(([t, b]) => `<div class="saved"><button class="use" data-act="saved-use" data-b="${esc(fill(b))}"><b>${esc(t)}</b><span>${esc(fill(b))}</span></button></div>`).join('') : '')
@@ -1350,21 +1575,29 @@ const CabanaChat = window.CabanaChat = (() => {
       case 'safety-ok': store.set('safety:' + a.id, '1'); return renderSafety();
       case 'chip': {
         const k = t.dataset.k;
-        if (k.startsWith('act:')) return ({ offer: offerSheet, suggest: () => suggestSheet(false), saved: savedSheet })[k.slice(4)]?.();
+        if (k.startsWith('act:')) return ({ offer: isTour(a) ? tourOfferSheet : offerSheet, suggest: () => suggestSheet(false), saved: savedSheet })[k.slice(4)]?.();
         const ta = $('#cbx-ta'); ta.value = t.dataset.t; grow(ta); $('#cbx-send').disabled = false; checkDraft(); ta.focus(); return;
       }
       case 'actions': return actionsSheet();
       case 'menu': return menuSheet();
       case 'details': return detailsSheet();
       case 'sheet-close': return closeSheet();
-      case 'offer': return offerSheet();
+      case 'offer': return isTour(a) ? tourOfferSheet() : offerSheet();
       case 'of-pct': { const l = a.meta.listing; S.root.querySelector('#of-p').value = Math.round(l.price * (1 - t.dataset.p / 100)); return offerSummary(); }
-      case 'offer-send': return sendOffer();
+      case 'to-pct': { const tr = a.meta.tour; S.root.querySelector('#to-p').value = Math.round(tr.price * (1 - t.dataset.p / 100)); return tourOfferSummary(); }
+      case 'offer-send': return isTour(a) ? sendTourOffer() : sendOffer();
       case 'offer-withdraw': case 'offer-decline':
-        return rpc('cabana_chat_offer_respond', { p_offer: t.dataset.id, p_action: act === 'offer-withdraw' ? 'withdraw' : 'decline' })
+        return rpc(t.dataset.tour ? 'cabana_chat_tour_offer_respond' : 'cabana_chat_offer_respond', { p_offer: t.dataset.id, p_action: act === 'offer-withdraw' ? 'withdraw' : 'decline' })
           .then(() => { refreshMeta(); catchUp(); }).catch(err => toast(friendly(err)));
-      case 'offer-book': location.href = bookUrl(t.dataset.in, t.dataset.out, t.dataset.g); return;
+      case 'offer-book':
+        if (isTour(a)) return bookTour(a.meta.tour, t.dataset.date, t.dataset.g);
+        location.href = bookUrl(t.dataset.in, t.dataset.out, t.dataset.g); return;
       case 'book': {
+        if (isTour(a)) {
+          const off = liveOffer(), c = a.meta.conversation;
+          const card = off && a.order.map(id => a.msgs.get(id)).find(m => m.kind === 'offer' && m.payload?.offer_id === off.id);
+          return card ? bookTour(a.meta.tour, card.payload.date, card.payload.people) : bookTour(a.meta.tour, c.checkin, c.guests);
+        }
         const off = liveOffer(), c = a.meta.conversation;
         const card = off && a.order.map(id => a.msgs.get(id)).find(m => m.kind === 'offer' && m.payload?.offer_id === off.id);
         const p = card?.payload;
@@ -1379,8 +1612,8 @@ const CabanaChat = window.CabanaChat = (() => {
       case 'ask-host': close(); return open({ listingId: t.dataset.id, checkin: a?.meta?.conversation?.checkin, checkout: a?.meta?.conversation?.checkout, guests: a?.meta?.conversation?.guests });
       case 'help': return helpSheet();
       case 'help-send': return sendHelp();
-      case 'trip': return tripSheet();
-      case 'trip-save': return saveTrip();
+      case 'trip': return isTour(a) ? tourTripSheet() : tripSheet();
+      case 'trip-save': return isTour(a) ? saveTourTrip() : saveTrip();
       case 'saved': return savedSheet();
       case 'saved-use': { closeSheet(); const ta = $('#cbx-ta'); if (ta) { ta.value = t.dataset.b; grow(ta); $('#cbx-send').disabled = false; checkDraft(); ta.focus(); } return; }
       case 'saved-add': return addSaved();
@@ -1389,7 +1622,14 @@ const CabanaChat = window.CabanaChat = (() => {
       case 'block':
         return sheet(sheetHead('Block this conversation?', 'Neither of you will be able to send messages here. You can unblock it later. If something is wrong, you can also report it to our Trust team.') + '<div class="sticky-go"><button class="btn ghost" data-act="help">Report instead</button><button class="btn danger" data-act="block-now">Block</button></div>');
       case 'block-now': return setState('block');
-      case 'view-listing': { const l = a.meta.listing, c = a.meta.conversation; location.href = `apartments.html?open=${encodeURIComponent(l.id)}${c.checkin ? `&checkin=${c.checkin}&checkout=${c.checkout}` : ''}`; return; }
+      case 'view-listing': {
+        if (isTour(a) && a.meta.tour) {
+          const tt = a.meta.tour, c = a.meta.conversation;
+          if (window.CabanaTours && window.CabanaTours.tour && window.CabanaTours.tour(tt.id)) { close(); window.CabanaTours.open(tt.id, { date: c.checkin }); return; }
+          location.href = `/tours?open=${encodeURIComponent(tt.id)}${c.checkin ? `&date=${c.checkin}` : ''}`; return;
+        }
+        const l = a.meta.listing, c = a.meta.conversation; location.href = `apartments.html?open=${encodeURIComponent(l.id)}${c.checkin ? `&checkin=${c.checkin}&checkout=${c.checkout}` : ''}`; return;
+      }
       case 'profile': { closeSheet(); $('.t-ava')?.click(); return; }
     }
   }
@@ -1454,6 +1694,7 @@ const CabanaChat = window.CabanaChat = (() => {
         const q = new URLSearchParams(location.search);
         if (q.get('c')) openConversation(q.get('c'));
         else if (q.get('chat_booking')) openForBooking(q.get('chat_booking'));
+        else if (q.get('chat_tour_booking')) openForTourBooking(q.get('chat_tour_booking'));
         else if (q.get('inbox') === '1' || location.hash === '#messages') openInbox();
       } catch (_) {}
     });
@@ -1489,7 +1730,7 @@ const CabanaChat = window.CabanaChat = (() => {
   _init();
 
   return {
-    open, openInbox, openConversation, openForBooking, close, closeInbox: close,
+    open, openInbox, openConversation, openForBooking, openTour, openForTourBooking, close, closeInbox: close,
     getUnread, initBell, initFAB: initBell, updateBell, scrub,
     // v5 names kept so nothing that still calls them breaks
     _pSend: () => send(), _tSend: () => send(), _thrBack: back, _openThr: openConversation,

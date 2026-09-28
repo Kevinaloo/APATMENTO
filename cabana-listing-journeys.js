@@ -80,7 +80,7 @@
       });
       C.focusForm(form,units,actions);
     });
-    if(path==='/list-your-tour'){C.selectChoices('t-category');C.selectChoices('t-schedule');}
+    if(path==='/list-your-tour'){C.selectChoices('o-persona');C.selectChoices('t-category');C.selectChoices('t-schedule');}
     else C.selectChoices('e-category');
   }else if(path==='/list-your-fleet'){
     document.querySelectorAll('#fleet-form .panel').forEach(panel=>{

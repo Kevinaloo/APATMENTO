@@ -118,6 +118,24 @@
         { id: 'tours.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
       ], shadow: true },
 
+    // The full catalogue and the guides directory sit under Tours and
+    // share its engine; the operator studio is on the never list.
+    { page: 'tours-catalogue', label: 'Tours · all tours', service: true,
+      feed: { grid: ['#ct-grid'], label: 'tour cards' },
+      slots: [
+        { id: 'tours-catalogue.feed', label: 'In results', kind: 'infeed', formats: ['native', 'carousel'] },
+        { id: 'tours-catalogue.end', label: 'After results', kind: 'section', formats: ['window', 'video', 'split', 'carousel'],
+          anchor: ['.ct-band'], mode: 'before', fallback: 'footer.site-footer', house: true },
+        { id: 'tours-catalogue.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
+      ], shadow: true },
+
+    { page: 'tour-guides', label: 'Tours · guides', service: true,
+      slots: [
+        { id: 'tour-guides.end', label: 'After guides', kind: 'section', formats: ['window', 'video', 'split', 'carousel'],
+          anchor: ['.ct-band'], mode: 'before', fallback: 'footer.site-footer', house: true },
+        { id: 'tour-guides.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
+      ], shadow: true },
+
     // The results grid is drawn by Cabana Live on its Events tab only,
     // so the engine waits for it across tab changes (spa) instead of
     // calling the page broken when a visitor is on Music or Movies.
@@ -185,7 +203,7 @@
     'delete-account', 'unsubscribe', 'offline', '404', 'partner-bookings', 'partner-listings', 'partner-calendar',
     'partner-earnings', 'partner-reviews', 'partner-analytics', 'partner-agents', 'partner-settings',
     'partner-orders', 'partner-menu', 'partner-fleet', 'partner-cabana', 'agent-dashboard', 'ambassador-dashboard',
-    'driver', 'rider', 'list-your-event', 'list-your-tour', 'list-your-fleet'];
+    'driver', 'rider', 'list-your-event', 'list-your-tour', 'list-your-fleet', 'tours-studio'];
 
   /* ── POLICY ──────────────────────────────────────────────────────
      Defaults. The console overrides these live (ad_settings).       */

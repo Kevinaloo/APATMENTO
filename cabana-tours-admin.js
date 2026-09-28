@@ -4,9 +4,11 @@
    Runs inside admin.html. Reuses the admin's own components (.card,
    .btn, .tabs, .inp, .pill) so it looks native rather than bolted on.
 
-   Two jobs:
+   Three jobs:
      · moderate what operators submit  (pending → published / rejected)
      · publish Cabana's own tours      (created straight to published)
+     · run the Spotlight at the top of /tours: review paid slides,
+       feature tours for free, pause or end anything, set the prices
 
    Writes are gated by RLS on is_admin(), so a non-admin reaching this
    file gets nothing. The UI gate is a convenience, not the security.
@@ -15,7 +17,7 @@
   'use strict';
 
   var sb = null;
-  var state = { tab: 'pending', tours: [], operators: [], editing: null };
+  var state = { tab: 'pending', tours: [], operators: [], editing: null, spots: null, spotSettings: null };
   var adminMedia = null;
 
   function client() {
@@ -79,9 +81,33 @@
         render();
       }, function () { render(); });
 
-    c.from('tour_operators').select('*').order('created_at', { ascending: false })
+    /* Operator contacts are not readable column by column any more; the
+       console reads them through its own guarded function. */
+    c.rpc('admin_tour_operators')
       .then(function (r) { state.operators = (r && r.data) || []; renderOps(); }, function () {});
+    loadSpots();
   }
+  function loadSpots() {
+    var c = client(); if (!c) return;
+    c.rpc('admin_tour_spotlights').then(function (r) {
+      state.spots = (r && r.data) || [];
+      if (state.tab === 'spotlight') render(); else paintSpotCount();
+    }, function () { state.spots = []; });
+    c.from('tour_spotlight_settings').select('*').limit(1).then(function (r) {
+      state.spotSettings = r && r.data && r.data[0];
+      if (state.tab === 'spotlight') render();
+    }, function () {});
+  }
+  function paintSpotCount() {
+    var b = document.querySelector('#tr-tabs [data-tab="spotlight"] .mono');
+    if (b) b.textContent = spotReview().length;
+  }
+  function spotLive(tourId) {
+    return (state.spots || []).some(function (s) {
+      return s.live && String(s.tour_id) === String(tourId);
+    });
+  }
+  function spotReview() { return (state.spots || []).filter(function (s) { return s.status === 'in_review'; }); }
 
   /* ── moderation actions ──────────────────────────────────────────── */
 
@@ -120,47 +146,6 @@
     c.from('tours').update({ status: 'archived' }).eq('id', id)
       .then(function (r) { done(r && r.error ? { ok: false, error: r.error.message } : { ok: true }); },
             function () { toast('Could not delete'); });
-  }
-
-  function setShowcase(id, on) {
-    var c = client(); if (!c) return;
-    var t = state.tours.filter(function (x) { return String(x.id) === String(id); })[0];
-    if (on && !(t && (t.showcase_video || arr(t.videos).length))) {
-      toast('That tour has no video to play.');
-      return;
-    }
-    c.from('tours').update({ showcase: !!on }).eq('id', id).then(function (r) {
-      if (r && r.error) { toast('Could not update: ' + r.error.message); return; }
-      toast(on ? 'Added to the reel' : 'Removed from the reel');
-      load();
-    }, function () { toast('Could not update'); });
-  }
-
-  /* Reordering swaps ranks with the neighbour rather than renumbering
-     the whole list, so two admins working at once cannot silently
-     reshuffle each other's ordering. */
-  function nudge(id, dir) {
-    var c = client(); if (!c) return;
-    var list = reelOrder();
-    var i = list.findIndex(function (x) { return String(x.id) === String(id); });
-    var j = i + dir;
-    if (i < 0 || j < 0 || j >= list.length) return;
-    var a = list[i], b = list[j];
-    var ra = Number(a.showcase_rank) || 0, rb = Number(b.showcase_rank) || 0;
-    if (ra === rb) { ra = rb + (dir < 0 ? 1 : -1); }
-    Promise.all([
-      c.from('tours').update({ showcase_rank: rb }).eq('id', a.id),
-      c.from('tours').update({ showcase_rank: ra }).eq('id', b.id)
-    ]).then(function () { load(); }, function () { toast('Could not reorder'); });
-  }
-
-  function reelOrder() {
-    return state.tours
-      .filter(function (t) { return t.showcase && t.status === 'published'; })
-      .sort(function (a, b) {
-        return (Number(b.showcase_rank) || 0) - (Number(a.showcase_rank) || 0) ||
-               (Number(b.sort_weight) || 0) - (Number(a.sort_weight) || 0);
-      });
   }
 
   function toggleFeatured(id, on) {
@@ -210,7 +195,7 @@
     return '<tr>' +
       '<td><div class="t-main">' + esc(t.title) +
         (t.featured ? ' <span class="pill p-info">Featured</span>' : '') +
-        (t.showcase ? ' <span class="pill p-ok">Reel</span>' : '') + '</div>' +
+        (spotLive(t.id) ? ' <span class="pill p-ok">In Spotlight</span>' : '') + '</div>' +
         '<div class="t-sub">' + esc(t.destination || t.county || '—') + ' · ' +
         esc(t.duration_label || (t.days + ' day' + (t.days === 1 ? '' : 's'))) + '</div></td>' +
       '<td>' + (house ? '<span class="pill p-ok">Cabana</span>' :
@@ -226,7 +211,7 @@
     if (!host) return;
     var c = counts();
 
-    if (state.tab === 'reel') { renderReelTab(); return; }
+    if (state.tab === 'spotlight') { renderSpotTab(); return; }
 
     var list = state.tours.filter(function (t) {
       return state.tab === 'all' ? true : t.status === state.tab;
@@ -239,9 +224,9 @@
       '</div>' +
 
       '<div class="tabs" id="tr-tabs">' +
-        ['pending','published','paused','draft','rejected','reel','all'].map(function (k) {
+        ['pending','published','paused','draft','rejected','spotlight','all'].map(function (k) {
           var n = k === 'all' ? state.tours.length
-                : k === 'reel' ? reelOrder().length
+                : k === 'spotlight' ? spotReview().length
                 : (c[k] || 0);
           return '<button class="tab' + (state.tab === k ? ' on' : '') + '" data-tab="' + k + '">' +
                  k.charAt(0).toUpperCase() + k.slice(1) +
@@ -291,104 +276,107 @@
     renderOps();
   }
 
-  function renderReelTab() {
-    var host = $('s-tours');
-    if (!host) return;
-    var list = reelOrder();
-    var candidates = state.tours.filter(function (t) {
-      return t.status === 'published' && !t.showcase &&
-             (t.showcase_video || arr(t.videos).length);
-    });
-
+  /* ── the Spotlight desk ──────────────────────────────────────────── */
+  var SPOT_PILL = { in_review: 'p-warn', approved: 'p-ok', paused: 'p-info', pending_payment: 'p-mute', rejected: 'p-bad', ended: 'p-mute', draft: 'p-mute' };
+  function when(iso) { try { return new Date(iso).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' }); } catch (e) { return ''; } }
+  function spotThumb(s) {
+    var src = s.media_kind === 'youtube' ? 'https://i.ytimg.com/vi/' + s.media_url + '/mqdefault.jpg' : (s.poster_url || (s.media_kind === 'image' ? s.media_url : ''));
+    if (!src) return '<div style="width:112px;height:64px;border-radius:10px;background:linear-gradient(115deg,#12E0D0,#3B5BFF,#B98CFF,#FF6FA8);display:flex;align-items:center;justify-content:center;color:#07061A;font:700 10px Inter;text-transform:uppercase;letter-spacing:.1em">' + esc(s.art || s.media_kind) + '</div>';
+    return '<a href="' + esc(s.media_kind === 'youtube' ? 'https://youtu.be/' + s.media_url : s.media_url) + '" target="_blank" rel="noopener"><img src="' + esc(src) + '" alt="" style="width:112px;height:64px;object-fit:cover;border-radius:10px;display:block"/></a>';
+  }
+  function spotRow(s) {
+    var acts = '';
+    if (s.status === 'in_review') acts = '<button class="btn btn-ok btn-sm" data-spa="approve" data-id="' + s.id + '">Approve</button><button class="btn btn-d btn-sm" data-spa="reject" data-id="' + s.id + '">Reject</button>';
+    else if (s.status === 'approved') acts = '<button class="btn btn-g btn-sm" data-spa="pause" data-id="' + s.id + '">Pause</button><button class="btn btn-d btn-sm" data-spa="end" data-id="' + s.id + '">End</button>';
+    else if (s.status === 'paused') acts = '<button class="btn btn-ok btn-sm" data-spa="resume" data-id="' + s.id + '">Resume</button><button class="btn btn-d btn-sm" data-spa="end" data-id="' + s.id + '">End</button>';
+    else if (s.status === 'rejected') acts = '<button class="btn btn-g btn-sm" data-spa="approve" data-id="' + s.id + '">Approve after all</button>';
+    var ctr = s.impressions ? (Math.round(s.clicks / s.impressions * 1000) / 10) + '%' : '—';
+    return '<tr><td style="width:128px">' + spotThumb(s) + '</td>' +
+      '<td><div class="t-main">' + esc(String(s.headline || '').replace(/\*/g, '')) + (s.live ? ' <span class="pill p-ok">Live</span>' : '') + '</div>' +
+        '<div class="t-sub">' + esc([s.kind === 'sponsored' ? (s.operator || s.buyer || 'Sponsored') : s.kind === 'tour' ? 'Featured by Cabana' : 'Cabana', s.tour, s.kicker].filter(Boolean).join(' · ')) + '</div>' +
+        (s.subline ? '<div class="t-sub" style="max-width:560px">' + esc(s.subline) + '</div>' : '') +
+        (s.review_note ? '<div class="t-sub" style="color:#B26A00">Note: ' + esc(s.review_note) + '</div>' : '') + '</td>' +
+      '<td><div class="mono">' + esc(when(s.starts_at)) + ' → ' + esc(when(s.ends_at)) + '</div><div class="t-sub">' + esc(s.package || s.kind) + '</div></td>' +
+      '<td class="mono">' + (s.kind === 'sponsored' ? money(s.amount_paid) + ' / ' + money(s.grand_total) + (Number(s.credited) > 0 ? '<div class="t-sub">' + money(s.credited) + ' credited</div>' : '') : '—') + '</td>' +
+      '<td class="mono">' + (s.impressions || 0) + ' · ' + (s.clicks || 0) + '<div class="t-sub">tap rate ' + ctr + '</div></td>' +
+      '<td><span class="pill ' + (SPOT_PILL[s.status] || 'p-mute') + '">' + esc(String(s.status).replace('_', ' ')) + '</span></td>' +
+      '<td class="t-act">' + acts + '</td></tr>';
+  }
+  function spotTable(title, sub, list, empty) {
+    return '<div class="card" style="margin-top:18px;"><div class="card-t">' + title + ' <span class="mono">' + list.length + '</span></div>' +
+      (sub ? '<div class="card-s">' + sub + '</div>' : '') +
+      '<table class="tbl"><thead><tr><th></th><th>Slide</th><th>Window</th><th>Paid</th><th>Views · taps</th><th>Status</th><th></th></tr></thead><tbody>' +
+      (list.length ? list.map(spotRow).join('') : '<tr><td colspan="7"><div class="empty"><div class="empty-s">' + empty + '</div></div></td></tr>') +
+      '</tbody></table></div>';
+  }
+  function renderSpotTab() {
+    var host = $('s-tours'); if (!host) return;
+    var all = state.spots || [], st = state.spotSettings || {}, P = st.prices || {};
+    var review = all.filter(function (s) { return s.status === 'in_review'; });
+    var running = all.filter(function (s) { return s.status === 'approved' || s.status === 'paused'; });
+    var other = all.filter(function (s) { return ['rejected', 'ended', 'pending_payment'].indexOf(s.status) !== -1; }).slice(0, 30);
+    var published = state.tours.filter(function (t) { return t.status === 'published'; });
     host.innerHTML =
-      '<div class="hd"><div><div class="card-t">The reel</div>' +
-        '<div class="card-s">The band of playing video above the listings on ' +
-        'cabana.africa/tours. Runs top to bottom, loops, and pauses the moment a ' +
-        'guest touches it.</div></div>' +
-        '<div class="hd-act"><button class="btn btn-p" id="tr-new">+ New Cabana tour</button></div>' +
-      '</div>' +
-
+      '<div class="hd"><div><div class="card-t">The Spotlight</div>' +
+        '<div class="card-s">The full-screen slideshow at the top of cabana.africa/tours. Sponsored slides are paid for by guides and operators and wait here for a yes or no; approving a late one moves its window so they lose no days. Refusing a paid one turns the payment into Cabana credit.</div></div>' +
+        '<div class="hd-act"><button class="btn btn-p" id="tr-new">+ New Cabana tour</button></div></div>' +
       '<div class="tabs" id="tr-tabs">' +
-        ['pending','published','paused','draft','rejected','reel','all'].map(function (k) {
-          var n = k === 'all' ? state.tours.length
-                : k === 'reel' ? list.length
-                : (counts()[k] || 0);
-          return '<button class="tab' + (state.tab === k ? ' on' : '') + '" data-tab="' + k + '">' +
-                 k.charAt(0).toUpperCase() + k.slice(1) + ' <span class="mono">' + n + '</span></button>';
-        }).join('') +
-      '</div>' +
-
-      (list.length < 2
-        ? '<div class="card" style="border-color:rgba(245,177,46,.4);background:rgba(245,177,46,.06);">' +
-          '<div class="t-main">The reel is not running</div>' +
-          '<div class="t-sub">It needs at least two tours. One card cannot loop, so the band ' +
-          'stays hidden and the listings move up. ' + (list.length ? 'One is in it now.' : 'None are in it yet.') +
-          '</div></div>'
-        : '') +
-
-      '<div class="card"><table class="tbl"><thead><tr>' +
-        '<th style="width:64px;">Order</th><th>Tour</th><th>Clip</th><th>Headline</th><th></th>' +
-      '</tr></thead><tbody>' +
-      (list.length ? list.map(function (t, i) {
-        var clip = t.showcase_video || arr(t.videos)[0] || '';
-        var name = String(clip).split('/').pop();
-        return '<tr>' +
-          '<td class="mono">' +
-            '<button class="btn btn-g btn-sm" data-mv="-1" data-id="' + t.id + '"' +
-              (i === 0 ? ' disabled' : '') + ' aria-label="Move up">\u2191</button> ' +
-            '<button class="btn btn-g btn-sm" data-mv="1" data-id="' + t.id + '"' +
-              (i === list.length - 1 ? ' disabled' : '') + ' aria-label="Move down">\u2193</button>' +
-          '</td>' +
-          '<td><div class="t-main">' + esc(t.title) + '</div>' +
-            '<div class="t-sub">' + esc(t.destination || t.county || '—') + '</div></td>' +
-          '<td class="mono" style="font-size:11px;">' +
-            (clip ? esc(name.length > 24 ? name.slice(0, 24) + '…' : name)
-                  : '<span class="pill p-bad">missing</span>') + '</td>' +
-          '<td class="t-sub">' + esc(t.showcase_headline || t.title) + '</td>' +
-          '<td class="t-act">' +
-            '<button class="btn btn-g btn-sm" data-act="edit" data-id="' + t.id + '">Edit</button>' +
-            '<button class="btn btn-d btn-sm" data-sc="0" data-id="' + t.id + '">Remove</button>' +
-          '</td></tr>';
-      }).join('')
-        : '<tr><td colspan="5"><div class="empty"><div class="empty-t">Nothing in the reel</div>' +
-          '<div class="empty-s">Add a published tour that has a video.</div></div></td></tr>') +
-      '</tbody></table></div>' +
-
-      (candidates.length
-        ? '<div class="card" style="margin-top:18px;">' +
-          '<div class="card-t">Ready for the reel</div>' +
-          '<div class="card-s">Published tours that already have a video but are not in it.</div>' +
-          '<table class="tbl"><tbody>' +
-          candidates.map(function (t) {
-            return '<tr><td><div class="t-main">' + esc(t.title) + '</div>' +
-              '<div class="t-sub">' + esc(t.destination || t.county || '—') + ' · ' +
-              arr(t.videos).length + ' video' + (arr(t.videos).length === 1 ? '' : 's') + '</div></td>' +
-              '<td class="t-act"><button class="btn btn-ok btn-sm" data-sc="1" data-id="' + t.id +
-              '">Add to reel</button></td></tr>';
-          }).join('') +
-          '</tbody></table></div>'
-        : '') +
-
+        ['pending','published','paused','draft','rejected','spotlight','all'].map(function (k) {
+          var n = k === 'all' ? state.tours.length : k === 'spotlight' ? review.length : (counts()[k] || 0);
+          return '<button class="tab' + (state.tab === k ? ' on' : '') + '" data-tab="' + k + '">' + k.charAt(0).toUpperCase() + k.slice(1) + ' <span class="mono">' + n + '</span></button>';
+        }).join('') + '</div>' +
+      (state.spots == null ? '<div class="card"><div class="skel" style="height:64px"></div></div>' :
+        spotTable('Waiting for review', 'Paid in full. Check the media, the words and the tour, then decide.', review, 'Nothing waiting. Paid Spotlights land here.') +
+        spotTable('Running and paused', '', running, 'Nothing running.') +
+        '<div class="card" style="margin-top:18px;"><div class="card-t">Feature a tour for free</div><div class="card-s">Puts a published tour in the Spotlight as a Cabana pick, behind any sponsored slides, for 30 days.</div>' +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px"><select class="inp" id="sp-tour" style="min-width:280px">' +
+          published.map(function (t) { return '<option value="' + t.id + '">' + esc(t.title) + '</option>'; }).join('') + '</select>' +
+          '<button class="btn btn-p btn-sm" id="sp-feature"' + (published.length ? '' : ' disabled') + '>Feature it</button></div></div>' +
+        '<div class="card" style="margin-top:18px;"><div class="card-t">Prices and limits</div><div class="card-s">What guides and operators pay, and how many sponsored slides may share a day.</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px">' +
+            ['day', 'week', 'fortnight', 'month'].map(function (k) { return '<label class="t-sub">' + k + ' (KES)<input class="inp" type="number" min="0" data-price="' + k + '" value="' + esc(P[k] == null ? '' : P[k]) + '"/></label>'; }).join('') +
+            '<label class="t-sub">Max sponsored a day<input class="inp" type="number" min="1" max="20" id="sp-max" value="' + esc(st.max_sponsored || 6) + '"/></label>' +
+            '<label class="t-sub">Review within (hours)<input class="inp" type="number" min="1" max="168" id="sp-rh" value="' + esc(st.review_hours || 24) + '"/></label>' +
+            '<label class="t-sub" style="display:flex;align-items:center;gap:8px;margin-top:18px"><input type="checkbox" id="sp-on"' + (st.enabled === false ? '' : ' checked') + '/> Selling Spotlights</label>' +
+          '</div><button class="btn btn-g btn-sm" id="sp-save" style="margin-top:12px">Save</button></div>' +
+        spotTable('Recent history', 'Unpaid checkouts, refusals and ended slides.', other, 'Nothing yet.')) +
       '<div id="tr-ops"></div><div id="tr-form"></div>';
-
-    host.querySelectorAll('[data-tab]').forEach(function (b) {
-      b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); });
-    });
-    host.querySelectorAll('[data-mv]').forEach(function (b) {
+    host.querySelectorAll('[data-tab]').forEach(function (b) { b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); }); });
+    host.querySelectorAll('[data-spa]').forEach(function (b) {
       b.addEventListener('click', function () {
-        nudge(b.getAttribute('data-id'), Number(b.getAttribute('data-mv')));
+        var act = b.getAttribute('data-spa'), note = null;
+        if (act === 'reject') { note = window.prompt('What should they change? They will see this, and a paid slide becomes Cabana credit.'); if (note === null) return; }
+        if (act === 'end' && !window.confirm('End this slide now?')) return;
+        b.disabled = true;
+        client().rpc('admin_tour_spotlight_decide', { p_id: b.getAttribute('data-id'), p_action: act, p_note: note }).then(function (r) {
+          if (r && r.error) { toast(r.error.message); b.disabled = false; return; }
+          toast({ approve: 'Approved: it is in the Spotlight', reject: 'Refused and credited', pause: 'Paused', resume: 'Back on', end: 'Ended' }[act] || 'Done');
+          loadSpots();
+        }, function () { toast('Could not update'); b.disabled = false; });
       });
     });
-    host.querySelectorAll('[data-sc]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        setShowcase(b.getAttribute('data-id'), b.getAttribute('data-sc') === '1');
-      });
+    var fb = $('sp-feature');
+    if (fb) fb.addEventListener('click', function () {
+      var id = $('sp-tour').value, t = state.tours.filter(function (x) { return String(x.id) === String(id); })[0]; if (!t) return;
+      var cover = t.cover_url || arr(t.photos)[0] || '';
+      fb.disabled = true;
+      client().from('tour_spotlights').insert({
+        kind: 'tour', status: 'approved', tour_id: t.id, operator_id: t.operator_id || null,
+        media_kind: t.showcase_video ? 'video' : (cover ? 'image' : 'art'), media_url: t.showcase_video || cover || null, poster_url: t.video_poster || cover || null,
+        art: 'savanna', kicker: 'Featured by Cabana', headline: t.showcase_headline || t.title, subline: t.summary || null,
+        starts_at: new Date().toISOString(), ends_at: new Date(Date.now() + 30 * 864e5).toISOString(), priority: 5
+      }).then(function (r) { fb.disabled = false; if (r && r.error) toast(r.error.message); else { toast('Featured for 30 days'); loadSpots(); } }, function () { fb.disabled = false; toast('Could not feature'); });
     });
-    host.querySelectorAll('[data-act="edit"]').forEach(function (b) {
-      b.addEventListener('click', function () { openForm(b.getAttribute('data-id')); });
+    var sv = $('sp-save');
+    if (sv) sv.addEventListener('click', function () {
+      var prices = {};
+      host.querySelectorAll('[data-price]').forEach(function (i) { if (i.value !== '') prices[i.getAttribute('data-price')] = Math.max(0, Math.round(Number(i.value) || 0)); });
+      client().from('tour_spotlight_settings').update({
+        prices: prices, max_sponsored: Math.min(20, Math.max(1, Number($('sp-max').value) || 6)),
+        review_hours: Math.min(168, Math.max(1, Number($('sp-rh').value) || 24)), enabled: $('sp-on').checked, updated_at: new Date().toISOString()
+      }).eq('id', 1).then(function (r) { if (r && r.error) toast(r.error.message); else { toast('Saved'); loadSpots(); } }, function () { toast('Could not save'); });
     });
-    var nb = $('tr-new');
-    if (nb) nb.addEventListener('click', function () { openForm(null); });
+    var nb = $('tr-new'); if (nb) nb.addEventListener('click', function () { openForm(null); });
     renderOps();
   }
 
@@ -449,7 +437,7 @@
   }
   /* A picker over media the tour already has, rather than a URL box.
      Asking an admin to paste a storage URL is asking for a typo that
-     silently breaks the reel. */
+     silently breaks the Spotlight clip. */
   function pick(label, name, options, val, hint) {
     var opts = [['', '— none —']].concat(options.map(function (u, i) {
       var short = String(u).split('/').pop();
@@ -464,7 +452,7 @@
     var host = $('tr-form');
     if (!host) return;
 
-    /* Media already on the tour, so the reel pickers offer real files
+    /* Media already on the tour, so the Spotlight pickers offer real files
        rather than a URL box to paste into. */
     var vids = arr(t && t.videos);
     var pics = arr(t && t.photos);
@@ -522,29 +510,28 @@
           '<div class="fld"><label class="fld-l">Photos and video</label>' +
             '<div id="tr-media"></div></div>' +
 
-          /* ── The reel ──────────────────────────────────────────────
-             Which tours appear in the moving band on /tours is an
-             editorial call, not "whatever happens to have a video
-             attached". So it is set here, per tour, with the clip and
-             the running order chosen explicitly. */
+          /* ── Spotlight clip ────────────────────────────────────────
+             When this tour runs in the Spotlight at the top of /tours
+             (paid, featured free from the Spotlight desk, or as an
+             automatic "Departing soon" slide) this is the clip, poster
+             and headline it uses. Empty falls back to the cover photo
+             and the tour title. */
           '<div class="card" style="margin:18px 0;padding:16px;background:rgba(45,212,191,.05);' +
             'border:1px solid rgba(45,212,191,.22);">' +
-            '<div class="card-t" style="font-size:14px;">The reel</div>' +
-            '<div class="card-s" style="margin-bottom:12px;">Tours shown as playing video above the ' +
-              'listings on cabana.africa/tours. Needs a video on the tour. The band only runs once ' +
-              'two tours are in it.</div>' +
-            check('Show this tour in the reel', 'showcase', !!(t && t.showcase),
-                  vids.length ? '' : 'upload a video first') +
-            '<div class="g3">' +
+            '<div class="card-t" style="font-size:14px;">Spotlight clip</div>' +
+            '<div class="card-s" style="margin-bottom:12px;">Used whenever this tour appears in the ' +
+              'Spotlight at the top of cabana.africa/tours. Wrap words in *stars* to set them in the ' +
+              'italic accent. Leave empty to use the cover photo and title.</div>' +
+            '<div class="g2">' +
               pick('Clip to play', 'showcase_video', vids, t && t.showcase_video,
-                   'defaults to the first video') +
+                   vids.length ? 'optional' : 'upload a video to choose one') +
               pick('Poster frame', 'video_poster', pics, t && t.video_poster,
                    'shown before it plays') +
-              field('Order', 'showcase_rank', (t && t.showcase_rank) || 0,
-                    { type: 'number', hint: 'higher runs first' }) +
             '</div>' +
-            field('Headline over the clip', 'showcase_headline', t && t.showcase_headline,
+            field('Headline', 'showcase_headline', t && t.showcase_headline,
                   { ph: 'Falls back to the tour title' }) +
+            '<input type="hidden" name="showcase" value="' + (t && t.showcase ? '1' : '') + '">' +
+            '<input type="hidden" name="showcase_rank" value="' + ((t && t.showcase_rank) || 0) + '">' +
           '</div>' +
           '<div class="g2">' +
             field('Included — one per line', 'includes_list', arr(t && t.includes_list).join('\n'),
@@ -623,8 +610,8 @@
       tags: arr(g('tags')),
       cancellation: g('cancellation') || null,
 
-      /* Reel. showcase_video null is meaningful: it tells the page to
-         fall back to the first video rather than to show nothing. */
+      /* Spotlight clip. Null falls back to the cover photo. The legacy
+         reel flag and rank ride along unchanged in hidden fields. */
       showcase: fd.get('showcase') === '1',
       showcase_video: g('showcase_video') || null,
       video_poster: g('video_poster') || null,
@@ -634,21 +621,6 @@
 
     if (adminMedia && adminMedia.busy()) { toast('Photos are still uploading.'); return; }
 
-    /* A tour in the reel with no clip is an empty black rectangle on
-       the busiest part of the page. Catch it here, where someone can
-       still do something about it, rather than at render time. */
-    if (row.showcase) {
-      var prevT = state.editing
-        ? (state.tours.filter(function (x) { return String(x.id) === String(state.editing); })[0] || {})
-        : {};
-      var haveClip = row.showcase_video ||
-                     arr(prevT.videos).length ||
-                     (adminMedia && adminMedia.value().videos.length);
-      if (!haveClip) {
-        toast('Add a video before putting this tour in the reel.');
-        return;
-      }
-    }
     if (adminMedia) {
       var m = adminMedia.value();
       var prev = state.editing

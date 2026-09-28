@@ -1553,6 +1553,11 @@
     close: function () { close(); },
     list: function () { return st.list.slice(); },
     forTour: function (id) { return st.byTour[id] || null; },
+    /* The featured world as a still panorama: the tours Spotlight pans
+       across it for its VR slide. Painted once, then cached. */
+    poster: function () {
+      try { var f = featured(); return f.illustrated ? worldPoster() : (f.poster_url || worldPoster()); } catch (e) { return ''; }
+    },
     reload: load
   };
 })(window);

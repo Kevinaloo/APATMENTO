@@ -4,8 +4,15 @@
    Operator-facing submission. Writes two rows, both owned by the
    signed-in user and both landing in review:
 
-     tour_operators  → status 'pending', verified false, kind 'partner'
-     tours           → status 'pending', owner_id = auth.uid()
+     tour_operators  → status 'pending', verified false, kind 'partner',
+                       persona 'guide' or 'operator'
+     tours           → status 'pending', owner_id = auth.uid(), with a
+                       schedule the departure board can count down to:
+                       daily, weekly (weekday codes) or fixed dates
+
+   Contact details on tour_operators are not readable from the browser
+   (column grants), so the operator's own row comes back through the
+   tour_operator_me() RPC and inserts only ask for public columns.
 
    RLS enforces every one of those on the server. Nothing here is a
    security control — an operator cannot self-publish or self-verify
@@ -16,6 +23,7 @@
   'use strict';
 
   var sb = null, user = null, operator = null, media = null;
+  var fixedDates = [];   // ISO dates for a fixed-schedule tour
 
   function $(id) { return document.getElementById(id); }
   function show(id) {
@@ -63,9 +71,17 @@
 
   /* If they've listed before, skip straight to the tour form. */
   function findOperator() {
-    sb.from('tour_operators').select('*').eq('owner_id', user.id).limit(1)
-      .then(function (r) {
-        operator = (r && r.data && r.data[0]) || null;
+    var ask = sb.rpc('tour_operator_me').then(function (r) {
+      if (r && r.error) throw r.error;
+      return (r && r.data) || null;
+    }).catch(function () {
+      // Older database without the RPC: public columns only.
+      return sb.from('tour_operators').select('id,name,status,persona')
+        .eq('owner_id', user.id).limit(1)
+        .then(function (r) { return (r && r.data && r.data[0]) || null; });
+    });
+    ask.then(function (op) {
+        operator = op || null;
         if (operator) {
           var h = document.querySelector('#p-tour .lt-p');
           if (h) {
@@ -130,12 +146,14 @@
       email: email.value.trim(),
       county: $('o-county').value.trim() || null,
       bio: $('o-bio').value.trim() || null,
+      persona: ($('o-persona') && $('o-persona').value === 'guide') ? 'guide' : 'operator',
       kind: 'partner',
       status: 'pending'
-    }).select().then(function (r) {
+    }).select('id,name,status,persona').then(function (r) {
       if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
       if (r && r.error) { say('Could not save: ' + r.error.message); alert('Could not save: ' + r.error.message); return; }
       operator = (r.data && r.data[0]) || null;
+      if (operator) operator.email = email.value.trim();
       say('Saved. Now the tour.');
       show('p-tour');
     }, function (err) {
@@ -163,6 +181,11 @@
     var priceBad = f.price.value === '' || Number(f.price.value) < 0 || isNaN(Number(f.price.value));
     markError(f.price, 'e-t-price', priceBad);
     if (priceBad) bad = true;
+
+    var sched = schedule();
+    markError(null, 'e-t-weekly', sched.type === 'weekly' && !sched.days.length);
+    markError($('t-next'), 'e-t-fixed', sched.type === 'fixed' && !sched.dates.length);
+    if ((sched.type === 'weekly' && !sched.days.length) || (sched.type === 'fixed' && !sched.dates.length)) bad = true;
 
     if (bad) { say('Some details are missing.'); return; }
 
@@ -215,8 +238,11 @@
       price_kes: Math.round(Number(f.price.value) || 0),
       group_min: Math.max(1, Number($('t-min').value) || 1),
       group_max: Math.max(1, Number($('t-max').value) || 12),
-      schedule_type: $('t-schedule').value,
-      next_departure: $('t-next').value || null,
+      schedule_type: sched.type,
+      next_departure: sched.type === 'fixed' ? sched.dates[0] : null,
+      departure_days: sched.type === 'weekly' ? sched.days
+                    : sched.type === 'fixed' ? sched.dates.slice(1) : [],
+      departure_time: sched.type === 'on_request' ? null : (sched.time || null),
       meeting_point: meetingPoint(),
       includes_list: lines($('t-inc').value),
       excludes_list: lines($('t-exc').value),
@@ -235,7 +261,8 @@
       var msg = $('lt-done-msg');
       if (msg && operator && operator.status !== 'approved') {
         msg.textContent = 'We\u2019ll review the tour and your operator details together, then be in ' +
-          'touch on ' + (operator.email || 'your email') + '. Once approved it appears on the tours page.';
+          'touch on ' + (operator.email || (user && user.email) || 'your email') +
+          '. Once approved it appears on the tours page, and your studio shows who booked.';
       }
       say('Sent for review.');
       show('p-done');
@@ -244,6 +271,67 @@
       say('Could not send.');
       alert('Could not send: ' + ((err && err.message) || 'unknown error'));
     });
+  }
+
+  /* ── schedule ────────────────────────────────────────────────────── */
+
+  function todayIso() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  /* What the form says about when the tour runs. A date typed into the
+     picker but never "added" still counts, so nobody loses their only date
+     by forgetting to press the button. */
+  function schedule() {
+    var type = ($('t-schedule') && $('t-schedule').value) || 'on_request';
+    var days = Array.prototype.map.call(
+      document.querySelectorAll('input[name="departure_days"]:checked'), function (i) { return i.value; });
+    var dates = fixedDates.slice();
+    var typed = $('t-next') && $('t-next').value;
+    if (typed && dates.indexOf(typed) === -1) dates.push(typed);
+    var from = todayIso();
+    dates = dates.filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= from; }).sort();
+    return { type: type, days: days, dates: dates, time: ($('t-time') && $('t-time').value) || '' };
+  }
+
+  function paintSchedule() {
+    var type = ($('t-schedule') && $('t-schedule').value) || 'on_request';
+    var wk = $('t-weekly'), fx = $('t-fixed');
+    if (wk) wk.hidden = type !== 'weekly';
+    if (fx) fx.hidden = type !== 'fixed';
+    var tm = $('t-time');
+    if (tm) tm.disabled = type === 'on_request';
+  }
+
+  function paintDates() {
+    var host = $('t-dates'); if (!host) return;
+    host.innerHTML = '';
+    fixedDates.sort().forEach(function (d) {
+      var chip = document.createElement('span');
+      chip.className = 'lt-date';
+      var when = new Date(d + 'T12:00:00');
+      chip.textContent = isNaN(when) ? d : when.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+      var x = document.createElement('button');
+      x.type = 'button'; x.setAttribute('aria-label', 'Remove ' + d); x.textContent = '\u00d7';
+      x.addEventListener('click', function () {
+        fixedDates = fixedDates.filter(function (y) { return y !== d; });
+        paintDates();
+      });
+      chip.appendChild(x);
+      host.appendChild(chip);
+    });
+  }
+
+  function addDate() {
+    var input = $('t-next'); if (!input || !input.value) return;
+    var d = input.value;
+    if (d < todayIso()) { say('That date has passed.'); markError(input, 'e-t-fixed', true); return; }
+    if (fixedDates.indexOf(d) === -1) fixedDates.push(d);
+    input.value = '';
+    markError(input, 'e-t-fixed', false);
+    paintDates();
+    say('Date added.');
   }
 
   /* ── wiring ──────────────────────────────────────────────────────── */
@@ -261,10 +349,27 @@
       show('p-op');
     });
 
+    var sel = $('t-schedule');
+    if (sel) sel.addEventListener('change', paintSchedule);
+    var addBtn = $('t-date-add');
+    if (addBtn) addBtn.addEventListener('click', addDate);
+    var nextIn = $('t-next');
+    if (nextIn) {
+      nextIn.min = todayIso();
+      nextIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addDate(); } });
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="departure_days"]'), function (i) {
+      i.addEventListener('change', function () { markError(null, 'e-t-weekly', false); });
+    });
+    paintSchedule();
+
     var again = $('lt-another');
     if (again) again.addEventListener('click', function () {
       var ft2 = $('f-tour');
       if (ft2) ft2.reset();
+      fixedDates = [];
+      paintDates();
+      paintSchedule();
       if (media) {
         media.clear();
         media.setFolder('draft-' + Date.now().toString(36));

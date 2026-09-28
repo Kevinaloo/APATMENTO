@@ -27,6 +27,10 @@ const REF_MAP = {
   'APT-':   { table: 'apartment_bookings', col: 'payment_reference' },
   'TOUR-':  { table: 'tour_bookings',      col: 'payment_reference' },
   'EVENT-': { table: 'event_tickets',      col: 'payment_reference' },
+  /* A guide or operator buying a slot in the tours Spotlight. Charged in
+     full (payment_mode 'full' on the row); a trigger on the ledger row
+     settles it, so no callback path needs to know what a Spotlight is. */
+  'SPOT-':  { table: 'tour_spotlights',    col: 'payment_reference' },
 };
 
 function resolveRef(reference) {
@@ -128,6 +132,11 @@ export default async function handler(req, res) {
     if (!bookingOwner || bookingOwner !== user.id) {
       return res.status(403).json({ error: 'not_your_booking' });
     }
+    /* A Spotlight is only payable while its checkout is open. One that was
+       cancelled, refused or already paid must never take money again. */
+    if (map.table === 'tour_spotlights' && !['pending_payment', 'draft'].includes(booking.status)) {
+      return res.status(409).json({ error: 'This Spotlight is no longer waiting for payment.' });
+    }
 
     // ── Authoritative running total, summed from the ledger ─────────
     let amountPaid = 0;
@@ -149,7 +158,9 @@ export default async function handler(req, res) {
       requested,
       grandTotal,
       amountPaid,
-      paymentMode: booking.payment_mode,
+      /* Tours take their online share (the deposit) in one payment, and a
+         Spotlight is bought outright: neither has a part-paid state. */
+      paymentMode: ['tour_bookings', 'tour_spotlights'].includes(map.table) ? 'full' : booking.payment_mode,
     });
 
     if (!verdict.ok) {

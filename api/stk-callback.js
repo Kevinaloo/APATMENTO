@@ -389,6 +389,12 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
   const booking = br.ok ? (await br.json())[0] : null;
   if (!booking) return { success: true, amountPaid, bookingMissing: true };
 
+  /* A Spotlight settles itself from the ledger row (a database trigger)
+     and tells its buyer; it has no stay columns, receipt or rewards. */
+  if (ledger.booking_table === 'tour_spotlights') {
+    return { success: true, amountPaid, spotlight: true };
+  }
+
   const total    = Number(booking.grand_total || 0);
   const deposit  = Math.round(total * 0.25);
   const wasFull  = Number(booking.amount_paid || 0) >= total;
@@ -404,14 +410,19 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
     {
       method: 'PATCH',
       headers: H({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
-      body: JSON.stringify({
+      /* Only apartment_bookings has the stay mirror columns. Sending them
+         to tour_bookings or event_tickets made PostgREST refuse the whole
+         PATCH, so a paid tour instalment never moved its booking. */
+      body: JSON.stringify(ledger.booking_table === 'apartment_bookings' ? {
         amount_paid:      amountPaid,
         deposit_required: deposit,
         status,
         balance_amount:   Math.max(0, total - amountPaid),
         balance_paid:     nowFull,
         ...(nowFull && !wasFull ? { fully_paid_at: new Date().toISOString() } : {}),
-      }),
+      } : ledger.booking_table === 'tour_bookings'
+        ? { amount_paid: amountPaid, status }
+        : { status }),
     });
 
   /* 3b. The host hears about it the moment the dates are theirs to keep:
@@ -464,7 +475,9 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
       headers: { 'Content-Type': 'application/json',
                  'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
       body: JSON.stringify({ action: 'award', booking_ref: ledger.booking_ref,
-                             guest_id: booking.guest_id, service_type: 'stays',
+                             guest_id: booking.guest_id,
+                             service_type: ledger.booking_table === 'tour_bookings' ? 'tours'
+                                         : ledger.booking_table === 'event_tickets' ? 'events' : 'stays',
                              gross_amount: total,
                              /* see the note on the other award call: the fee is
                                 fixed and stamped, so it travels with the award */
@@ -472,7 +485,7 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
                                             ? null : Number(booking.service_fee) }),
     }).catch(e => console.warn('[rewards] non-fatal:', e.message));
 
-    fetch(`${origin}/api/agents?action=attribute`, {
+    if (ledger.booking_table === 'apartment_bookings') fetch(`${origin}/api/agents?action=attribute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json',
                  'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },

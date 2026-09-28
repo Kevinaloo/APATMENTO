@@ -124,6 +124,29 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
 .lt-done-mark svg{width:30px;height:30px;}
 
 .lt-live{position:fixed;left:-9999px;}
+
+.lt-when{display:grid;gap:14px;}
+.lt-sched{padding:14px 16px;border-radius:14px;background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.2);}
+.lt-sched[hidden]{display:none;}
+.lt-days{display:flex;flex-wrap:wrap;gap:8px;}
+.lt-days label{position:relative;cursor:pointer;}
+.lt-days input{position:absolute;opacity:0;width:1px;height:1px;}
+.lt-days span{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:40px;padding:0 12px;
+  border-radius:99px;border:1px solid rgba(10,10,20,.16);background:#fff;font:600 13px/1 'Geist','Inter',sans-serif;
+  color:#0A0A14;transition:background .18s,border-color .18s,color .18s,transform .18s;}
+.lt-days input:checked+span{background:#0A0A14;border-color:#0A0A14;color:#fff;}
+.lt-days input:focus-visible+span{box-shadow:0 0 0 4px rgba(45,212,191,.28);}
+.lt-days label:active span{transform:scale(.96);}
+.lt-dates-add{display:flex;gap:10px;}
+.lt-dates-add .lt-i{flex:1;min-width:0;}
+.lt-dates-add .ct-btn{flex:none;white-space:nowrap;}
+.lt-dates{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.lt-dates:empty{display:none;}
+.lt-date{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 6px 0 12px;border-radius:99px;
+  background:#0A0A14;color:#fff;font:600 12.5px/1 'Geist','Inter',sans-serif;}
+.lt-date button{flex:none;width:24px;height:24px;padding:0;display:grid;place-items:center;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;
+  cursor:pointer;font-size:14px;line-height:1;}
+.lt-date button:hover{background:rgba(255,255,255,.26);}
 </style>
 
 <!-- CABANA-SEO-GRAPH -->
@@ -183,7 +206,15 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
 
     <form class="lt-f" id="f-op" novalidate>
       <div>
-        <label class="lt-l" for="o-name">Operating name</label>
+        <label class="lt-l" for="o-persona">Who travellers will be booking</label>
+        <select class="lt-s" id="o-persona" name="persona">
+          <option value="guide">Me, a guide. I take people out myself</option>
+          <option value="operator" selected>A tour company with its own guides</option>
+        </select>
+        <p class="lt-hint">Guides get their own card in the Cabana guides directory, with their name and face up front.</p>
+      </div>
+      <div>
+        <label class="lt-l" for="o-name">Operating name <span>or your own name, if you guide</span></label>
         <input class="lt-i" id="o-name" name="name" required placeholder="Narok Safari Co"/>
         <p class="lt-err" id="e-o-name">Tell us what your operation is called.</p>
       </div>
@@ -301,18 +332,47 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
         </div>
       </div>
 
-      <div class="lt-row">
-        <div>
-          <label class="lt-l" for="t-schedule">When it runs</label>
-          <select class="lt-s" id="t-schedule" name="schedule_type">
-            <option value="on_request">On request</option>
-            <option value="daily">Runs daily</option>
-            <option value="fixed">Fixed departure dates</option>
-          </select>
+      <div class="lt-when">
+        <div class="lt-row">
+          <div>
+            <label class="lt-l" for="t-schedule">When it runs</label>
+            <select class="lt-s" id="t-schedule" name="schedule_type">
+              <option value="on_request">On request</option>
+              <option value="daily">Every day</option>
+              <option value="weekly">Set days every week</option>
+              <option value="fixed">Fixed departure dates</option>
+            </select>
+          </div>
+          <div>
+            <label class="lt-l" for="t-time">Leaves at <span>optional</span></label>
+            <input class="lt-i" id="t-time" name="departure_time" type="time" step="300"/>
+            <p class="lt-hint">Scheduled tours get a live countdown on the tours page.</p>
+          </div>
         </div>
-        <div>
-          <label class="lt-l" for="t-next">Next departure <span>optional</span></label>
-          <input class="lt-i" id="t-next" name="next_departure" type="date"/>
+        <!-- Weekly: which weekdays. The departure board expands these into
+             real dates, so "Saturdays" becomes a countdown to this Saturday. -->
+        <div class="lt-sched" id="t-weekly" hidden>
+          <span class="lt-l" id="t-weekly-l">Which days</span>
+          <div class="lt-days" role="group" aria-labelledby="t-weekly-l">
+            <label><input type="checkbox" name="departure_days" value="mon"/><span>Mon</span></label>
+            <label><input type="checkbox" name="departure_days" value="tue"/><span>Tue</span></label>
+            <label><input type="checkbox" name="departure_days" value="wed"/><span>Wed</span></label>
+            <label><input type="checkbox" name="departure_days" value="thu"/><span>Thu</span></label>
+            <label><input type="checkbox" name="departure_days" value="fri"/><span>Fri</span></label>
+            <label><input type="checkbox" name="departure_days" value="sat"/><span>Sat</span></label>
+            <label><input type="checkbox" name="departure_days" value="sun"/><span>Sun</span></label>
+          </div>
+          <p class="lt-err" id="e-t-weekly">Pick at least one day it runs.</p>
+        </div>
+        <!-- Fixed: the next departure plus any further dates. -->
+        <div class="lt-sched" id="t-fixed" hidden>
+          <label class="lt-l" for="t-next">Departure dates</label>
+          <div class="lt-dates-add">
+            <input class="lt-i" id="t-next" name="next_departure" type="date"/>
+            <button class="ct-btn ct-btn-ghost" type="button" id="t-date-add">Add date</button>
+          </div>
+          <div class="lt-dates" id="t-dates" aria-live="polite"></div>
+          <p class="lt-err" id="e-t-fixed">Add at least one departure date from today on.</p>
         </div>
       </div>
 
@@ -372,6 +432,7 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
         We'll look it over and be in touch. Once it's approved it appears on the tours page.</p>
       <div class="lt-acts" style="justify-content:center;">
         <button class="ct-btn ct-btn-primary" type="button" id="lt-another">List another tour</button>
+        <a class="ct-btn ct-btn-ghost" href="/tours-studio">Open your studio</a>
         <a class="ct-btn ct-btn-ghost" href="/tours">Back to tours</a>
       </div>
     </div>

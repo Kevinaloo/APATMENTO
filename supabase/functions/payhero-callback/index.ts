@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const url = Deno.env.get('SUPABASE_URL') || '';
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const callbackToken = Deno.env.get('PAYHERO_CALLBACK_TOKEN') || '';
-const allowedTables = new Set(['apartment_bookings', 'tour_bookings', 'event_tickets']);
+const allowedTables = new Set(['apartment_bookings', 'tour_bookings', 'event_tickets', 'tour_spotlights']);
 
 const sb = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
   const reference = String(
     payload.external_reference || payload.response?.external_reference || ''
   ).trim();
-  if (!/^(APT|TOUR|EVENT)-[A-Za-z0-9_-]+-P\d+$/.test(reference)) {
+  if (!/^(APT|TOUR|EVENT|SPOT)-[A-Za-z0-9_-]+-P\d+$/.test(reference)) {
     console.warn('[payhero-callback] ignored unsupported reference');
     return json(200, { received: true, ignored: true });
   }
@@ -141,6 +141,14 @@ Deno.serve(async (req) => {
     return json(500, { error: 'invalid_booking_table' });
   }
 
+  /* A Spotlight settles itself: the trigger on booking_payments moved it
+     into review (and told its buyer) the moment the row above turned
+     paid. It has no booking-shaped status to write. */
+  if (table === 'tour_spotlights') {
+    console.log('[payhero-callback] spotlight paid', reference);
+    return json(200, { received: true, status: 'in_review', spotlight: true });
+  }
+
   const { data: paidRows, error: paidError } = await sb
     .from('booking_payments')
     .select('amount')
@@ -166,6 +174,7 @@ Deno.serve(async (req) => {
     : 'part_paid';
 
   const patch: Record<string, unknown> = { status: bookingStatus };
+  if (table === 'tour_bookings') patch.amount_paid = amountPaid;
   if (table === 'apartment_bookings') {
     Object.assign(patch, {
       amount_paid: amountPaid,

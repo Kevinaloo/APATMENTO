@@ -791,7 +791,7 @@
       { id: 'listings', label: 'Listings', icon: 'building', keys: 'g l', tone: 'warn', badge: function () { return c('listings') + c('tour3d') + c('conflicts'); } },
       { id: 'food', label: 'Food orders', icon: 'utensils', tone: 'info', badge: function () { return n(CX.pulse.food_live); } },
       { id: 'flights', label: 'Flight desk', icon: 'plane', tone: 'warn', desk: 's-flights', badge: function () { return c('flights'); } },
-      { id: 'tours', label: 'Tours', icon: 'map', tone: 'warn', desk: 's-tours', badge: function () { return c('tours') + c('operators'); } },
+      { id: 'tours', label: 'Tours', icon: 'map', tone: 'warn', desk: 's-tours', badge: function () { return c('tours') + c('operators') + c('spotlights'); } },
       { id: 'immersive', label: 'Immersive', icon: 'vr', tone: 'info', badge: function () { return c('immersive_requests'); } },
       { id: 'move', label: 'Cabana Move', icon: 'car', tone: 'warn', desk: 's-transport', badge: function () { return c('rides'); } },
       { id: 'offers', label: 'Offers', icon: 'tag', desk: 's-offers' },

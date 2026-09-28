@@ -58,6 +58,7 @@
       '.cmu-t{font-family:Geist,Inter,sans-serif;font-size:14px;font-weight:600;color:#0A0A14;margin-bottom:4px;}' +
       '.cmu-s{font-size:12.5px;color:#8E90AD;line-height:1.5;}' +
       '.cmu-btns{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;}' +
+      '.cmu-b[hidden]{display:none!important}' +
       '.cmu-b{display:inline-flex;align-items:center;gap:7px;font-family:Geist,Inter,sans-serif;' +
         'font-size:13px;font-weight:600;padding:9px 16px;border-radius:99px;cursor:pointer;' +
         'border:1px solid rgba(10,10,20,.14);background:#fff;color:#4A4C66;transition:border-color .2s,color .2s;}' +
@@ -171,7 +172,16 @@
     var sb = opts.client;
     var folder = opts.folder || 'draft';
     var bucket = opts.bucket || DEFAULT_BUCKET;
-    var maxVideos = opts.maxVideos || MAX_VIDEOS;
+    // No photo limit unless a caller sets one (the Spotlight takes exactly
+    // one). 0 is a real limit ("no clips here"), so only a missing option
+    // falls back to the default.
+    var maxPhotos = opts.maxPhotos != null ? Math.max(0, opts.maxPhotos) : Infinity;
+    var maxVideos = opts.maxVideos != null ? Math.max(0, opts.maxVideos) : MAX_VIDEOS;
+    var limits = [
+      maxPhotos === Infinity ? 'as many photos as you like' : maxPhotos ? (maxPhotos === 1 ? 'one photo' : 'up to ' + maxPhotos + ' photos') : '',
+      maxVideos ? (maxVideos === 1 ? 'one short clip' : 'up to ' + maxVideos + ' short clips') : ''
+    ].filter(Boolean).join(maxPhotos === Infinity ? ', and ' : ' and ');
+    var title = opts.title || (maxPhotos && maxVideos ? 'Add photos and video' : maxVideos ? 'Add a clip' : maxPhotos === 1 ? 'Add a photo' : 'Add photos');
     var onChange = opts.onChange || function () {};
 
     var items = [];   // {id,kind,url,preview,pct,error,busy}
@@ -184,17 +194,16 @@
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v13"/></svg>' +
         '</div>' +
-        '<div class="cmu-t">Add photos and video</div>' +
-        '<div class="cmu-s">Straight from your phone. As many photos as you like' +
-          (maxVideos ? ', and up to ' + maxVideos + ' short clips' : '') + '.</div>' +
+        '<div class="cmu-t">' + title + '</div>' +
+        '<div class="cmu-s">Straight from your phone: ' + limits + '.</div>' +
         '<div class="cmu-btns">' +
-          '<button class="cmu-b" type="button" data-pick="camera">' +
+          (maxPhotos ? '<button class="cmu-b" type="button" data-pick="camera">' : '<button class="cmu-b" type="button" data-pick="camera" hidden>') +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
             'Take a photo</button>' +
-          '<button class="cmu-b" type="button" data-pick="photo">' +
+          (maxPhotos ? '<button class="cmu-b" type="button" data-pick="photo">' : '<button class="cmu-b" type="button" data-pick="photo" hidden>') +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>' +
-            'Choose photos</button>' +
-          '<button class="cmu-b" type="button" data-pick="video">' +
+            (maxPhotos === 1 ? 'Choose a photo' : 'Choose photos') + '</button>' +
+          (maxVideos ? '<button class="cmu-b" type="button" data-pick="video">' : '<button class="cmu-b" type="button" data-pick="video" hidden>') +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>' +
             'Add a clip</button>' +
         '</div>' +
@@ -285,7 +294,8 @@
       var c = counts();
 
       if (!isVid && !isImg) { reject(file.name, 'Not a photo or video'); return; }
-      if (isVid && c.v >= maxVideos) { reject(file.name, 'Clip limit reached'); return; }
+      if (isVid && c.v >= maxVideos) { reject(file.name, maxVideos ? 'Clip limit reached' : 'Only photos here'); return; }
+      if (!isVid && c.p >= maxPhotos) { reject(file.name, maxPhotos === 1 ? 'One photo only here' : 'Photo limit reached'); return; }
       if (isVid && file.size > MAX_VIDEO_MB * 1048576) {
         reject(file.name, 'Clip is ' + mb(file.size) + '. Max ' + MAX_VIDEO_MB + ' MB.');
         return;

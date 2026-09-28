@@ -258,6 +258,7 @@ const PP_REF_MAP = {
   'APT-':   { table: 'apartment_bookings', col: 'payment_reference' },
   'TOUR-':  { table: 'tour_bookings',      col: 'payment_reference' },
   'EVENT-': { table: 'event_tickets',      col: 'payment_reference' },
+  'SPOT-':  { table: 'tour_spotlights',    col: 'payment_reference' },
 };
 
 function ppResolveRef(ref) {
@@ -305,6 +306,8 @@ async function handlePaypalCreateOrder(req, res) {
   const owner = booking.guest_id || booking.user_id;
   if (!owner || owner !== user.id)
     return res.status(403).json({ error: 'not_your_booking' });
+  if (map.table === 'tour_spotlights' && !['pending_payment', 'draft'].includes(booking.status))
+    return res.status(409).json({ error: 'This Spotlight is no longer waiting for payment.' });
 
   /* Sum paid instalments */
   const lr = await fetch(
@@ -318,7 +321,9 @@ async function handlePaypalCreateOrder(req, res) {
     requested,
     grandTotal:  Number(booking.grand_total || 0),
     amountPaid,
-    paymentMode: booking.payment_mode,
+    /* Tours take their online share (the deposit) in one payment, and a
+         Spotlight is bought outright: neither has a part-paid state. */
+      paymentMode: ['tour_bookings', 'tour_spotlights'].includes(map.table) ? 'full' : booking.payment_mode,
   });
   if (!verdict.ok) {
     return res.status(422).json({

@@ -294,11 +294,33 @@ export async function settleView(supaUrl, H, ledger, extra = {}) {
     { headers: H() });
   const booking = br.ok ? (await br.json())[0] : null;
 
+  /* A Spotlight is not a booking. The trigger on its ledger row already
+     settled it (into review) the moment the row turned paid, so there is
+     nothing to write back and no stay receipt to send: report its own
+     state and stop. */
+  if (table === 'tour_spotlights') {
+    const total = Number(booking?.grand_total || 0);
+    return {
+      status:           booking?.status || 'pending_payment',
+      spotlight:        true,
+      amount_paid:      amountPaid,
+      grand_total:      total,
+      outstanding:      Math.max(0, Math.round(total - amountPaid)),
+      deposit_required: total,
+      percent_paid:     total > 0 ? Math.min(100, Math.round((amountPaid / total) * 100)) : 0,
+      confirmed:        total > 0 && amountPaid >= total,
+      fully_paid:       total > 0 && amountPaid >= total,
+      ...extra,
+    };
+  }
+
   const s         = settlementOf({ ...booking, amount_paid: amountPaid });
   const newStatus = deriveStatus(amountPaid, s.total);
 
-  /* Only apartment_bookings carries the ledger mirror columns. */
+  /* apartment_bookings carries the full ledger mirror; tour_bookings
+     carries amount_paid alone (the operator's bookings view reads it). */
   const patch = { status: newStatus };
+  if (table === 'tour_bookings') patch.amount_paid = amountPaid;
   if (table === 'apartment_bookings') {
     Object.assign(patch, {
       amount_paid:      amountPaid,

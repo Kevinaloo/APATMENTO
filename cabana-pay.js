@@ -719,7 +719,10 @@
 
         const name  = trip.guestName ? trip.guestName + ', ' : '';
         const where = trip.property || 'Your stay';
-        const when  = trip.checkin && trip.checkout
+        /* Tours and Spotlights pass their own line (a departure, a run of
+           days) rather than a check-in and check-out. */
+        const when  = trip.whenText ? String(trip.whenText)
+          : trip.checkin && trip.checkout
           ? fmtDay(trip.checkin) + ' \u2192 ' + fmtDay(trip.checkout)
           : '';
         const nn = trip.nights ? trip.nights + (trip.nights > 1 ? ' nights' : ' night') : '';
@@ -728,7 +731,16 @@
            guest who actually holds their nights is told they are in. */
         let headline, note, tone;
 
-        if (lost) {
+        const custom = opts && opts.success;
+        if (custom && custom.title && !lost) {
+          /* A product that is not a stay (a tour, a Spotlight) says what
+             it actually bought. It is only ever reached once the server
+             reported the money settled, so the words can be confident. */
+          headline = String(custom.title);
+          note = String(custom.note || '');
+          tone = 'settled';
+
+        } else if (lost) {
           headline = name + 'these dates just went.';
           note = cred > 0
             ? 'Someone completed their deposit first \u00b7 your ' + kes(cred)
@@ -843,9 +855,12 @@
            calendar did not. Without it here the poller ran to timeout and
            showed the facepalm video for a payment that actually succeeded
            and has already been converted to credit. */
+        /* A Spotlight answers with its own state: paid means it went
+           straight into review ('in_review'), never a booking status. */
         if (d.status === 'paid' || d.status === 'paid_pending_checkin'
             || d.status === 'confirmed_balance_due' || d.status === 'part_paid'
-            || d.status === 'dates_unavailable') {
+            || d.status === 'dates_unavailable'
+            || (d.spotlight === true && d.fully_paid === true)) {
           clearInterval(_pollTimer);
           opts.result = d;
           _cut(() => _setState('success', opts));

@@ -1613,7 +1613,7 @@ export default async function handler(req, res) {
         if (caller.kind !== 'user') return res.status(401).json({ error: 'sign_in_required' });
         const convId = String(body.conversationId || '');
         if (!uuidish(convId)) return res.status(400).json({ error: 'bad_conversation' });
-        const conv = await one('chat_conversations', `id=eq.${convId}&select=id,host_id,guest_id,listing_id,listing_title`).catch(() => null);
+        const conv = await one('chat_conversations', `id=eq.${convId}&select=id,host_id,guest_id,listing_id,listing_title,tour_id`).catch(() => null);
         if (!conv || ![conv.host_id, conv.guest_id].includes(caller.userId)) return res.status(404).json({ error: 'conversation_not_found' });
 
         const REASONS = {
@@ -1639,7 +1639,7 @@ export default async function handler(req, res) {
             user_id: caller.userId, display_name: caller.name || null, email: caller.email || null,
             subject: clamp(`${reason.label} · ${conv.listing_title || 'chat'}`, 160),
             origin_page: 'chat', category: reason.category, status: 'queued',
-            meta: { chat_conversation_id: convId, listing_id: conv.listing_id, reporter_role: role, reason: reasonKey },
+            meta: { chat_conversation_id: convId, listing_id: conv.listing_id, tour_id: conv.tour_id || null, reporter_role: role, reason: reasonKey },
           });
         }
         const recent = await select('chat_messages',
@@ -2208,7 +2208,7 @@ async function agentOps(req, res, body, op) {
         const convId = String(body.convId || '');
         const text = clamp(body.text, 2000).trim();
         if (!uuidish(convId) || !text) return res.status(400).json({ error: 'bad_request' });
-        const conv = await one('chat_conversations', `id=eq.${convId}&select=id,guest_id,host_id`).catch(() => null);
+        const conv = await one('chat_conversations', `id=eq.${convId}&select=id,guest_id,host_id,tour_id`).catch(() => null);
         if (!conv) return res.status(404).json({ error: 'conv_not_found' });
         const id = await rpc('cabana_chat_service_post', {
           p_conversation: convId, p_sender: conv.guest_id, p_kind: 'system', p_content: text,
@@ -2216,7 +2216,7 @@ async function agentOps(req, res, body, op) {
         });
         await Promise.allSettled([conv.guest_id, conv.host_id].map(uid => notify({
           user_id: uid, title: 'Cabana Support in your chat', body: clamp(text, 140),
-          url: `/dashboard.html?inbox=1&c=${convId}`, kind: 'message',
+          url: conv.tour_id ? `/tours?inbox=1&c=${convId}` : `/dashboard.html?inbox=1&c=${convId}`, kind: 'message',
         })));
         return res.status(200).json({ ok: true, id });
       }
