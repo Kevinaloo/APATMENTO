@@ -698,9 +698,9 @@
     return '<section class="lv-row"><div class="lv-row-h"><div><h2 class="lv-row-t">Coming to Cabana Live ' + UI.chip('lv-chip-prem', '1 month free', 'crown') + '</h2>' +
       '<p class="lv-row-s">Live concerts, films and series are being added now. Your free month opens all of it.</p></div></div>' +
       '<div class="lv-soon-grid">' +
-        '<a class="lv-soon" href="' + L.href.tab('live') + '" style="--sa:#FF3355;--sb:#FF8A3D"><span class="lv-soon-ic">' + ic('live') + '</span>' + UI.chip('lv-chip-live', 'Live') + '<h3>Live shows</h3><p>Concerts, comedy and big nights, streamed as they happen. Replays when you miss them.</p></a>' +
-        '<a class="lv-soon" href="' + L.href.tab('movies') + '" style="--sa:#FFB23F;--sb:#FF5E3A"><span class="lv-soon-ic">' + ic('film') + '</span>' + UI.chip('lv-chip-orig', 'Movies') + '<h3>Movies</h3><p>African cinema and the films everyone is talking about, in one place.</p></a>' +
-        '<a class="lv-soon" href="' + L.href.tab('shows') + '" style="--sa:#33E1FF;--sb:#8B5CFF"><span class="lv-soon-ic">' + ic('tv') + '</span>' + UI.chip('lv-chip-orig', 'Series') + '<h3>Shows</h3><p>Series worth a whole weekend, with new episodes as they land.</p></a>' +
+        '<a class="lv-soon" href="' + L.href.tab('live') + '" style="--sa:#FF3355;--sb:#FF8A3D"><img class="lv-soon-photo" src="/assets/live/collection-cards/live-shows.jpg" alt="" loading="lazy" decoding="async" width="1200" height="675"><span class="lv-soon-ic">' + ic('live') + '</span>' + UI.chip('lv-chip-live', 'Live') + '<h3>Live shows</h3><p>Concerts, comedy and big nights, streamed as they happen. Replays when you miss them.</p></a>' +
+        '<a class="lv-soon" href="' + L.href.tab('movies') + '" style="--sa:#FFB23F;--sb:#FF5E3A"><img class="lv-soon-photo" src="/assets/live/collection-cards/movies.jpg" alt="" loading="lazy" decoding="async" width="1200" height="675"><span class="lv-soon-ic">' + ic('film') + '</span>' + UI.chip('lv-chip-orig', 'Movies') + '<h3>Movies</h3><p>African cinema and the films everyone is talking about, in one place.</p></a>' +
+        '<a class="lv-soon" href="' + L.href.tab('shows') + '" style="--sa:#33E1FF;--sb:#8B5CFF"><img class="lv-soon-photo" src="/assets/live/collection-cards/shows.jpg" alt="" loading="lazy" decoding="async" width="1200" height="675"><span class="lv-soon-ic">' + ic('tv') + '</span>' + UI.chip('lv-chip-orig', 'Series') + '<h3>Shows</h3><p>Series worth a whole weekend, with new episodes as they land.</p></a>' +
       '</div></section>';
   };
 

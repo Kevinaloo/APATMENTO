@@ -496,12 +496,15 @@ html.lv-lock, html.lv-lock body { overflow: hidden !important; }
 .lv-soon { position: relative; min-height: 230px; padding: 22px; border-radius: var(--r-lg); overflow: hidden; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; text-decoration: none; color: #fff;
   background: radial-gradient(120% 100% at 100% 0%, var(--sa, #FF3355) 0%, transparent 55%), radial-gradient(90% 80% at 0% 100%, var(--sb, #8B5CFF) 0%, transparent 60%), var(--lv-surface); box-shadow: inset 0 0 0 1px var(--lv-line); transition: transform .4s var(--ease), box-shadow .4s; }
 .lv-soon:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 1px var(--lv-line-2), var(--shadow-pop); }
-.lv-soon::before { content: ''; position: absolute; inset: 0; z-index: -1; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 14px); }
+.lv-soon-photo, .lv-evcat-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.lv-soon-photo { object-position: center 42%; }
+.lv-soon::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgba(8, 7, 12, .06) 0%, rgba(8, 7, 12, .15) 30%, rgba(8, 7, 12, .76) 58%, rgba(8, 7, 12, .95) 100%), linear-gradient(90deg, rgba(8, 7, 12, .24), transparent 75%); }
+.lv-soon > .lv-chip { align-self: flex-start; }
 .lv-soon-ic { position: absolute; top: 20px; right: 20px; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: rgba(0, 0, 0, .3); backdrop-filter: blur(8px); }
 .lv-soon-ic svg { width: 26px; height: 26px; }
 .lv-soon h3 { margin: 10px 0 6px; font-family: var(--f-cine); font-weight: 900; font-stretch: 74%; font-size: 34px; line-height: .92; text-transform: uppercase; }
-.lv-soon p { margin: 0; font-size: 13.5px; color: var(--lv-ink-2); max-width: 300px; }
-@media (max-width: 900px) { .lv-soon-grid { grid-template-columns: 1fr; } .lv-soon { min-height: 170px; } }
+.lv-soon p { margin: 0; font-size: 13.5px; color: #e7e3eb; max-width: 300px; text-shadow: 0 1px 8px rgba(0, 0, 0, .35); }
+@media (max-width: 900px) { .lv-soon-grid { grid-template-columns: 1fr; } .lv-soon { min-height: 230px; } }
 
 /* ── the events zone on home ─────────────────────────────────────── */
 .lv-evx { position: relative; margin: 0 0 clamp(30px, 4vw, 54px); padding: clamp(22px, 2.6vw, 34px) 0 clamp(8px, 1vw, 14px); isolation: isolate; }
@@ -514,9 +517,10 @@ html.lv-lock, html.lv-lock body { overflow: hidden !important; }
 .lv-evcat { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; min-height: 104px; padding: 14px; border-radius: 16px; overflow: hidden; isolation: isolate;
   text-decoration: none; color: #fff; background: linear-gradient(135deg, var(--ca), var(--cb)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
   transition: transform .25s var(--ease), box-shadow .25s var(--ease), filter .25s; }
-.lv-evcat::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, .38)); }
-.lv-evcat::after { content: ''; position: absolute; inset: 0; z-index: -1; background: repeating-linear-gradient(120deg, rgba(255, 255, 255, .05) 0 2px, transparent 2px 12px); }
-.lv-evcat:hover, .lv-evcat:focus-visible { transform: translateY(-3px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), 0 20px 40px -18px var(--ca); filter: saturate(1.15); }
+.lv-evcat-photo { object-position: 62% center; }
+.lv-evcat::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgba(8, 7, 12, .02) 20%, rgba(8, 7, 12, .18) 45%, rgba(8, 7, 12, .88) 100%); }
+.lv-evcat::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border: 1px solid rgba(255, 255, 255, .12); border-radius: inherit; }
+.lv-evcat:hover, .lv-evcat:focus-visible { transform: translateY(-3px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), 0 20px 40px -18px var(--ca); }
 .lv-evcat-ic { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(0, 0, 0, .22); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .lv-evcat-ic svg { width: 21px; height: 21px; }
 .lv-evcat b { font: 900 19px/1 var(--f-cine); font-stretch: 80%; letter-spacing: -.01em; text-transform: uppercase; }

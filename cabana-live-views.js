@@ -344,6 +344,7 @@
         '<a class="lv-row-all" href="' + L.href.tab('events') + '">All events' + ic('chevR', 2.4) + '</a></div>' +
       '<div class="lv-evcats" role="list" style="--cols:' + (cats.length <= 6 ? cats.length : Math.ceil(cats.length / 2)) + '">' + cats.map(function (c) {
         return '<a class="lv-evcat" role="listitem" href="' + L.href.tab('events') + '?cat=' + c.key + '" style="--ca:' + c.a + ';--cb:' + c.b + '">' +
+          '<img class="lv-evcat-photo" src="/assets/live/category-cards/' + c.photo + '.jpg" alt="" loading="lazy" decoding="async" width="960" height="416">' +
           '<span class="lv-evcat-ic">' + ic(c.icon, 2) + '</span><b>' + esc(c.label) + '</b>' +
           (counts[c.key] ? '<small>' + counts[c.key] + ' event' + (counts[c.key] === 1 ? '' : 's') + '</small>' : '') + '</a>';
       }).join('') + '</div>';
@@ -382,16 +383,16 @@
 
   var CATS = [
     { key: 'all', label: 'Everything' },
-    { key: 'music', label: 'Music', icon: 'music', a: '#FF2E93', b: '#8B5CFF' },
-    { key: 'festival', label: 'Festivals', icon: 'spark', a: '#FFB23F', b: '#FF5E3A' },
-    { key: 'nightlife', label: 'Nightlife', icon: 'party', a: '#7A3BFF', b: '#33E1FF' },
-    { key: 'comedy', label: 'Comedy', icon: 'mic', a: '#FFD23F', b: '#FF7A3D' },
-    { key: 'sports', label: 'Sports', icon: 'ball', a: '#22E08A', b: '#0FA3B1' },
-    { key: 'art', label: 'Arts', icon: 'palette', a: '#FF5E7E', b: '#B23BFF' },
-    { key: 'kids', label: 'Kids', icon: 'balloon', a: '#33E1FF', b: '#3D7BFF' },
-    { key: 'corporate', label: 'Business', icon: 'briefcase', a: '#9AA7FF', b: '#4B5BD6' },
-    { key: 'community', label: 'Community', icon: 'people', a: '#FF9F43', b: '#EE5A24' },
-    { key: 'food', label: 'Food & drink', icon: 'food', a: '#FF6B6B', b: '#FFB23F' }
+    { key: 'music', label: 'Music', icon: 'music', photo: 'music', a: '#FF2E93', b: '#8B5CFF' },
+    { key: 'festival', label: 'Festivals', icon: 'spark', photo: 'festivals', a: '#FFB23F', b: '#FF5E3A' },
+    { key: 'nightlife', label: 'Nightlife', icon: 'party', photo: 'nightlife', a: '#7A3BFF', b: '#33E1FF' },
+    { key: 'comedy', label: 'Comedy', icon: 'mic', photo: 'comedy', a: '#FFD23F', b: '#FF7A3D' },
+    { key: 'sports', label: 'Sports', icon: 'ball', photo: 'sports', a: '#22E08A', b: '#0FA3B1' },
+    { key: 'art', label: 'Arts', icon: 'palette', photo: 'arts', a: '#FF5E7E', b: '#B23BFF' },
+    { key: 'kids', label: 'Kids', icon: 'balloon', photo: 'kids', a: '#33E1FF', b: '#3D7BFF' },
+    { key: 'corporate', label: 'Business', icon: 'briefcase', photo: 'business', a: '#9AA7FF', b: '#4B5BD6' },
+    { key: 'community', label: 'Community', icon: 'people', photo: 'community', a: '#FF9F43', b: '#EE5A24' },
+    { key: 'food', label: 'Food & drink', icon: 'food', photo: 'food-and-drink', a: '#FF6B6B', b: '#FFB23F' }
   ];
   var WHEN = [['all', 'Any time'], ['tonight', 'Tonight'], ['weekend', 'This weekend'], ['week', 'This week'], ['month', 'This month']];
   var AUDS = [['all', 'Anyone'], ['night', 'After dark'], ['family', 'Family'], ['work', 'Business'], ['culture', 'Culture']];
