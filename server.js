@@ -108,6 +108,12 @@ app.get(/^\/events\/.+$/, (req, res) => {
   res.sendFile(join(__dirname, 'events.html'));
 });
 
+/* Karaoke room short links (a QR code on the big screen, a text
+   message). Mirrors the vercel.json redirect /k/:code. */
+app.get(/^\/k\/([A-Za-z0-9]{6})$/, (req, res) => {
+  res.redirect(302, `/events/karaoke/room/${req.params[0].toUpperCase()}`);
+});
+
 /* Public profile links. Mirrors the vercel.json rewrite /u/:handle. */
 app.get(/^\/u\/([A-Za-z0-9._]{3,24})$/, (req, res) => {
   res.sendFile(join(__dirname, 'person.html'));

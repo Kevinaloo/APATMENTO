@@ -75,6 +75,7 @@
 .lv[data-tab="movies"] { --lv-a1: #FFB23F; --lv-a2: #FF5E3A; }
 .lv[data-tab="shows"]  { --lv-a1: #33E1FF; --lv-a2: #8B5CFF; }
 .lv[data-tab="music"]  { --lv-a1: #C8FF3D; --lv-a2: #2EF2D0; }
+.lv[data-tab="karaoke"] { --lv-a1: #FF4FD8; --lv-a2: #7B61FF; }
 .lv { transition: --lv-a1 .9s var(--ease), --lv-a2 .9s var(--ease); }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -148,6 +149,8 @@ html.lv-lock, html.lv-lock body { overflow: hidden !important; }
 .lv-tab:hover { color: var(--lv-ink); background: rgba(255, 255, 255, .05); }
 .lv-tab[aria-current="page"] { color: #fff; }
 .lv-tab .lv-tab-live { width: 6px; height: 6px; border-radius: 50%; background: var(--lv-live); animation: lv-live-dot 1.8s infinite; }
+.lv-tab .lv-tab-new { width: 6px; height: 6px; margin-left: -1px; border-radius: 50%; background: linear-gradient(135deg, #FF4FD8, #FFD978); box-shadow: 0 0 10px #FF4FD8; }
+.lv-tab[aria-current="page"] .lv-tab-new { display: none; }
 .lv-tabs-ink { position: absolute; bottom: 1px; height: 2px; border-radius: 2px; background: var(--lv-accent); box-shadow: 0 0 16px var(--lv-a1); transition: left .45s var(--ease), width .45s var(--ease), opacity .3s; pointer-events: none; }
 .lv-top-r { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: none; }
 .lv-ico { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 0; background: transparent; color: var(--lv-ink-2); cursor: pointer; text-decoration: none; transition: .2s var(--ease); position: relative; }
@@ -898,6 +901,111 @@ body.lv-docked .lv-bookbar { bottom: 84px; }
   .lv-react button { width: 42px; height: 42px; font-size: 20px; }
 }
 
+/* The light show (cabana-visuals.js) behind the room, locked to the
+   record's beat. It blends over the blurred cover rather than hiding
+   it, so a record's own colours still carry the room. */
+.lv-party-light { position: absolute; inset: 0; z-index: -3; mix-blend-mode: screen; opacity: .92; pointer-events: none; }
+.lv-party-light .cv-gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.lv-party { touch-action: manipulation; }
+.lv-party.is-lit .lv-party-ring { animation: none; will-change: opacity, transform; transition: none; }
+.lv-party.is-lit .lv-party-beams { opacity: .35; }
+.lv-party-lights { display: flex; min-width: 0; }
+.lv-party-sing { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 12px; border-radius: 999px; text-decoration: none; font-size: 13.5px; font-weight: 800; color: #0b0912;
+  background: linear-gradient(120deg, #FF4FD8, #7B61FF); box-shadow: 0 10px 28px -10px #FF4FD8, inset 0 0 0 1px rgba(255, 255, 255, .25); transition: transform .2s var(--ease), box-shadow .2s; }
+.lv-party-sing:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -10px #FF4FD8, inset 0 0 0 1px rgba(255, 255, 255, .35); }
+.lv-party-sing svg { width: 18px; height: 18px; }
+@media (max-width: 640px) { .lv-party-sing span { display: none; } .lv-party-sing { width: 40px; padding: 0; justify-content: center; } }
+
+/* The light controls: which scene, the tempo (tap along to set it and
+   the downbeat), and "sync to room" (the microphone hears the beat). */
+.cv-ctrl { display: inline-flex; align-items: center; gap: 4px; height: 40px; padding: 3px; border-radius: 999px; background: rgba(0, 0, 0, .35); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.cv-btn { position: relative; display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: #fff; cursor: pointer; white-space: nowrap; font: 800 12.5px/1 var(--f-body); letter-spacing: .01em; transition: background .2s var(--ease), transform .15s var(--ease); }
+.cv-btn:hover { background: rgba(255, 255, 255, .1); }
+.cv-btn:active { transform: scale(.95); }
+.cv-btn small { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--lv-ink-3); }
+.cv-btn [data-cv-bpm] { font-family: var(--f-mono); font-size: 13px; font-weight: 700; min-width: 2.2em; text-align: right; }
+.cv-dot { width: 12px; height: 12px; border-radius: 50%; background: conic-gradient(from 0deg, #FF4FD8, #FFD978, #2EF2D0, #7B61FF, #FF4FD8); box-shadow: 0 0 10px rgba(255, 79, 216, .6); }
+.cv-btn.is-tap { animation: cv-tap .35s var(--ease); }
+@keyframes cv-tap { 30% { background: rgba(255, 255, 255, .28); transform: scale(1.06); } }
+.cv-ear { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; position: relative; }
+.cv-ear::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: currentColor; }
+.cv-btn.is-on { background: rgba(200, 255, 61, .16); color: var(--lv-lime); }
+.cv-btn.is-on .cv-ear { animation: cv-ear 1.4s ease-in-out infinite; }
+@keyframes cv-ear { 50% { box-shadow: inset 0 0 0 2px currentColor, 0 0 0 5px rgba(200, 255, 61, .18); } }
+.cv-ctrl[data-src="tap"] [data-cv="tap"] small, .cv-ctrl[data-src="crowd"] [data-cv="tap"] small, .cv-ctrl[data-src="listen"] [data-cv="tap"] small { color: var(--lv-lime); }
+.cv-still .cv-gl { opacity: 0; }
+@media (max-width: 760px) {
+  .cv-btn small { display: none; }
+  .cv-btn { padding: 0 10px; }
+  .lv-party-top { gap: 8px; flex-wrap: wrap; }
+  .lv-party-live { order: 1; }
+}
+@media (max-width: 420px) { .cv-btn [data-cv-name] { display: none; } }
+
+/* ── Cabana Karaoke on the home page ─────────────────────────────── */
+.lv-kk { position: relative; margin: 38px var(--gutter) 0; padding: clamp(26px, 4vw, 54px); border-radius: var(--r-lg); overflow: hidden; isolation: isolate;
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(22px, 4vw, 56px); align-items: center;
+  background: radial-gradient(90% 130% at 0% 0%, rgba(255, 79, 216, .22), transparent 60%), radial-gradient(80% 120% at 100% 100%, rgba(123, 97, 255, .28), transparent 62%), #0d0a16;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09), 0 40px 90px -50px rgba(255, 79, 216, .55); }
+.lv-kk-aura { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.lv-kk-aura i { position: absolute; width: 46%; aspect-ratio: 1; border-radius: 50%; filter: blur(70px); opacity: .35; animation: lv-kk-orb 14s var(--ease-io) infinite alternate; }
+.lv-kk-aura i:nth-child(1) { left: -10%; top: -30%; background: #FF4FD8; }
+.lv-kk-aura i:nth-child(2) { right: -12%; bottom: -40%; background: #7B61FF; animation-duration: 18s; }
+.lv-kk-aura i:nth-child(3) { left: 40%; top: 30%; width: 26%; background: #FFD978; opacity: .12; animation-duration: 11s; }
+@keyframes lv-kk-orb { to { transform: translate(12%, 10%) scale(1.15); } }
+.lv-kk-k { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--lv-ink-2); }
+.lv-kk-new { padding: 4px 9px; border-radius: 6px; font-size: 10.5px; letter-spacing: .12em; color: #1a0b16; background: linear-gradient(120deg, #FFD978, #FF4FD8); box-shadow: 0 6px 18px -6px #FF4FD8; }
+.lv-kk-h { margin: 14px 0 12px; font-family: var(--f-cine); font-weight: 900; font-stretch: 72%; font-size: clamp(44px, 6.4vw, 96px); line-height: .86; letter-spacing: -.01em; text-transform: uppercase; }
+.lv-kk-h em { font-style: normal; background: linear-gradient(100deg, #FF4FD8 10%, #FFD978 55%, #7B61FF 90%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: lv-kk-shine 6s linear infinite; }
+@keyframes lv-kk-shine { to { background-position: -200% 0; } }
+.lv-kk-p { margin: 0 0 22px; max-width: 540px; color: var(--lv-ink-2); font-size: clamp(14.5px, 1.2vw, 16.5px); }
+.lv-kk-acts { display: flex; flex-wrap: wrap; gap: 10px; }
+.lv-kk .lv-btn-accent { background: linear-gradient(120deg, #FF4FD8, #7B61FF); color: #fff; }
+.lv-kk-live:empty { display: none; }
+.lv-kk-live { margin-top: 18px; }
+.lv-kk-rooms { display: inline-flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 999px; text-decoration: none; font-size: 13px; background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); transition: background .2s; }
+.lv-kk-rooms:hover { background: rgba(255, 255, 255, .11); }
+.lv-kk-rooms span { color: var(--lv-ink-3); font-weight: 600; }
+.lv-kk-rooms svg { width: 14px; height: 14px; color: var(--lv-ink-3); }
+.lv-kk-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--lv-live); animation: lv-live-dot 1.8s infinite; }
+/* the little screen: a lyric line filling word by word on the beat */
+.lv-kk-art { position: relative; display: block; text-decoration: none; }
+.lv-kk-screen { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 10px; min-height: 300px; padding: 34px 30px 30px; border-radius: 24px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(10, 7, 18, .6), rgba(10, 7, 18, .9)), radial-gradient(70% 90% at 50% 100%, rgba(255, 79, 216, .35), transparent 70%), #0a0712;
+  box-shadow: 0 30px 80px -30px #000, inset 0 0 0 1px rgba(255, 255, 255, .1); transform: perspective(1200px) rotateY(-9deg) rotateX(3deg); transition: transform .8s var(--ease); }
+.lv-kk-art:hover .lv-kk-screen { transform: perspective(1200px) rotateY(-3deg) rotateX(1deg) translateY(-4px); }
+.lv-kk-eq { position: absolute; left: 0; right: 0; bottom: 0; height: 46%; display: flex; align-items: flex-end; gap: 6px; padding: 0 22px; opacity: .45; -webkit-mask-image: linear-gradient(0deg, #000, transparent); mask-image: linear-gradient(0deg, #000, transparent); }
+.lv-kk-eq i { flex: 1; height: 30%; border-radius: 6px 6px 0 0; background: linear-gradient(0deg, #7B61FF, #FF4FD8); animation: lv-kk-eq 1.15s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -.13s); }
+@keyframes lv-kk-eq { 0% { height: 18%; } 50% { height: 70%; } 100% { height: 36%; } }
+.lv-kk-line { position: relative; z-index: 1; font-family: var(--f-cine); font-weight: 800; font-stretch: 84%; text-transform: none; line-height: 1.12; }
+.lv-kk-line.is-prev, .lv-kk-line.is-next { font-size: clamp(15px, 1.4vw, 19px); color: rgba(255, 255, 255, .34); }
+.lv-kk-line.is-now { font-size: clamp(24px, 2.6vw, 36px); color: rgba(255, 255, 255, .45); }
+.lv-kk-line.is-now b { font-weight: 900; background: linear-gradient(90deg, #FFD978 0 50%, rgba(255, 255, 255, .45) 50% 100%); background-size: 200% 100%; background-position: 100% 0; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: lv-kk-word 5.6s linear infinite; animation-delay: calc(var(--i) * .42s); }
+@keyframes lv-kk-word { 0% { background-position: 100% 0; } 7% { background-position: 0 0; text-shadow: 0 0 22px rgba(255, 217, 120, .0); } 86% { background-position: 0 0; } 100% { background-position: 100% 0; } }
+.lv-kk-score { position: absolute; right: 18px; top: 16px; z-index: 2; display: grid; grid-template-columns: auto auto; align-items: end; column-gap: 8px; padding: 10px 14px; border-radius: 16px; background: rgba(0, 0, 0, .45); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.lv-kk-score small { grid-column: 1 / -1; font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--lv-ink-3); }
+.lv-kk-score b { font-family: var(--f-mark); font-size: 30px; line-height: 1; }
+.lv-kk-score em { font-style: normal; font-family: var(--f-mark); font-weight: 900; font-size: 20px; line-height: 1; background: linear-gradient(120deg, #FFD978, #FF4FD8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+@media (max-width: 860px) {
+  .lv-kk { grid-template-columns: 1fr; }
+  .lv-kk-screen { min-height: 220px; transform: none; }
+  .lv-kk-art:hover .lv-kk-screen { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lv-kk-line.is-now b { animation: none; background-position: 0 0; }
+  .lv-kk-eq i, .lv-kk-aura i, .lv-kk-h em { animation: none !important; }
+}
+
+/* The moment before karaoke arrives: its files are fetched on the
+   first visit. */
+.lv-kk-boot { min-height: 70vh; display: grid; place-content: center; justify-items: center; gap: 10px; padding-top: var(--top-h); text-align: center; }
+.lv-kk-boot b { font-family: var(--f-cine); font-weight: 900; font-stretch: 78%; font-size: 28px; text-transform: uppercase; }
+.lv-kk-boot small { color: var(--lv-ink-3); font-weight: 600; }
+.lv-kk-boot-eq { display: flex; align-items: flex-end; gap: 6px; height: 46px; margin-bottom: 8px; }
+.lv-kk-boot-eq i { width: 8px; height: 30%; border-radius: 4px; background: linear-gradient(0deg, #7B61FF, #FF4FD8); animation: lv-kk-eq .9s ease-in-out infinite alternate; }
+.lv-kk-boot-eq i:nth-child(2) { animation-delay: -.2s; } .lv-kk-boot-eq i:nth-child(3) { animation-delay: -.45s; } .lv-kk-boot-eq i:nth-child(4) { animation-delay: -.1s; } .lv-kk-boot-eq i:nth-child(5) { animation-delay: -.6s; }
+
 /* ── the invite and the page end ─────────────────────────────────── */
 .lv-invite { margin: 30px var(--gutter) 0; padding: clamp(26px, 4vw, 48px); border-radius: var(--r-lg); display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: center; overflow: hidden; position: relative;
   background: radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--lv-magenta) 22%, transparent), transparent 60%), radial-gradient(80% 120% at 100% 100%, color-mix(in srgb, var(--lv-violet) 22%, transparent), transparent 60%), var(--lv-surface); box-shadow: inset 0 0 0 1px var(--lv-line); }
@@ -969,4 +1077,5 @@ button.lv-card[disabled] { cursor: default; opacity: .6; }
 /* The site's help launcher steps above the dock, and out of the party
    room entirely, where the transport controls own the corner. */
 body.lv-docked #cbn-sup-launcher { bottom: calc(var(--dock-h, 84px) + 16px) !important; transition: bottom .4s var(--ease); }
-html.lv-party-on #cbn-sup-launcher, html.lv-party-on #cbn-apa-welcome { display: none !important; }
+html.lv-party-on #cbn-sup-launcher, html.lv-party-on #cbn-apa-welcome,
+html.kk-on #cbn-sup-launcher, html.kk-on #cbn-apa-welcome { display: none !important; }

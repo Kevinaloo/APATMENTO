@@ -27,6 +27,7 @@
     { k: 'home', label: 'Home' },
     { k: 'events', label: 'Events' },
     { k: 'live', label: 'Live', dot: true },
+    { k: 'karaoke', label: 'Karaoke', fresh: true },
     { k: 'movies', label: 'Movies' },
     { k: 'shows', label: 'Shows' },
     { k: 'music', label: 'Music' }
@@ -43,7 +44,7 @@
       '<nav class="lv-tabs" id="lv-tabs" aria-label="Cabana Live sections">' +
         TABS.map(function (t) {
           return '<a class="lv-tab" data-tab="' + t.k + '" href="' + L.href.tab(t.k) + '">' +
-            (t.dot ? '<i class="lv-tab-live" hidden></i>' : '') + t.label + '</a>';
+            (t.dot ? '<i class="lv-tab-live" hidden></i>' : '') + t.label + (t.fresh && !L.store.get('seen:' + t.k, 0) ? '<i class="lv-tab-new" aria-label="new"></i>' : '') + '</a>';
         }).join('') +
         '<span class="lv-tabs-ink" aria-hidden="true"></span>' +
       '</nav>' +

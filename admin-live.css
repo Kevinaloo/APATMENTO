@@ -154,3 +154,12 @@
 .lvx-home-i [data-home-up] .ic { transform: rotate(-90deg); }
 .lvx-home-i [data-home-down] .ic { transform: rotate(90deg); }
 .lvx-home-i:first-child [data-home-up], .lvx-home-i:last-child [data-home-down] { opacity: .3; pointer-events: none; }
+
+/* ── karaoke ─────────────────────────────────────────────────────── */
+.kkx-drafts { display: grid; gap: 8px; padding: 0 20px 18px; }
+.kkx-draft { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; background: var(--bg-2, rgba(127, 127, 127, .06)); }
+.kkx-draft img { width: 96px; height: 54px; object-fit: cover; border-radius: 8px; flex: none; }
+.kkx-lines { margin: 0 0 16px; padding: 0; list-style: none; display: grid; gap: 2px; max-height: 52vh; overflow: auto; border-radius: 12px; border: 1px solid var(--line, rgba(127, 127, 127, .2)); }
+.kkx-lines li { display: grid; grid-template-columns: 76px 1fr; gap: 10px; padding: 7px 12px; font-size: 14px; }
+.kkx-lines li:nth-child(odd) { background: var(--bg-2, rgba(127, 127, 127, .05)); }
+.kkx-lines .mono { color: var(--ink-3, #888); font-size: 12.5px; }

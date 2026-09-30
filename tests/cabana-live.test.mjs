@@ -98,7 +98,7 @@ test('arriving on Events plays nothing and loads no YouTube player', async () =>
   assert.equal(d.querySelector('#lv-yt iframe'), null, 'no player exists before a tap');
   assert.equal(d.querySelector('script[src*="iframe_api"]'), null, 'the YouTube API is not even downloaded');
   const tabs = [...d.querySelectorAll('.lv-tab')].map((a) => a.getAttribute('href'));
-  assert.deepEqual(tabs, ['/events', '/events/whats-on', '/events/live', '/events/movies', '/events/shows', '/events/music']);
+  assert.deepEqual(tabs, ['/events', '/events/whats-on', '/events/live', '/events/karaoke', '/events/movies', '/events/shows', '/events/music']);
   dom.window.close();
 });
 

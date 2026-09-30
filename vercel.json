@@ -4,6 +4,11 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/k/:code",
+      "destination": "/events/karaoke/room/:code",
+      "permanent": false
+    },
+    {
       "source": "/become-agent",
       "destination": "/agents",
       "permanent": true
@@ -427,6 +432,10 @@
     {
       "source": "/api/music-search",
       "destination": "/api/utilities?action=music-search"
+    },
+    {
+      "source": "/api/karaoke",
+      "destination": "/api/utilities?action=karaoke"
     },
     {
       "source": "/api/scrape",

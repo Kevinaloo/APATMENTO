@@ -145,6 +145,7 @@
     { id: 'live-movies', label: 'Movies', icon: 'play' },
     { id: 'live-series', label: 'Series', icon: 'layers' },
     { id: 'live-music', label: 'Music', icon: 'music' },
+    { id: 'live-karaoke', label: 'Karaoke', icon: 'mic' },
     { id: 'live-premium', label: 'Premium', icon: 'star' }
   ];
   var TITLE_KINDS = { 'live-shows': ['live', 'special'], 'live-movies': ['movie'], 'live-series': ['show'] };
@@ -158,6 +159,7 @@
     ['mylist', 'My List', 'What the visitor saved, when they have saved something'],
     ['premium', 'Premium band', 'The gold “one month free” offer'],
     ['top10', 'Top 10 in Kenya', 'The first ten records on the chart'],
+    ['karaoke', 'Cabana Karaoke', 'The karaoke band: sing a song, start a room, and the rooms live right now'],
     ['new', 'New on Cabana', 'Titles published in the last few weeks'],
     ['movies', 'Movies', 'Published films'],
     ['series', 'Series', 'Published series'],
@@ -226,6 +228,10 @@
   CX.view('live-music', studio('live-music', {
     title: 'Music', sub: 'The Kenya chart from YouTube, the channels it follows, and your playlists.', path: '/events/music',
     body: function (body, v, ov) { return renderMusic(body, v, ov); }
+  }));
+  CX.view('live-karaoke', studio('live-karaoke', {
+    title: 'Karaoke', sub: 'Songs, lyrics, the judge, rooms and battles, and the VIP offer. Everything under /events/karaoke.', path: '/events/karaoke',
+    body: function (body, v) { return renderKaraoke(body, v); }
   }));
   CX.view('live-premium', studio('live-premium', {
     title: 'Premium', sub: 'The free month, the price for later, and who has access.',
@@ -1072,6 +1078,171 @@
   /* ════════════════════════════════════════════════════════════════
      PREMIUM
      ════════════════════════════════════════════════════════════════ */
+
+  /* ════════════════════════════════════════════════════════════════
+     KARAOKE
+     The allowance and the VIP offer, lyric drafts sent in from the
+     studio, the songs (their kind, their lyric clock, their lyrics),
+     recent takes, and who holds VIP.
+     ════════════════════════════════════════════════════════════════ */
+
+  var KK_LYR = { words: ['p-ok', 'Word sync'], synced: ['p-ok', 'Timed'], plain: ['p-info', 'Not timed'], none: ['p-mute', 'No lyrics'], pending: ['p-warn', 'Finding'], error: ['p-bad', 'Error'] };
+  var KK_KINDS = [['karaoke', 'Karaoke track'], ['original', 'Original'], ['lyric', 'Lyric video'], ['live', 'Live']];
+
+  function renderKaraoke(body, v) {
+    set(body, CX.skeleton('cards'));
+    return Promise.all([
+      rpc('admin_karaoke_overview', null, { fresh: true }),
+      CX.rows(CX.q('karaoke_settings').select('*').eq('id', 1)),
+      rpc('admin_karaoke_passes', null, { fresh: true }),
+      rpc('admin_karaoke_lyric_drafts', null, { fresh: true }).catch(function () { return []; })
+    ]).then(function (r) {
+      if (!v.alive()) return;
+      var ov = r[0] || {}, st = r[1][0] || {}, pz = r[2] || {}, drafts = r[3] || [];
+      var passes = pz.passes || [], wait = pz.waitlist || [];
+      var pending = drafts.filter(function (d) { return d.status === 'pending'; });
+      var lyr = ov.lyrics || {};
+      var fields = [
+        { name: 'vip_name', label: 'Name of the paid tier', value: st.vip_name, required: true },
+        { name: 'free_sessions', label: 'Free songs a month', type: 'number', value: st.free_sessions == null ? 5 : st.free_sessions, min: 0, max: 1000, required: true, help: 'judged takes; practice is always free' },
+        { name: 'price_kes', label: 'VIP price (KES)', type: 'number', value: st.price_kes == null ? '' : st.price_kes, min: 0, help: 'empty = "pricing soon" and a waitlist' },
+        { name: 'price_period', label: 'Per', type: 'select', options: [['week', 'Week'], ['month', 'Month'], ['year', 'Year']], value: st.price_period || 'month' },
+        { name: 'free_take_days', label: 'Keep free takes (days)', type: 'number', value: st.free_take_days || 30, min: 1, max: 3650, required: true },
+        { name: 'open_to_all', label: 'VIP for everyone', type: 'switch', value: st.open_to_all, help: 'a launch weekend: no limits for anyone while on' },
+        { name: 'premium_includes_vip', label: 'Cabana Live Premium includes VIP', type: 'switch', value: st.premium_includes_vip },
+        { name: 'ranked_needs_karaoke', label: 'Only karaoke tracks are ranked', type: 'switch', value: st.ranked_needs_karaoke !== false, help: 'a video with the original singer in it is scored for fun' },
+        { name: 'banner_title', label: 'Headline', value: st.banner_title, required: true, full: true },
+        { name: 'banner_text', label: 'Line under it', type: 'textarea', rows: 2, value: st.banner_text, required: true }
+      ];
+      set(body, html`
+        <div class="grid g4 lvx-kpis">
+          <div class="mini"><div class="mini-l">Singers this month</div><div class="mini-v">${num(ov.singers_month)}</div><div class="mini-s">${num(ov.performances_month)} takes · ${num(ov.performances_today)} today</div></div>
+          <div class="mini"><div class="mini-l">Judged by AI</div><div class="mini-v">${num(ov.verified_month)}</div><div class="mini-s">of ${num(ov.scored_month)} scored this month · average ${ov.avg_score == null ? '–' : ov.avg_score}</div></div>
+          <div class="mini"><div class="mini-l">Rooms</div><div class="mini-v">${num(ov.rooms_live)}</div><div class="mini-s">live now · ${num(ov.rooms_open)} open · ${num(ov.rooms_public)} public</div></div>
+          <div class="mini"><div class="mini-l">VIP</div><div class="mini-v">${num(ov.vip_active)}</div><div class="mini-s">active · ${num(ov.waitlist)} on the waitlist · ${num(ov.challenges_open)} challenges open</div></div>
+        </div>
+        ${pending.length ? html`<div class="card mb" data-drafts><div class="card-hd"><div><div class="card-t">Lyrics waiting for you <span class="pill p-warn">${num(pending.length)}</span></div><div class="card-s">Sent in from the lyric studio. Approve and the song sings with them straight away, with the member’s name on them.</div></div></div>
+          <div class="kkx-drafts">${pending.map(draftRow)}</div></div>` : ''}
+        <div class="grid g2 mb" style="align-items:start">
+          <div class="card"><div class="card-hd"><div><div class="card-t">The allowance and the VIP offer</div><div class="card-s">What every member gets free, and what VIP costs once you set a price.</div></div></div>
+            <form class="form-grid" data-f="kk" onsubmit="return false" style="padding:0 20px 18px">${fields.map(CX.fieldHTML)}</form>
+            <div class="row" style="padding:0 20px 18px;justify-content:flex-end"><button class="btn btn-p" data-kk-save>${icon('check')}Save</button></div></div>
+          <div class="card"><div class="card-hd"><div><div class="card-t">Give someone VIP</div><div class="card-s">An artist, a host, a winner. Their takes are kept for good from now on.</div></div></div>
+            <form class="form-grid" data-f="kk-grant" onsubmit="return false" style="padding:0 20px 8px">
+              ${CX.fieldHTML({ name: 'email', label: 'Member email', required: true, full: true, type: 'email' })}
+              ${CX.fieldHTML({ name: 'days', label: 'Days', type: 'number', value: 30, min: 0, help: '0 = no end date' })}
+              ${CX.fieldHTML({ name: 'note', label: 'Note', placeholder: 'Why' })}
+            </form>
+            <div class="row" style="padding:0 20px 18px;justify-content:flex-end"><button class="btn btn-ok" data-kk-grant>${icon('star')}Grant VIP</button></div>
+            <div class="grid g2" style="padding:0 20px 18px">
+              <div class="mini"><div class="mini-l">Songs</div><div class="mini-v">${num(ov.songs)}</div><div class="mini-s">${num(n(lyr.words) + n(lyr.synced))} timed · ${num(lyr.plain)} not timed · ${num(lyr.none)} without</div></div>
+              <div class="mini"><div class="mini-l">Public takes</div><div class="mini-v">${num(ov.public_performances)}</div><div class="mini-s">on Cabana’s stage</div></div>
+            </div></div>
+        </div>
+        <div class="card mb"><div class="card-hd"><div><div class="card-t">Songs</div><div class="card-s">The most sung first. The lyric clock is learned from judged takes; set it by hand only when a video is clearly off.</div></div></div>
+          ${(ov.top_songs || []).length ? html`<div class="table-wrap"><table class="tbl"><thead><tr><th>Song</th><th>Sung</th><th>Kind</th><th>Lyrics</th><th>Lyric clock</th><th></th></tr></thead><tbody>
+            ${(ov.top_songs || []).map(function (s) {
+              var ls = KK_LYR[s.lyrics_status] || ['p-mute', s.lyrics_status];
+              return html`<tr class="${s.hidden ? 'muted' : ''}"><td><div class="row gap-s" style="align-items:center"><img src="https://i.ytimg.com/vi/${s.video_id}/default.jpg" alt="" style="width:56px;height:42px;object-fit:cover;border-radius:6px"/><div><div class="strong">${s.title}</div><div class="muted" style="font-size:11.5px">${s.artist || ''} · <a href="/events/karaoke/sing/${s.video_id}" target="_blank" rel="noopener">${s.video_id}</a></div></div></div></td>
+                <td>${num(s.sung)}</td>
+                <td><select class="inp inp-sm" data-kk-kind="${s.video_id}">${KK_KINDS.map(function (k) { return html`<option value="${k[0]}" ${k[0] === s.kind ? raw('selected') : ''}>${k[1]}</option>`; })}</select></td>
+                <td><span class="pill ${ls[0]}">${ls[1]}</span></td>
+                <td><span class="mono">${(s.offset_s >= 0 ? '+' : '') + Number(s.offset_s || 0).toFixed(2)}s</span> <span class="muted" style="font-size:11.5px">from ${num(s.offset_n)}</span></td>
+                <td style="text-align:right;white-space:nowrap"><button class="btn btn-sm btn-g" data-kk-offset="${s.video_id}" data-cur="${s.offset_s || 0}">Set clock</button><button class="btn btn-sm btn-g" data-kk-relyric="${s.video_id}">Find lyrics again</button><button class="btn btn-sm btn-q" data-kk-hide="${s.video_id}" data-on="${s.hidden ? 'show' : 'hide'}">${s.hidden ? 'Show' : 'Hide'}</button></td></tr>`;
+            })}</tbody></table></div>` : CX.empty('No songs yet', 'Songs appear the first time someone opens one.', 'music')}</div>
+        <div class="grid g2" style="align-items:start">
+          <div class="card"><div class="card-hd"><div><div class="card-t">Recent takes</div><div class="card-s">Newest first. Hiding a take makes it private to its singer.</div></div></div>
+            ${(ov.recent || []).length ? html`<div class="table-wrap"><table class="tbl"><thead><tr><th>Member</th><th>Score</th><th>Seen by</th><th></th></tr></thead><tbody>
+              ${(ov.recent || []).map(function (p) {
+                return html`<tr><td><div class="strong">${p.email || '–'}</div><div class="muted" style="font-size:11.5px">${ago(p.created_at)} · ${p.status}${p.verified ? ' · judged' : ''}</div></td>
+                  <td>${p.score == null ? '–' : html`<b>${p.score}</b>`}</td><td>${p.visibility}</td>
+                  <td style="text-align:right;white-space:nowrap"><a class="btn btn-sm btn-g" href="/events/karaoke/p/${p.id}" target="_blank" rel="noopener">Open</a>${p.visibility !== 'private' ? html`<button class="btn btn-sm btn-q" data-kk-hideperf="${p.id}">Hide</button>` : ''}</td></tr>`;
+              })}</tbody></table></div>` : CX.empty('No takes yet', 'Takes appear as people sing.', 'music')}</div>
+          <div class="card"><div class="card-hd"><div><div class="card-t">VIP passes</div><div class="card-s">${num(wait.length)} waiting for VIP to open.</div></div><div class="row gap-s"><button class="btn btn-g btn-sm" data-kk-wcsv>${icon('download')}Waitlist</button><button class="btn btn-g btn-sm" data-kk-pcsv>${icon('download')}Passes</button></div></div>
+            ${passes.length ? html`<div class="table-wrap"><table class="tbl"><thead><tr><th>Member</th><th>Ends</th><th>Status</th><th></th></tr></thead><tbody>
+              ${passes.map(function (p) {
+                return html`<tr><td><div class="strong">${p.email || p.user_id}</div>${p.note ? html`<div class="muted" style="font-size:11.5px">${p.note}</div>` : ''}</td>
+                  <td>${p.expires_at ? fdate(p.expires_at) : 'No end'}</td>
+                  <td>${p.active ? html`<span class="pill p-ok">Active</span>` : p.revoked_at ? html`<span class="pill p-bad">Revoked</span>` : html`<span class="pill p-mute">Ended</span>`}</td>
+                  <td style="text-align:right;white-space:nowrap">${p.revoked_at ? '' : html`<button class="btn btn-sm btn-g" data-kk-extend="${p.id}">+30 days</button><button class="btn btn-sm btn-q" data-kk-revoke="${p.id}">Revoke</button>`}</td></tr>`;
+              })}</tbody></table></div>` : CX.empty('No VIP passes yet', 'Grant one above, or set a price to open VIP.', 'star')}</div>
+        </div>`);
+
+      on(body, '[data-kk-save]', 'click', function (el) {
+        var val = CX.readForm($('[data-f="kk"]', body), fields); if (!val) return;
+        CX.busy(el, function () {
+          return CX.q('karaoke_settings').update({
+            vip_name: val.vip_name, free_sessions: val.free_sessions, price_kes: val.price_kes === '' ? null : val.price_kes, price_period: val.price_period,
+            free_take_days: val.free_take_days, open_to_all: !!val.open_to_all, premium_includes_vip: !!val.premium_includes_vip,
+            ranked_needs_karaoke: !!val.ranked_needs_karaoke, banner_title: val.banner_title, banner_text: val.banner_text
+          }).eq('id', 1).then(must).then(function () { CX.log('karaoke_settings_save', 'karaoke_settings', '1', val); toast('Saved · live on /events/karaoke', 'ok'); });
+        }).catch(noop);
+      });
+      on(body, '[data-kk-grant]', 'click', function (el) {
+        var f = [{ name: 'email', required: true }, { name: 'days', type: 'number' }, { name: 'note' }];
+        var val = CX.readForm($('[data-f="kk-grant"]', body), f); if (!val) return;
+        CX.busy(el, function () { return rpc('admin_karaoke_pass_action', { p_action: 'grant', p_email: val.email, p_days: val.days === '' ? 30 : val.days, p_note: val.note || null }).then(function () { toast('VIP granted to ' + val.email, 'ok'); v.refresh(); }); }).catch(noop);
+      });
+      on(body, '[data-kk-extend]', 'click', function (el) { CX.busy(el, function () { return rpc('admin_karaoke_pass_action', { p_action: 'extend', p_pass: el.getAttribute('data-kk-extend'), p_days: 30 }).then(function () { toast('Extended by 30 days', 'ok'); v.refresh(); }); }).catch(noop); });
+      on(body, '[data-kk-revoke]', 'click', function (el) {
+        confirm({ title: 'Revoke this VIP pass?', body: 'Their free allowance applies again straight away. Takes already kept stay kept.', tone: 'danger', confirm: 'Revoke',
+          onConfirm: function () { return rpc('admin_karaoke_pass_action', { p_action: 'revoke', p_pass: el.getAttribute('data-kk-revoke') }).then(function () { v.refresh(); }); } }).catch(noop);
+      });
+      function moderate(kind, id, action, value, msg) {
+        return rpc('admin_karaoke_moderate', { p_kind: kind, p_id: id, p_action: action, p_value: value == null ? null : String(value) }).then(function () { toast(msg, 'ok'); });
+      }
+      on(body, '[data-kk-kind]', 'change', function (el) { moderate('song', el.getAttribute('data-kk-kind'), 'kind', el.value, 'Kind saved').catch(function (e) { toast(friendly(e), 'bad'); }); });
+      on(body, '[data-kk-relyric]', 'click', function (el) { CX.busy(el, function () { return moderate('song', el.getAttribute('data-kk-relyric'), 'relyric', null, 'The lyrics will be looked up again the next time the song opens'); }).catch(noop); });
+      on(body, '[data-kk-hide]', 'click', function (el) { CX.busy(el, function () { return moderate('song', el.getAttribute('data-kk-hide'), el.getAttribute('data-on'), null, el.getAttribute('data-on') === 'hide' ? 'Hidden from karaoke' : 'Back on karaoke').then(function () { v.refresh(); }); }).catch(noop); });
+      on(body, '[data-kk-hideperf]', 'click', function (el) {
+        confirm({ title: 'Hide this take?', body: 'It becomes private to the singer. They can see it; nobody else can.', tone: 'danger', confirm: 'Hide',
+          onConfirm: function () { return moderate('performance', el.getAttribute('data-kk-hideperf'), 'hide', null, 'Hidden').then(function () { v.refresh(); }); } }).catch(noop);
+      });
+      on(body, '[data-kk-offset]', 'click', function (el) {
+        var id = el.getAttribute('data-kk-offset');
+        var cur = Number(el.getAttribute('data-cur')) || 0;
+        var val = global.prompt('How many seconds is the lyric off on this video? Positive if the words should light up later, negative if earlier.', String(cur));
+        if (val == null) return;
+        var x = Number(String(val).replace(',', '.'));
+        if (!isFinite(x) || Math.abs(x) > 60) { toast('A number of seconds between -60 and 60, please.', 'bad'); return; }
+        CX.busy(el, function () { return moderate('song', id, 'offset', x, 'Lyric clock set to ' + (x >= 0 ? '+' : '') + x.toFixed(2) + 's').then(function () { v.refresh(); }); }).catch(noop);
+      });
+      on(body, '[data-kk-draft]', 'click', function (el) { var d = drafts.filter(function (x) { return x.id === el.getAttribute('data-kk-draft'); })[0]; if (d) draftDrawer(d, v); });
+      on(body, '[data-kk-pcsv]', 'click', function () { CX.csv(passes, ['email', 'source', 'starts_at', 'expires_at', 'active', 'note'], 'cabana-karaoke-vip.csv'); });
+      on(body, '[data-kk-wcsv]', 'click', function () { CX.csv(wait, ['email', 'created_at'], 'cabana-karaoke-waitlist.csv'); });
+    });
+  }
+
+  function draftRow(d) {
+    var s = d.song || {}, by = d.by || {};
+    return html`<div class="kkx-draft"><img src="https://i.ytimg.com/vi/${d.video_id}/mqdefault.jpg" alt=""/>
+      <div class="grow"><div class="strong">${s.track || s.title || d.video_id}</div><div class="muted" style="font-size:12px">${s.track_artist || s.artist || ''} · by ${by.name || d.email || 'a member'} · ${num(d.lines)} lines${d.synced ? ', timed' : ', not timed'} · ${ago(d.created_at)}</div>
+        <div class="muted" style="font-size:12px">${(KK_LYR[s.lyrics_status] || ['', s.lyrics_status])[1]} now</div></div>
+      <button class="btn btn-sm btn-p" data-kk-draft="${d.id}">${icon('eye')}Review</button></div>`;
+  }
+
+  function draftDrawer(d, v) {
+    var s = d.song || {}, lines = (d.doc && d.doc.lines) || [];
+    function fmt(t) { if (t == null) return ''; var m = Math.floor(t / 60), x = t - m * 60; return m + ':' + (x < 10 ? '0' : '') + x.toFixed(2); }
+    CX.drawer.open({
+      key: 'kk-draft-' + d.id, wide: true, kicker: 'Karaoke · Lyric draft', title: s.track || s.title || d.video_id, sub: (d.by && d.by.name ? 'by ' + d.by.name + ' · ' : '') + (d.email || ''),
+      load: function (dr) {
+        set(dr.body, html`<div class="row gap-s mb" style="align-items:center"><a class="btn btn-g btn-sm" href="https://www.youtube.com/watch?v=${d.video_id}" target="_blank" rel="noopener">${icon('play')}Watch the video</a>
+            <a class="btn btn-g btn-sm" href="/events/karaoke/studio/${d.video_id}" target="_blank" rel="noopener">${icon('external')}Open in the studio</a>
+            <span class="muted">${d.synced ? 'Timed line by line' : 'Words only: they will follow the singer’s voice'}</span></div>
+          <ol class="kkx-lines">${lines.map(function (l) { return html`<li><span class="mono">${fmt(l.t)}</span><span>${l.x}</span></li>`; })}</ol>
+          <div class="fld full"><label class="fld-l">Note to the member <span class="opt">shown if you send it back</span></label><textarea class="inp" data-kk-note rows="2" maxlength="280" placeholder="What to fix"></textarea></div>`);
+        dr.actions(html`<button class="btn btn-q" data-kk-reject>${icon('x')}Send back</button><button class="btn btn-ok" data-kk-approve>${icon('check')}Approve · live now</button>`);
+        on(dr.el, '[data-kk-approve]', 'click', function (el) {
+          CX.busy(el, function () { return rpc('admin_karaoke_lyric_review', { p_draft: d.id, p_action: 'approve', p_note: null }).then(function () { toast('Approved. The song sings with these lyrics now.', 'ok'); CX.drawer.close(true); v.refresh(); }); }).catch(function (e) { toast(friendly(e), 'bad'); });
+        });
+        on(dr.el, '[data-kk-reject]', 'click', function (el) {
+          var note = ($('[data-kk-note]', dr.el).value || '').trim();
+          CX.busy(el, function () { return rpc('admin_karaoke_lyric_review', { p_draft: d.id, p_action: 'reject', p_note: note || null }).then(function () { toast('Sent back to the member', 'ok'); CX.drawer.close(true); v.refresh(); }); }).catch(function (e) { toast(friendly(e), 'bad'); });
+        });
+      }
+    });
+  }
 
   function renderPremium(body, v, ov) {
     set(body, CX.skeleton());

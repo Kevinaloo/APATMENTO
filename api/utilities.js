@@ -2,7 +2,7 @@
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow | music-search
            | reconcile-payments | geocode | atlas | sos-alert | carhire-terrain
-           | route
+           | route | karaoke
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 60 };
@@ -46,6 +46,7 @@ import sosHandler from './lib/_sos.js';
 import terrainHandler from './lib/_carhire-terrain.js';
 import routeHandler from './lib/_route.js';
 import musicSearchHandler from './lib/_music-search.js';
+import karaokeHandler from './lib/_karaoke.js';
 import weatherHandler from './lib/_weather.js';
 import scrapeHandler from './lib/_scrape.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
@@ -816,6 +817,13 @@ export default async function handler(req, res) {
     return scrapeHandler(req, res);
   }
 
+  /* Karaoke: the judge that listens to a recorded song, the signed link
+     to a replay, and the sweep that finishes what nobody waited for.
+     /api/karaoke rewrites here, for the same twelve-function reason. */
+  if (action === 'karaoke') {
+    return karaokeHandler(req, res);
+  }
+
   if (action === 'carhire-terrain') {
     return terrainHandler(req, res);
   }
@@ -864,7 +872,7 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, route, weather, music-search, '
+    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, route, weather, music-search, karaoke, '
          + 'scrape, close-bookings, welcome-email, indexnow, reconcile-payments, expire-match-offers, paypal-create-order, '
          + 'paypal-capture, paypal-webhook',
   });

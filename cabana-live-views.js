@@ -270,7 +270,7 @@
   /* The home page is a list of sections the console can reorder and hide
      (live_settings.home_sections, handed over by live_state). Any section
      the setting does not mention keeps its place from this default. */
-  var HOME_ORDER = ['live', 'events', 'mylist', 'premium', 'top10', 'new', 'movies', 'series', 'specials', 'soon', 'plan', 'playlists', 'releases', 'artists', 'invite'];
+  var HOME_ORDER = ['live', 'events', 'mylist', 'premium', 'top10', 'karaoke', 'new', 'movies', 'series', 'specials', 'soon', 'plan', 'playlists', 'releases', 'artists', 'invite'];
   L.HOME_ORDER = HOME_ORDER;
   function homeLayout() {
     var h = (D.state && D.state.home) || {};
@@ -301,6 +301,7 @@
         return UI.row({ title: 'My List', sub: 'Everything you saved with the heart', items: mine, render: renderSaved, col: '230px', all: L.BASE + '/my-list' });
       },
       premium: function () { return UI.premium(); },
+      karaoke: karaokeBand,
       top10: function () { return UI.row({ title: 'Top 10 in Kenya today', sub: 'The music chart, live from YouTube', items: tracks.slice(0, 10), render: function (t, i) { return UI.card.top10(t, i, 'chart'); }, railCls: 'lv-top10-rail', col: 'clamp(210px, 19vw, 280px)', all: L.href.tab('music') }); },
       'new': function () { return UI.row({ title: 'New on Cabana', items: titles.filter(function (t) { return L.isNew(t) && L.titleState(t) !== 'soon'; }).slice(0, 18), render: UI.card.poster, col: 'clamp(150px, 13vw, 200px)' }); },
       movies: function () { return UI.row({ title: 'Movies', items: titles.filter(function (t) { return t.kind === 'movie' && L.titleState(t) !== 'soon'; }).slice(0, 18), render: UI.card.poster, col: 'clamp(150px, 13vw, 200px)', all: L.href.tab('movies') }); },
@@ -855,6 +856,107 @@
     ctx.onLeave(off);
   }
 
+  /* ── karaoke ─────────────────────────────────────────────────────
+     Cabana Karaoke is its own set of files (the lyric engine, the voice
+     engine, the light show, the stage and the pages). None of it is in
+     the platform's first paint: the first visit to /events/karaoke
+     fetches it, in order, and every later visit finds it ready. */
+
+  var KK_V = '1';
+  var KK_FILES = ['/cabana-karaoke-lyrics.js', '/cabana-karaoke-audio.js', '/cabana-visuals.js', '/cabana-karaoke.js', '/cabana-karaoke-views.js'];
+  var kkLoading = null;
+  L.loadKaraoke = function () {
+    if (L.karaoke && L.karaoke.views) return Promise.resolve(L.karaoke);
+    if (kkLoading) return kkLoading;
+    var css = L.loadStyle('/cabana-karaoke.css?v=' + KK_V);
+    kkLoading = Promise.all(KK_FILES.map(function (f) { return L.loadScript(f + '?v=' + KK_V); }).concat([css])).then(function () {
+      if (!L.karaoke || !L.karaoke.views) throw new Error('karaoke did not start');
+      return L.karaoke;
+    });
+    kkLoading.catch(function () { kkLoading = null; });
+    return kkLoading;
+  };
+
+  /* Each karaoke page draws into its own box inside the view, so the
+     listeners it hangs there go when the page goes. */
+  function karaokePage(name) {
+    return function (ctx) {
+      function mount(KK) {
+        if (!ctx.alive()) return;
+        /* the "new" mark on the tab has done its job */
+        if (!L.store.get('seen:karaoke', 0)) { L.store.set('seen:karaoke', 1); u.qsa('.lv-tab[data-tab="karaoke"] .lv-tab-new').forEach(function (i) { i.remove(); }); }
+        var box = doc.createElement('div');
+        box.className = 'kk-view';
+        ctx.el.innerHTML = '';
+        ctx.el.appendChild(box);
+        KK.views[name]({ params: ctx.params, query: ctx.query, meta: ctx.meta, el: box, alive: ctx.alive, onLeave: ctx.onLeave });
+      }
+      if (L.karaoke && L.karaoke.views) { mount(L.karaoke); return; }
+      ctx.el.innerHTML = '<div class="lv-kk-boot" role="status" aria-live="polite">' +
+        '<div class="lv-kk-boot-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' +
+        '<b>Tuning the stage</b><small>Lyrics, microphone and lights</small></div>';
+      L.loadKaraoke().then(mount, function () {
+        if (!ctx.alive()) return;
+        ctx.el.innerHTML = '<div class="lv-page-top">' + UI.empty('mic', 'Karaoke would not load', 'The connection dropped while the stage was loading. Try again.',
+          '<button class="lv-btn lv-btn-accent" type="button" data-kk-retry>' + ic('mic') + 'Try again</button>') + '</div>';
+        var r = u.qs('[data-kk-retry]', ctx.el);
+        if (r) r.addEventListener('click', function () { L.rerender(); });
+      });
+    };
+  }
+
+  /* The home page's karaoke band. It is drawn from nothing but markup;
+     the public rooms that are live right now are asked for afterwards,
+     once a minute at most. */
+  var kkLive = { at: 0, rooms: null, busy: false };
+  function karaokeBand() {
+    var words = ['Sing', 'it', 'like', 'the', 'whole', 'city', 'is', 'listening'];
+    var html = '<section class="lv-kk" aria-labelledby="lv-kk-h">' +
+      '<div class="lv-kk-aura" aria-hidden="true"><i></i><i></i><i></i></div>' +
+      '<div class="lv-kk-copy">' +
+        '<div class="lv-kk-k"><span class="lv-kk-new">New</span>Cabana Karaoke</div>' +
+        '<h2 class="lv-kk-h" id="lv-kk-h">Take the <em>mic</em>.</h2>' +
+        '<p class="lv-kk-p">Lyrics that light up word by word, an AI judge that listens to every line, rooms for friends on one sofa or across the country, and battles all of Cabana can vote on.</p>' +
+        '<div class="lv-kk-acts">' +
+          '<a class="lv-btn lv-btn-accent" href="' + L.href.tab('karaoke') + '">' + ic('mic') + 'Sing a song</a>' +
+          '<a class="lv-btn lv-btn-glass" href="' + L.href.tab('karaoke') + '?start=room">' + ic('people') + 'Start a room</a>' +
+        '</div>' +
+        '<div class="lv-kk-live" data-kk-live></div>' +
+      '</div>' +
+      '<a class="lv-kk-art" href="' + L.href.tab('karaoke') + '" aria-label="Open Cabana Karaoke" tabindex="-1">' +
+        '<span class="lv-kk-screen">' +
+          '<span class="lv-kk-eq" aria-hidden="true">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function (i) { return '<i style="--i:' + i + '"></i>'; }).join('') + '</span>' +
+          '<span class="lv-kk-line is-prev">Tonight the stage is yours</span>' +
+          '<span class="lv-kk-line is-now">' + words.map(function (w, i) { return '<b style="--i:' + i + '">' + w + '</b>'; }).join(' ') + '</span>' +
+          '<span class="lv-kk-line is-next">and every word is a hit</span>' +
+          '<span class="lv-kk-score"><small>Score</small><b>94</b><em>S</em></span>' +
+        '</span>' +
+      '</a>' +
+    '</section>';
+    setTimeout(paintKaraokeLive, 0);
+    return html;
+  }
+  function paintKaraokeLive() {
+    var host = u.qs('[data-kk-live]');
+    if (!host) return;
+    function draw() {
+      var rooms = kkLive.rooms || [];
+      if (!rooms.length) { host.innerHTML = ''; return; }
+      var aud = rooms.reduce(function (s, r) { return s + (Number(r.audience) || 0); }, 0);
+      host.innerHTML = '<a class="lv-kk-rooms" href="' + L.href.tab('karaoke') + '"><i class="lv-kk-pulse"></i><b>' + rooms.length + ' room' + (rooms.length === 1 ? '' : 's') + ' live now</b>' +
+        (aud ? '<span>' + u.compact(aud) + ' listening</span>' : '') + ic('chevR', 2.4) + '</a>';
+    }
+    if (kkLive.rooms && Date.now() - kkLive.at < 60000) { draw(); return; }
+    var c = L.sb();
+    if (!c || !c.rpc || kkLive.busy) return;
+    kkLive.busy = true;
+    Promise.resolve(c.rpc('karaoke_rooms_live')).then(function (r) {
+      kkLive.busy = false; kkLive.at = Date.now();
+      kkLive.rooms = (r && Array.isArray(r.data)) ? r.data : [];
+      draw();
+    }, function () { kkLive.busy = false; });
+  }
+
   /* ── actions (one handler for every button on the platform) ─────── */
 
   doc.addEventListener('click', function (e) {
@@ -908,4 +1010,11 @@
   L.route(/^\/events\/watch\/([a-z0-9-]+)$/, titlePage, { tab: 'movies', detail: true, byTitle: true });
   L.route(/^\/events\/my-list$/, myList, { tab: 'home', detail: true });
   L.route(/^\/events\/search$/, search, { tab: 'home', detail: true });
+  L.route(/^\/events\/karaoke$/, karaokePage('lobby'), { tab: 'karaoke' });
+  L.route(/^\/events\/karaoke\/me$/, karaokePage('me'), { tab: 'karaoke', detail: true });
+  L.route(/^\/events\/karaoke\/sing\/([A-Za-z0-9_-]{11})$/, karaokePage('sing'), { tab: 'karaoke', detail: true });
+  L.route(/^\/events\/karaoke\/room\/([A-Za-z0-9]{6})$/, karaokePage('room'), { tab: 'karaoke', detail: true });
+  L.route(/^\/events\/karaoke\/p\/([0-9a-fA-F-]{36})$/, karaokePage('replay'), { tab: 'karaoke', detail: true });
+  L.route(/^\/events\/karaoke\/c\/([0-9a-fA-F-]{36})$/, karaokePage('challenge'), { tab: 'karaoke', detail: true });
+  L.route(/^\/events\/karaoke\/studio\/([A-Za-z0-9_-]{11})$/, karaokePage('studio'), { tab: 'karaoke', detail: true });
 })(window);

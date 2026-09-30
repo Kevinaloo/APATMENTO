@@ -530,6 +530,35 @@
     }
   };
 
+  /* ── on-demand modules ────────────────────────────────────────────
+     Karaoke, the light show and their styles are fetched the first
+     time they are needed, so the platform's first paint carries none
+     of them. Each file is requested once; order is kept. */
+  var fetched = {};
+  L.loadScript = function (src) {
+    if (fetched[src]) return fetched[src];
+    fetched[src] = new Promise(function (resolve, reject) {
+      var s = doc.createElement('script');
+      s.src = src; s.async = false;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { delete fetched[src]; reject(new Error('load ' + src)); };
+      doc.head.appendChild(s);
+    });
+    return fetched[src];
+  };
+  L.loadStyle = function (href) {
+    if (fetched[href]) return fetched[href];
+    fetched[href] = new Promise(function (resolve) {
+      var l = doc.createElement('link');
+      l.rel = 'stylesheet'; l.href = href;
+      l.onload = function () { resolve(); };
+      l.onerror = function () { delete fetched[href]; resolve(); };
+      doc.head.appendChild(l);
+      setTimeout(resolve, 2500);
+    });
+    return fetched[href];
+  };
+
   /* ── toast ──────────────────────────────────────────────────────── */
 
   var toastEl = null, toastT = null;
@@ -663,8 +692,11 @@
     try { u = new URL(url, location.href); } catch (e) { location.href = url; return; }
     if (u.origin !== location.origin || !isOurs(u.pathname)) { location.href = u.href; return; }
     L.store.sset(scrollKey(), String(global.scrollY || 0));
-    if (opts.replace) history.replaceState({ lv: 1 }, '', u.pathname + u.search + u.hash);
-    else history.pushState({ lv: 1 }, '', u.pathname + u.search + u.hash);
+    /* d counts the steps taken inside Cabana Live, so a page's own back
+       button knows whether going back stays here or leaves the site */
+    var d = (history.state && history.state.d) || 0;
+    if (opts.replace) history.replaceState({ lv: 1, d: d }, '', u.pathname + u.search + u.hash);
+    else history.pushState({ lv: 1, d: d + 1 }, '', u.pathname + u.search + u.hash);
     render({ fresh: !opts.keepScroll });
   };
 
@@ -711,6 +743,12 @@
     else paint();
   }
   L.rerender = function () { render({ keepScroll: true }); };
+  /* Back inside Cabana Live when there is somewhere to go back to;
+     otherwise to the given page. */
+  L.back = function (fallback) {
+    if (history.state && history.state.d > 0) history.back();
+    else L.go(fallback || L.BASE, { replace: true });
+  };
 
   /* A detail page learns its tab only once its data is known (a series
      belongs under Shows, a live show under Live). */

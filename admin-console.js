@@ -150,6 +150,7 @@
     vr: '<path d="M3 9.2A2.7 2.7 0 0 1 5.7 6.5h12.6A2.7 2.7 0 0 1 21 9.2v5.1a2.7 2.7 0 0 1-2.7 2.7h-3.1a2 2 0 0 1-1.7-.9l-.8-1.2a.9.9 0 0 0-1.5 0l-.8 1.2a2 2 0 0 1-1.7.9H5.7A2.7 2.7 0 0 1 3 14.3z"/><circle cx="8" cy="11.8" r="1.6"/><circle cx="16" cy="11.8" r="1.6"/>',
     crosshair: '<circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/>',
     music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
     google: '<path d="M21.35 11.1H12v2.9h5.35c-.23 1.4-1.66 4.1-5.35 4.1a6.1 6.1 0 1 1 0-12.2c1.9 0 3.2.8 3.9 1.5l2.66-2.56A9.3 9.3 0 0 0 12 2.3a9.7 9.7 0 1 0 0 19.4c5.6 0 9.3-3.94 9.3-9.48 0-.64-.07-1.12-.15-1.62z" fill="currentColor" stroke="none"/>'
   };
   function icon(name, cls) {
@@ -806,6 +807,7 @@
       { id: 'live-movies', label: 'Movies', icon: 'play' },
       { id: 'live-series', label: 'Series', icon: 'layers' },
       { id: 'live-music', label: 'Music', icon: 'music' },
+      { id: 'live-karaoke', label: 'Karaoke', icon: 'mic' },
       { id: 'live-premium', label: 'Premium', icon: 'star' }
     ] },
     { g: 'People', items: [

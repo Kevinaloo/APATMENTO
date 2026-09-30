@@ -60,6 +60,9 @@
     return D.chart.tracks.concat(D.chart.releases).filter(function (t) { if (seen[t.videoId]) return false; seen[t.videoId] = 1; return true; });
   }
   M.setQueue = function (name, list) { ctxQueues[name] = list; };
+  /* The YouTube API loader, shared with the karaoke stage so the script
+     is fetched once. */
+  M.api = function () { return api(); };
 
   /* ── the YouTube player ─────────────────────────────────────────── */
 
@@ -293,6 +296,7 @@
     if (els.toggle) { els.toggle.innerHTML = ic(P.playing ? 'pause' : 'play'); els.toggle.setAttribute('aria-label', P.playing ? 'Pause' : 'Play'); }
     var pp = u.qs('[data-party="toggle"]'); if (pp) pp.innerHTML = ic(P.playing ? 'pause' : 'play');
     var party = u.qs('.lv-party'); if (party) party.classList.toggle('is-playing', P.playing);
+    if (lights && lights.vis) lights.vis.setPlaying(P.playing && M.current() === lights.vid);
     doc.body.classList.toggle('is-paused-all', !P.playing);
     paintNow();
     paintPlaying();
@@ -567,12 +571,15 @@
     el.style.setProperty('--beat', beat.toFixed(3) + 's');
     el.innerHTML =
       '<div class="lv-party-wash" style="background-image:url(' + u.ytThumb(vid, 'hqdefault') + ')"></div>' +
+      '<div class="lv-party-light" aria-hidden="true"></div>' +
       '<div class="lv-party-beams"></div><div class="lv-party-floor"></div><canvas class="lv-party-canvas"></canvas>' +
       '<div class="lv-floaters"></div>' +
       '<div class="lv-party-top">' +
         '<button class="lv-round lv-round-sm" type="button" data-party="back" aria-label="Leave the party">' + ic('back') + '</button>' +
         '<span class="lv-party-live"><i></i><span data-party="count">Party room</span></span>' +
+        '<span class="lv-party-lights" data-party="lights"></span>' +
         '<span style="flex:1"></span>' +
+        '<a class="lv-party-sing" href="' + L.BASE + '/karaoke/sing/' + encodeURIComponent(vid) + '" aria-label="Sing this song, karaoke">' + ic('mic', 2.2) + '<span>Sing it</span></a>' +
         '<button class="lv-round lv-round-sm' + (L.saves.has('track', vid) ? ' is-on' : '') + '" type="button" data-act="save" data-kind="track" data-ref="' + esc(vid) + '" aria-label="Save this track">' + ic(L.saves.has('track', vid) ? 'check' : 'heart', 2.2) + '</button>' +
         '<button class="lv-round lv-round-sm" type="button" data-act="share" aria-label="Invite friends">' + ic('share') + '</button>' +
         '<button class="lv-round lv-round-sm" type="button" data-party="full" aria-label="Full screen">' + ic('full') + '</button>' +
@@ -598,6 +605,8 @@
     var stale = u.qs('body > .lv-party'); if (stale) stale.remove();
     doc.body.appendChild(el);
     doc.documentElement.classList.add('lv-lock', 'lv-party-on');
+    /* the site's own invitations wait until the party is over */
+    if (!global.__cabanaOverlay) global.__cabanaOverlay = 'party';
     requestAnimationFrame(function () { el.classList.add('is-on'); });
     P.stage = true;
     layout();
@@ -628,12 +637,13 @@
       else if (a === 'toggle') { if (!P.track) M.play(vid, queueName, { track: t }); else M.toggle(); }
       else if (a === 'next') M.next();
       else if (a === 'prev') M.prev();
-      else if (a === 'back') { if (history.length > 1 && document.referrer.indexOf(location.host) !== -1) history.back(); else L.go(L.href.tab('music')); }
+      else if (a === 'back') L.back(L.href.tab('music'));
       else if (a === 'full') { try { if (doc.fullscreenElement) doc.exitFullscreen(); else doc.documentElement.requestFullscreen(); } catch (x) {} setTimeout(layout, 300); }
     });
 
     joinRoom(vid);
     startCanvas(el, bpm);
+    startLights(el, vid, bpm);
     var off = L.on('music', function () { if (ctx.alive()) { paintQueue(); } });
     function onKey(e) {
       if (/INPUT|TEXTAREA/.test((e.target && e.target.tagName) || '')) return;
@@ -649,8 +659,10 @@
       el.remove();
       P.stage = false;
       doc.documentElement.classList.remove('lv-lock', 'lv-party-on');
+      if (global.__cabanaOverlay === 'party') global.__cabanaOverlay = null;
       leaveRoom();
       stopCanvas();
+      stopLights();
       try { if (doc.fullscreenElement) doc.exitFullscreen(); } catch (x) {}
       /* Deferred a tick: moving to the next record re-enters the party,
          and the frame should stay on the stage rather than dip. */
@@ -677,6 +689,8 @@
       }).on('broadcast', { event: 'react' }, function (msg) {
         var e = msg && msg.payload && msg.payload.e;
         if (REACTIONS.indexOf(e) !== -1) react(e, false);
+      }).on('broadcast', { event: 'beat' }, function (msg) {
+        beatFromRoom(msg && msg.payload);
       }).subscribe(function (status) {
         if (status === 'SUBSCRIBED') { try { room.track({ at: Date.now() }); } catch (e) {} }
       });
@@ -710,6 +724,102 @@
     }
   }
 
+  /* ── the light show ───────────────────────────────────────────────
+     A WebGL room of light behind the video (cabana-visuals.js, fetched
+     the first time a party opens), locked to the record's own clock:
+     the tempo comes from the record (Deezer knows most), a tap along
+     sets tempo and the downbeat exactly, and "Sync to room" lets the
+     microphone hear it. When someone in the party taps the beat in,
+     everyone's lights move with theirs. Tap the light for a ripple,
+     double tap (or V) for the next scene. */
+  var lights = null, lightPulse = null, beatSent = 0, beatT = null;
+  var tclk = { t: 0, w: 0, vid: null };
+  /* The video's clock, smooth: the player reports a few times a second,
+     and the light wants every frame. */
+  function songClock() {
+    if (!P.yt || !P.ready || !P.yt.getCurrentTime) return null;
+    var w = (global.performance ? performance.now() : Date.now()) / 1000, cur = M.current();
+    var raw;
+    try { raw = P.yt.getCurrentTime(); } catch (e) { return null; }
+    if (!isFinite(raw)) return null;
+    if (!P.playing || tclk.vid !== cur) { tclk.t = raw; tclk.w = w; tclk.vid = cur; return raw; }
+    var pred = tclk.t + (w - tclk.w);
+    if (Math.abs(raw - pred) > 0.2) { tclk.t = raw; tclk.w = w; return raw; }
+    /* a report that has moved on nudges the estimate toward it */
+    tclk.t = pred + (raw - pred) * 0.08; tclk.w = w;
+    return tclk.t;
+  }
+  M.songClock = songClock;
+
+  function startLights(el, vid, bpm) {
+    stopLights();
+    var host = u.qs('.lv-party-light', el), slot = u.qs('[data-party="lights"]', el), ring = u.qs('.lv-party-ring', el);
+    if (!host) return;
+    var my = lights = { vid: vid, vis: null, ctrl: null, dead: false };
+    L.loadScript('/cabana-visuals.js?v=1').then(function () {
+      var V = global.CabanaVisuals;
+      if (my.dead || !V || !V.create) return;
+      var clock = new V.BeatClock({ bpm: bpm, source: 'genre', clock: function () { return M.current() === vid ? songClock() : null; } });
+      var vis = my.vis = V.create(host, {
+        clock: clock, surface: el, calm: .08,
+        onPulse: function (p) {
+          lightPulse = p;
+          if (ring) { ring.style.opacity = (.3 + p * .55).toFixed(3); ring.style.transform = 'scale(' + (1 + p * .012).toFixed(4) + ')'; }
+        }
+      });
+      if (!vis.gl) lightPulse = null;
+      else el.classList.add('is-lit');
+      vis.setPlaying(P.playing && M.current() === vid);
+      my.clock = clock;
+      /* the beat someone set here before, on this device */
+      var saved = L.store.get('lv-beat:' + vid, null);
+      if (saved && saved.bpm >= 60 && saved.bpm <= 200 && isFinite(saved.offset)) clock.set(saved.bpm, saved.offset, 'tap');
+      else {
+        fetch(L.SB_URL + '/functions/v1/karaoke?action=meta&v=' + encodeURIComponent(vid)).then(function (r) { return r.ok ? r.json() : null; }).then(function (m) {
+          if (!my.dead && m && m.bpm && clock.source === 'genre') clock.set(m.bpm, null, 'known');
+        }, function () {});
+      }
+      var cs = getComputedStyle(u.qs('.lv') || doc.body);
+      var a1 = (cs.getPropertyValue('--lv-a1') || '#C8FF3D').trim() || '#C8FF3D', a2 = (cs.getPropertyValue('--lv-a2') || '#2EF2D0').trim() || '#2EF2D0';
+      vis.setColors([a1, a2, '#8B5CFF']);
+      V.paletteFrom(u.ytThumb(vid, 'mqdefault'), [a1, a2, '#8B5CFF']).then(function (c) { if (!my.dead) vis.setColors(c); });
+      if (slot) {
+        my.ctrl = V.controls(vis, { toast: L.toast });
+        slot.appendChild(my.ctrl);
+      }
+      clock.onChange(function () {
+        el.style.setProperty('--beat', Math.max(.4, 60 / clock.bpm).toFixed(3) + 's');
+        if (clock.source !== 'tap') return;
+        L.store.set('lv-beat:' + vid, { bpm: Math.round(clock.bpm * 100) / 100, offset: Math.round(clock.offset * 1000) / 1000 });
+        /* one message when the tapping stops, not one per tap */
+        clearTimeout(beatT);
+        beatT = setTimeout(function () {
+          if (my.dead || !room || roomVid !== vid || Date.now() - beatSent < 1500) return;
+          beatSent = Date.now();
+          try { room.send({ type: 'broadcast', event: 'beat', payload: { bpm: Math.round(clock.bpm * 100) / 100, offset: Math.round(clock.offset * 1000) / 1000 } }); } catch (e) {}
+        }, 900);
+      });
+    }, function () {});
+  }
+  /* A beat from someone else in the room: two numbers, checked. */
+  function beatFromRoom(p) {
+    if (!lights || !lights.clock || !p) return;
+    var bpm = Number(p.bpm), off = Number(p.offset);
+    if (!(bpm >= 60 && bpm <= 200) || !isFinite(off) || Math.abs(off) > 36000) return;
+    if (lights.clock.source === 'listen') return;
+    lights.clock.set(bpm, off, 'crowd');
+    L.toast('Someone in the room tapped in the beat. The lights follow it now.');
+  }
+  function stopLights() {
+    clearTimeout(beatT);
+    if (!lights) return;
+    lights.dead = true;
+    if (lights.ctrl) { try { lights.ctrl.destroy(); } catch (e) {} lights.ctrl.remove(); }
+    if (lights.vis) lights.vis.destroy();
+    lights = null; lightPulse = null;
+  }
+  L.on('music', function () { if (lights && lights.vis) lights.vis.setPlaying(P.playing && M.current() === lights.vid); });
+
   /* Soft light rising through the room, breathing on the tempo. */
   function startCanvas(el, bpm) {
     stopCanvas();
@@ -728,7 +838,7 @@
       canvasT = requestAnimationFrame(frame);
       if (doc.hidden) return;
       var playing = P.playing && P.stage;
-      var t = (now - t0) / 1000, beatPhase = playing ? (Math.sin(t * Math.PI * 2 * (bpm / 60)) + 1) / 2 : .3;
+      var t = (now - t0) / 1000, beatPhase = playing ? (lightPulse != null ? lightPulse : (Math.sin(t * Math.PI * 2 * (bpm / 60)) + 1) / 2) : .3;
       ctx2.clearRect(0, 0, W, H);
       for (var i = 0; i < parts.length; i++) {
         var p = parts[i];
