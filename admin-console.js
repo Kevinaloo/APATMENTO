@@ -954,7 +954,7 @@
      are prefetched once the console is idle, so the first click is warm. */
   var DESK_JS = {
     flights: ['/fd-atlas.js', '/cabana-flights-admin.js'],
-    tours: ['/cabana-tours-admin.js'],
+    tours: ['/cabana-tours-page.js', '/cabana-tours-admin.js', '/cabana-tours-page-admin.js'],
     events: ['/cabana-events-admin.js'],
     move: ['/cabana-rides-admin.js?v=3'],
     offers: ['/cabana-offers.js']

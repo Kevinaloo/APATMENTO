@@ -135,3 +135,70 @@ test('Vercel Hobby cap: still twelve serverless functions or fewer', () => {
   const fns = readdirSync(new URL('../api/', import.meta.url)).filter(f => f.endsWith('.js'));
   assert.ok(fns.length <= 12, fns.join(', '));
 });
+
+/* ── the page the team edits (tour_page_blocks) ─────────────────────── */
+const PAGE_SQL = read('supabase/migrations/20260929090000_tours_page_content.sql');
+function pageDefaults() {
+  const sandbox = { window: {} };
+  // eslint-disable-next-line no-new-func
+  new Function('window', read('cabana-tours-page.js'))(sandbox.window);
+  return sandbox.window.CabanaToursPageDefaults;
+}
+
+test('launch copy in the page and in the migration seed say the same thing', () => {
+  const blocks = pageDefaults();
+  assert.ok(Array.isArray(blocks) && blocks.length >= 8);
+  for (const b of blocks) {
+    assert.match(PAGE_SQL, new RegExp(`\\('${b.id}', '${b.kind}', ${b.position}, ${b.enabled}`), `${b.id} is seeded with the same position and switch`);
+    for (const k of ['title', 'lede', 'eyebrow', 'cta_label']) {
+      if (!b.content[k]) continue;
+      const v = String(b.content[k]).replace(/'/g, "''");
+      assert.ok(PAGE_SQL.includes(`'${v}'`), `${b.id}.${k} differs between cabana-tours-page.js and the seed`);
+    }
+  }
+  assert.equal(blocks.find(b => b.id === 'immersive').enabled, false, 'the 360° room starts switched off');
+});
+
+test('the page table is public to read and admin-only to write', () => {
+  assert.match(PAGE_SQL, /create policy tour_page_blocks_read on public\.tour_page_blocks for select to anon, authenticated using \(true\)/);
+  assert.match(PAGE_SQL, /create policy tour_page_blocks_admin on public\.tour_page_blocks for all to authenticated\s+using \(public\.is_admin\(\)\) with check \(public\.is_admin\(\)\)/);
+  assert.match(PAGE_SQL, /grant select on public\.tour_page_blocks to anon, authenticated;/);
+  assert.match(PAGE_SQL, /constraint tour_page_blocks_single check \(kind = 'collection' or id = kind\)/);
+  assert.match(PAGE_SQL, /update public\.tour_spotlights\s+set status = 'ended'[\s\S]*where kind = 'house' and media_kind in \('art', 'world'\)/, 'the illustrated stand-ins are retired');
+});
+
+test('no stand-in content ships: no built-in slides, drawn scenes or invented listings', () => {
+  const sl = read('cabana-tours-spotlight.js'), kit = read('cabana-tours.js'), home = read('cabana-tours-home.js'), page = read('tours.html');
+  assert.doesNotMatch(sl, /var HOUSE\s*=|sceneGuides|sceneFeatured|sceneWorld|acacia\(/);
+  assert.doesNotMatch(kit, /function acacia|function birds|Masai Mara', 'Nairobi', 'Naivasha'/);
+  assert.doesNotMatch(home, /Dawn with the \*lions\*|ct-board-empty|GLYPH/);
+  assert.doesNotMatch(page, /TouristTrip|Wildbosses/, 'no structured data for tours that do not exist');
+  assert.match(sl, /function coverHTML/, 'with nothing running, the top is the cover');
+});
+
+test('the FAQ schema matches the questions on the page', () => {
+  const page = read('tours.html');
+  const visible = [...page.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1].replace(/&rsquo;/g, '’'));
+  const graph = JSON.parse(page.match(/<!-- CABANA-SEO-GRAPH -->\s*<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+  const faq = graph['@graph'].find(n => n['@type'] === 'FAQPage');
+  assert.deepEqual(faq.mainEntity.map(q => q.name), visible);
+});
+
+test('the console carries the page editor, loaded with the tours desk', () => {
+  const core = read('admin-console.js'), ed = read('cabana-tours-page-admin.js'), adm = read('cabana-tours-admin.js');
+  assert.match(core, /tours: \['\/cabana-tours-page\.js', '\/cabana-tours-admin\.js', '\/cabana-tours-page-admin\.js'\]/);
+  assert.match(adm, /state\.tab === 'page'/);
+  assert.match(ed, /from\('tour_page_blocks'\)\.upsert/);
+  assert.match(ed, /kind: 'house'/);
+  assert.match(ed, /internal\(f\.cta_url\)/, 'slide buttons stay on Cabana');
+});
+
+test('tours pages use Cabana’s own faces: Cabana Display, Geist and Geist Mono', () => {
+  const css = read('cabana-tours-kit.css');
+  assert.match(css, /font-family: 'Cabana Display';\s*src: url\('\/fonts\/cabana-display-soft\.woff2'\)/);
+  assert.match(css, /src: url\('\/fonts\/cabana-display-soft-italic\.woff2'\)/);
+  assert.match(css, /--ct-f: 'Geist'/);
+  assert.match(css, /--ct-flap: 'Geist Mono'/);
+  assert.doesNotMatch(css, /Mona Sans|Instrument Serif|Big Shoulders|font-stretch/);
+  for (const f of ['fonts/cabana-display-soft-italic.woff2', 'assets/fonts/geist-latin.woff2', 'assets/fonts/geist-mono-latin.woff2', 'assets/fonts/geist-OFL.txt']) assert.ok(exists(f), f);
+});

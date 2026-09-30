@@ -16,7 +16,10 @@
   function load() {
     var kit = K(), c = kit && kit.sb();
     if (!c) { S.list = []; paint(); return; }
-    c.rpc('tour_guides_directory').then(function (r) { S.list = r && Array.isArray(r.data) ? r.data : []; paint(); }, function () { S.list = []; paint(); });
+    c.rpc('tour_guides_directory').then(function (r) {
+      // A guide appears once they have a live tour to book.
+      S.list = (r && Array.isArray(r.data) ? r.data : []).filter(function (g) { return Number(g.tours) > 0; }); paint();
+    }, function () { S.list = []; paint(); });
   }
   function toursOf(g) { return K().get().filter(function (t) { return String(t.operator_id) === String(g.id); }); }
   function card(g) {
@@ -27,14 +30,14 @@
     return '<article class="ct-guide ct-rv" id="g-' + esc(g.slug || g.id) + '" data-g="' + esc(g.id) + '">' +
       '<div class="ct-guide-cover">' + cover + '</div><div class="ct-guide-av">' + av + '</div>' +
       '<div class="ct-guide-b">' +
-        '<span class="ct-guide-role">' + (g.persona === 'guide' ? 'Local guide' : 'Tour operator') + (g.county ? ' · ' + esc(g.county) : '') + '</span>' +
-        '<h2 class="ct-guide-n">' + esc(g.name) + (g.verified ? '<span style="color:#0C8F86;display:inline-flex" title="Verified by Cabana">' + I.verified + '</span>' : '') + '</h2>' +
+        '<span class="ct-guide-role">' + (g.persona === 'guide' ? 'Guide' : 'Tour operator') + (g.county ? ' · ' + esc(g.county) : '') + '</span>' +
+        '<h2 class="ct-guide-n">' + esc(g.name) + (g.verified ? '<span style="color:#0C8F86;display:inline-flex" title="Vetted by Cabana">' + I.verified + '</span>' : '') + '</h2>' +
         (g.tagline || g.bio ? '<p class="ct-guide-line" style="-webkit-line-clamp:3">' + esc(g.tagline || g.bio) + '</p>' : '') +
         (langs.length ? '<div class="ct-guide-langs">' + langs.map(function (l) { return '<span>' + esc(l) + '</span>'; }).join('') + '</div>' : '') +
         '<div class="ct-guide-stats"><span><b>' + (g.tours || 0) + '</b>' + (g.tours === 1 ? 'tour' : 'tours') + '</span>' +
-          (g.from_kes ? '<span><b>' + kit.money(g.from_kes).replace('KES ', '') + '</b>from KES</span>' : g.free ? '<span><b>FREE</b>walks</span>' : '') +
+          (g.from_kes ? '<span><b>' + kit.money(g.from_kes).replace('KES ', '') + '</b>from KES</span>' : g.free ? '<span><b>Free</b>walks</span>' : '') +
           ((g.places || []).length ? '<span><b>' + g.places.length + '</b>' + (g.places.length === 1 ? 'place' : 'places') + '</span>' : '') +
-          (g.since ? '<span><b>' + esc(g.since) + '</b>on Cabana</span>' : '') + '</div>' +
+          (g.since ? '<span><b>' + esc(g.since) + '</b>joined</span>' : '') + '</div>' +
         (tours.length ? '<div class="ct-guide-tours">' + tours.slice(0, 3).map(function (t) {
           var d = kit.next(t.id), p = kit.price(t);
           return '<button class="ct-guide-tour" type="button" data-ct-open="' + esc(t.id) + '"><span class="m">' + kit.cover(t, '') + '</span><span class="t"><b>' + esc(t.title) + '</b><small>' + esc([p.v, d ? 'Next ' + kit.fmtDay(d.departs_on) : (t.schedule_type === 'on_request' ? 'On request' : '')].filter(Boolean).join(' · ')) + '</small></span></button>';
@@ -62,8 +65,8 @@
     });
     if (cnt) cnt.innerHTML = '<b>' + res.length + '</b>' + (res.length === 1 ? 'guide or operator' : 'guides and operators');
     box.innerHTML = res.length ? res.map(card).join('')
-      : '<div class="ct-blank"><div class="ct-blank-mark">' + kit.icon.users + '</div><h3>' + (S.list.length ? 'No one matches that yet' : 'The first guides are being checked') + '</h3><p>' +
-        (S.list.length ? 'Try another place or language.' : 'Every guide and operator on Cabana is checked by a person before they appear here.') + '</p><div class="ct-blank-acts"><a class="ct-btn ct-btn-sun" href="/list-your-tour">Join as a guide</a></div></div>';
+      : '<div class="ct-blank"><div class="ct-blank-mark">' + kit.icon.users + '</div><h3>' + (S.list.length ? 'No guides match that search' : 'The first guides are on their way') + '</h3><p>' +
+        (S.list.length ? 'Try another name, place or language.' : 'Every guide and operator is vetted by our team before they appear here.') + '</p><div class="ct-blank-acts"><a class="ct-btn ct-btn-sun" href="/list-your-tour">List your tours</a></div></div>';
     kit.reveal(box);
     lightFromHash();
   }

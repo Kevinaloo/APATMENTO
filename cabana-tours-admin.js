@@ -9,6 +9,9 @@
      · publish Cabana's own tours      (created straight to published)
      · run the Spotlight at the top of /tours: review paid slides,
        feature tours for free, pause or end anything, set the prices
+     · write the page around the tours (Page tab, in
+       cabana-tours-page-admin.js): cover, Cabana slides, sections,
+       categories and collections
 
    Writes are gated by RLS on is_admin(), so a non-admin reaching this
    file gets nothing. The UI gate is a convenience, not the security.
@@ -206,12 +209,42 @@
     '</tr>';
   }
 
+  var TAB_LABEL = { pending: 'Pending', published: 'Published', paused: 'Paused', draft: 'Draft', rejected: 'Rejected', spotlight: 'Spotlight', page: 'Page', all: 'All' };
+  function tabsHTML() {
+    var c = counts();
+    return '<div class="tabs" id="tr-tabs">' +
+      ['pending', 'published', 'paused', 'draft', 'rejected', 'spotlight', 'page', 'all'].map(function (k) {
+        var n = k === 'all' ? state.tours.length : k === 'spotlight' ? spotReview().length : k === 'page' ? '' : (c[k] || 0);
+        return '<button class="tab' + (state.tab === k ? ' on' : '') + '" data-tab="' + k + '">' + TAB_LABEL[k] +
+               (n === '' ? '' : ' <span class="mono">' + n + '</span>') + '</button>';
+      }).join('') + '</div>';
+  }
+  function wireTabs(host) {
+    host.querySelectorAll('[data-tab]').forEach(function (b) {
+      b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); });
+    });
+  }
+
+  /* The page itself: cover, Cabana's slides, sections, categories and
+     collections. The editor lives in cabana-tours-page-admin.js. */
+  function renderPageTab() {
+    var host = $('s-tours'); if (!host) return;
+    host.innerHTML =
+      '<div class="hd"><div><div class="card-t">The tours page</div>' +
+        '<div class="card-s">What travellers see at cabana.africa/tours around the tours themselves: the cover, Cabana’s own Spotlight slides, and every section below. Saving is live.</div></div>' +
+        '<div class="hd-act"><a class="btn btn-g" href="/tours" target="_blank" rel="noopener">Open the page ↗</a></div></div>' +
+      tabsHTML() + '<div id="tp-root"></div>';
+    wireTabs(host);
+    if (window.CabanaToursPage) window.CabanaToursPage.mount($('tp-root'));
+    else $('tp-root').innerHTML = '<div class="card"><div class="empty"><div class="empty-t">The page editor did not load</div><div class="empty-s">Reload the console and try again.</div></div></div>';
+  }
+
   function render() {
     var host = $('s-tours');
     if (!host) return;
-    var c = counts();
 
     if (state.tab === 'spotlight') { renderSpotTab(); return; }
+    if (state.tab === 'page') { renderPageTab(); return; }
 
     var list = state.tours.filter(function (t) {
       return state.tab === 'all' ? true : t.status === state.tab;
@@ -223,16 +256,7 @@
         '<div class="hd-act"><button class="btn btn-p" id="tr-new">+ New Cabana tour</button></div>' +
       '</div>' +
 
-      '<div class="tabs" id="tr-tabs">' +
-        ['pending','published','paused','draft','rejected','spotlight','all'].map(function (k) {
-          var n = k === 'all' ? state.tours.length
-                : k === 'spotlight' ? spotReview().length
-                : (c[k] || 0);
-          return '<button class="tab' + (state.tab === k ? ' on' : '') + '" data-tab="' + k + '">' +
-                 k.charAt(0).toUpperCase() + k.slice(1) +
-                 ' <span class="mono">' + n + '</span></button>';
-        }).join('') +
-      '</div>' +
+      tabsHTML() +
 
       '<div class="card"><table class="tbl"><thead><tr>' +
         '<th>Tour</th><th>Operator</th><th>Price</th><th>Status</th><th></th>' +
@@ -250,9 +274,7 @@
       '<div id="tr-ops"></div>' +
       '<div id="tr-form"></div>';
 
-    host.querySelectorAll('[data-tab]').forEach(function (b) {
-      b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); });
-    });
+    wireTabs(host);
     host.querySelectorAll('[data-act]').forEach(function (b) {
       b.addEventListener('click', function () {
         var id = b.getAttribute('data-id'), act = b.getAttribute('data-act');
@@ -318,17 +340,13 @@
     var published = state.tours.filter(function (t) { return t.status === 'published'; });
     host.innerHTML =
       '<div class="hd"><div><div class="card-t">The Spotlight</div>' +
-        '<div class="card-s">The full-screen slideshow at the top of cabana.africa/tours. Sponsored slides are paid for by guides and operators and wait here for a yes or no; approving a late one moves its window so they lose no days. Refusing a paid one turns the payment into Cabana credit.</div></div>' +
+        '<div class="card-s">The full-screen slideshow at the top of cabana.africa/tours. Guides and operators pay for sponsored slides, which wait here for a yes or no; approving a late one moves its dates so they lose no days, and refusing a paid one turns the payment into Cabana credit. Cabana’s own slides are made under Page.</div></div>' +
         '<div class="hd-act"><button class="btn btn-p" id="tr-new">+ New Cabana tour</button></div></div>' +
-      '<div class="tabs" id="tr-tabs">' +
-        ['pending','published','paused','draft','rejected','spotlight','all'].map(function (k) {
-          var n = k === 'all' ? state.tours.length : k === 'spotlight' ? review.length : (counts()[k] || 0);
-          return '<button class="tab' + (state.tab === k ? ' on' : '') + '" data-tab="' + k + '">' + k.charAt(0).toUpperCase() + k.slice(1) + ' <span class="mono">' + n + '</span></button>';
-        }).join('') + '</div>' +
+      tabsHTML() +
       (state.spots == null ? '<div class="card"><div class="skel" style="height:64px"></div></div>' :
         spotTable('Waiting for review', 'Paid in full. Check the media, the words and the tour, then decide.', review, 'Nothing waiting. Paid Spotlights land here.') +
         spotTable('Running and paused', '', running, 'Nothing running.') +
-        '<div class="card" style="margin-top:18px;"><div class="card-t">Feature a tour for free</div><div class="card-s">Puts a published tour in the Spotlight as a Cabana pick, behind any sponsored slides, for 30 days.</div>' +
+        '<div class="card" style="margin-top:18px;"><div class="card-t">Feature a tour for free</div><div class="card-s">Puts a published tour in the Spotlight as a Cabana pick, after any sponsored slides, for 30 days. The tour needs a photo.</div>' +
           '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px"><select class="inp" id="sp-tour" style="min-width:280px">' +
           published.map(function (t) { return '<option value="' + t.id + '">' + esc(t.title) + '</option>'; }).join('') + '</select>' +
           '<button class="btn btn-p btn-sm" id="sp-feature"' + (published.length ? '' : ' disabled') + '>Feature it</button></div></div>' +
@@ -341,7 +359,7 @@
           '</div><button class="btn btn-g btn-sm" id="sp-save" style="margin-top:12px">Save</button></div>' +
         spotTable('Recent history', 'Unpaid checkouts, refusals and ended slides.', other, 'Nothing yet.')) +
       '<div id="tr-ops"></div><div id="tr-form"></div>';
-    host.querySelectorAll('[data-tab]').forEach(function (b) { b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); }); });
+    wireTabs(host);
     host.querySelectorAll('[data-spa]').forEach(function (b) {
       b.addEventListener('click', function () {
         var act = b.getAttribute('data-spa'), note = null;
@@ -359,11 +377,12 @@
     if (fb) fb.addEventListener('click', function () {
       var id = $('sp-tour').value, t = state.tours.filter(function (x) { return String(x.id) === String(id); })[0]; if (!t) return;
       var cover = t.cover_url || arr(t.photos)[0] || '';
+      if (!cover && !t.showcase_video) { toast('Add a photo to this tour first. The Spotlight never shows a tour without one.'); return; }
       fb.disabled = true;
       client().from('tour_spotlights').insert({
         kind: 'tour', status: 'approved', tour_id: t.id, operator_id: t.operator_id || null,
-        media_kind: t.showcase_video ? 'video' : (cover ? 'image' : 'art'), media_url: t.showcase_video || cover || null, poster_url: t.video_poster || cover || null,
-        art: 'savanna', kicker: 'Featured by Cabana', headline: t.showcase_headline || t.title, subline: t.summary || null,
+        media_kind: t.showcase_video ? 'video' : 'image', media_url: t.showcase_video || cover, poster_url: t.video_poster || cover || null,
+        kicker: 'Featured by Cabana', headline: t.showcase_headline || t.title, subline: t.summary || null,
         starts_at: new Date().toISOString(), ends_at: new Date(Date.now() + 30 * 864e5).toISOString(), priority: 5
       }).then(function (r) { fb.disabled = false; if (r && r.error) toast(r.error.message); else { toast('Featured for 30 days'); loadSpots(); } }, function () { fb.disabled = false; toast('Could not feature'); });
     });

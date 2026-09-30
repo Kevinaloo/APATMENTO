@@ -68,7 +68,7 @@
   }
   function head(t, kick) {
     var kit = K();
-    return '<div class="ct-bk-head"><small>' + kit.esc(kick || 'Boarding pass') + '</small><h3>' + kit.esc(t.title) + '</h3>' +
+    return '<div class="ct-bk-head"><small>' + kit.esc(kick || 'Book this tour') + '</small><h3>' + kit.esc(t.title) + '</h3>' +
       '<button class="ct-sheet-close" type="button" data-bk-close aria-label="Close">' + kit.icon.close + '</button></div>';
   }
 
@@ -105,7 +105,7 @@
     if (!u) {
       var next = '/tours?book=' + encodeURIComponent(t.id) + (o.date ? '&date=' + encodeURIComponent(o.date) : '') + (o.people ? '&people=' + o.people : '');
       show(head(t, 'Almost there') + '<div class="ct-bk-b"><div class="ct-note">' + kit.icon.shield +
-        '<span>Sign in to book. It keeps your booking, your chat with the guide and your receipt in one place, and your deposit protected.</span></div>' +
+        '<span>Sign in to book. Your booking, your messages with the guide and your receipt stay together in your account.</span></div>' +
         '<a class="ct-btn ct-btn-sun ct-btn-block" href="/auth.html?next=' + encodeURIComponent(next) + '">Sign in to book</a>' +
         '<button class="ct-btn ct-btn-block" type="button" data-bk-close>Not now</button></div>');
       return;
@@ -136,9 +136,9 @@
       }).join('') + '</div>';
     } else if (t.schedule_type === 'daily' || t.schedule_type === 'on_request' || !t.schedule_type) {
       dateUI = '<input class="ct-input" type="date" data-bk-input min="' + esc(minDay) + '" value="' + esc(S.date || '') + '" aria-label="Tour date"/>' +
-        (t.schedule_type === 'on_request' ? '<div class="ct-note" style="margin-top:10px">' + I.chat + '<span>This tour runs on request. Pick your day; if it does not suit the guide they will say so in your messages, and you are refunded in full.</span></div>' : '');
+        (t.schedule_type === 'on_request' ? '<div class="ct-note" style="margin-top:10px">' + I.chat + '<span>This tour runs on request. Choose your date; if the guide can’t make it, they’ll tell you in your messages and you’ll get a full refund.</span></div>' : '');
     } else {
-      dateUI = '<div class="ct-note warn">' + I.cal + '<span>No departures are open for booking right now. Ask the guide when the next one runs.</span></div>' +
+      dateUI = '<div class="ct-note warn">' + I.cal + '<span>There are no dates open for booking right now. Message the guide to ask when it runs next.</span></div>' +
         '<button class="ct-btn ct-btn-block" type="button" data-bk-msg style="margin-top:10px">' + I.chat + 'Message the guide</button>';
     }
     var dep = S.deps.filter(function (d) { return d.departs_on === S.date; })[0];
@@ -150,10 +150,10 @@
         : '<div class="ct-note">' + I.bolt + '<span>The guide sent you a private offer for <b>' + esc(kit.fmtDay(o.tour_date)) + ', ' + o.people + (o.people === 1 ? ' person' : ' people') + '</b>. <button type="button" data-bk-useoffer style="background:none;border:0;color:var(--ct-turq);font:inherit;font-weight:700;cursor:pointer;padding:0">Use it</button></span></div>';
     }
     var phone = K().esc(readPhone());
-    var html = head(t, 'Boarding pass · ' + (t.destination || 'Cabana Tours')) +
+    var html = head(t, 'Booking · ' + (t.destination || 'Cabana Tours')) +
       '<div class="ct-bk-b">' +
         '<div><div class="ct-bk-l">When</div>' + dateUI + '</div>' +
-        (S.date && (S.deps.length || t.schedule_type !== 'fixed') ? '<div><div class="ct-bk-l">Who’s coming</div><div class="ct-step"><span style="font:600 14px var(--ct-f);color:var(--ct-cream-2)">' + (t.price_basis === 'per_group' ? 'People in your group' : 'Travellers') + '</span>' +
+        (S.date && (S.deps.length || t.schedule_type !== 'fixed') ? '<div><div class="ct-bk-l">How many people</div><div class="ct-step"><span style="font:600 14px var(--ct-f);color:var(--ct-cream-2)">' + (t.price_basis === 'per_group' ? 'People in your group' : 'Travellers') + '</span>' +
           '<span class="ct-step-v"><button type="button" data-bk-n="-1" aria-label="One fewer"' + (S.people <= lim.min ? ' disabled' : '') + '>−</button><b aria-live="polite">' + S.people + '</b><button type="button" data-bk-n="1" aria-label="One more"' + (S.people >= lim.max ? ' disabled' : '') + '>+</button></span></div>' +
           (lim.min > 1 ? '<div style="margin-top:8px;font:500 12px var(--ct-f);color:var(--ct-cream-3)">This tour runs for groups of ' + lim.min + ' or more.</div>' : '') + '</div>' : '') +
         offerNote +
@@ -242,12 +242,12 @@
   function done(b, pending, msg) {
     var kit = K(), t = S.t, I = kit.icon, esc = kit.esc;
     show('<div class="ct-bk-done"><div class="stamp">' + (pending ? I.clock : I.check) + '</div>' +
-      '<h3>' + (pending ? 'Your place is held' : Number(b.grand_total) > 0 ? 'You’re going.' : 'You’re on the list.') + '</h3>' +
+      '<h3>' + (pending ? 'Your place is held' : Number(b.grand_total) > 0 ? 'You’re booked.' : 'Your place is reserved.') + '</h3>' +
       '<p>' + esc(msg || (t.title + ' · ' + kit.fmtDay(b.tour_date) + (t.departure_time ? ' at ' + kit.fmtTime(t.departure_time) : '') + ' · ' + b.num_people + (b.num_people === 1 ? ' person.' : ' people.') +
         ' The guide’s number and meeting details are now in your booking and your messages.')) + '</p>' +
       '<div class="acts"><button class="ct-btn ct-btn-sweep ct-btn-block" type="button" data-bk-chat>' + I.chat + 'Message your guide</button>' +
       '<a class="ct-btn ct-btn-block" href="/my-bookings.html">My bookings</a>' +
-      '<button class="ct-btn ct-btn-s ct-btn-block" type="button" data-bk-close>Keep exploring</button></div></div>');
+      '<button class="ct-btn ct-btn-s ct-btn-block" type="button" data-bk-close>Back to tours</button></div></div>');
     var r = root(), ch = $('[data-bk-chat]', r);
     if (ch) ch.addEventListener('click', function () {
       close();

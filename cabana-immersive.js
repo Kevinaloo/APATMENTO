@@ -522,6 +522,9 @@
   function release(who) { if (global.__cabanaOverlay === who) global.__cabanaOverlay = null; }
   function showBanner() {
     if (bannerShown || P || othersBusy()) return;
+    // The tours team can switch the room off on /tours; then it stays quiet.
+    var sec = doc.getElementById('immersive');
+    if (sec && (sec.getAttribute('data-off') === '1' || (sec.hidden && doc.body && doc.body.classList.contains('ct-x')))) return;
     bannerShown = true;
     store(LS.banner, Date.now());
     claim('immersive-banner');

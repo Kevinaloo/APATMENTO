@@ -4,14 +4,16 @@
    Shared by /tours, /tours-catalogue, /tour-guides and /tours-studio.
    Owns: the catalogue in memory, real departures, saved tours (synced
    to the account, merged from this device on sign-in), the header
-   (tabs, saved, messages, search), the tour sheet, countdowns and the
-   illustrated covers that stand in for a missing photo.
+   (tabs, saved, messages, search), the tour sheet, countdowns, the
+   page content the Cabana team edits in the console (tour_page_blocks),
+   and the contour plates that stand in for a missing photo.
 
    Rules this file keeps:
      · No invented numbers. A countdown is to a departure the database
        returned; a save count shows only once it is real and worth it.
-     · No hotlinked media. Covers are the operator's own uploads; a tour
-       without one gets a drawing made here, not someone else's photo.
+     · No hotlinked media and no stand-in pictures. Covers are the
+       operator's own uploads; a tour without one gets an abstract
+       contour plate in its category's colours, never a fake scene.
      · Nothing here decides money or access. Prices, offers, seats and
        contact rules are re-checked by Postgres on every write.
 
@@ -123,16 +125,19 @@
   };
 
   /* ── what kind of tour is this ───────────────────────────────────── */
+  /* Names, lines and photos are edited in the console (Tours → Page →
+     Categories) and merged in when the page content arrives. */
   var CATS = {
-    'day-safari': { name: 'Day safaris', blurb: 'Out at dawn, back by dark', a: '#FFB020', b: '#FF5A36', scene: 'savanna' },
-    'big-safari': { name: 'Multi-day safaris', blurb: 'Camps, crossings, the long light', a: '#FF6FA8', b: '#6A2BD8', scene: 'savanna' },
-    'day-trip': { name: 'Day trips', blurb: 'Lakes, gorges, out and back', a: '#12E0D0', b: '#1B7CF0', scene: 'lake' },
-    'city-tour': { name: 'City walks', blurb: 'Streets, with the people who live on them', a: '#3B5BFF', b: '#B98CFF', scene: 'city' },
-    'adventure': { name: 'Adventure', blurb: 'Hikes, climbs and the Rift', a: '#3EE08F', b: '#0B6E63', scene: 'peaks' },
-    'culture': { name: 'Culture & community', blurb: 'Markets, music, craft, history', a: '#B98CFF', b: '#FF6FA8', scene: 'culture' },
-    'beach': { name: 'Coast & water', blurb: 'Dhows, reefs and island light', a: '#12E0D0', b: '#3B5BFF', scene: 'coast' },
-    'expedition': { name: 'Expeditions', blurb: 'Four days and further', a: '#FF5A36', b: '#3B1C4A', scene: 'peaks' }
+    'day-safari': { name: 'Day safaris', blurb: 'Game drives you can fit between breakfast and dinner.', a: '#FFB020', b: '#FF5A36', scene: 'savanna', image: null },
+    'big-safari': { name: 'Multi-day safaris', blurb: 'The Mara, Amboseli and Tsavo, with nights in camp.', a: '#FF6FA8', b: '#6A2BD8', scene: 'savanna', image: null },
+    'day-trip': { name: 'Day trips', blurb: 'Lakes, gorges and hills a short drive from the city.', a: '#12E0D0', b: '#1B7CF0', scene: 'lake', image: null },
+    'city-tour': { name: 'City walks', blurb: 'Food, history, art and nightlife, on foot with a local.', a: '#3B5BFF', b: '#B98CFF', scene: 'city', image: null },
+    'adventure': { name: 'Adventure', blurb: 'Hikes, climbs, cycling and white water.', a: '#3EE08F', b: '#0B6E63', scene: 'peaks', image: null },
+    'culture': { name: 'Culture & community', blurb: 'Markets, music and craft, and the people behind them.', a: '#B98CFF', b: '#FF6FA8', scene: 'culture', image: null },
+    'beach': { name: 'Coast & water', blurb: 'Dhows, reefs, islands and long afternoons by the sea.', a: '#12E0D0', b: '#3B5BFF', scene: 'coast', image: null },
+    'expedition': { name: 'Expeditions', blurb: 'Four days or more, for the big mountains and far corners.', a: '#FF5A36', b: '#3B1C4A', scene: 'peaks', image: null }
   };
+  var CAT_ORDER = ['day-safari', 'big-safari', 'day-trip', 'city-tour', 'adventure', 'culture', 'beach', 'expedition'];
   var ACCENTS = ['#12E0D0', '#3B5BFF', '#B98CFF', '#FF6FA8', '#FFB020', '#3EE08F'];
   function accentOf(t) { return ACCENTS[hash((t && t.id) || 'x') % ACCENTS.length]; }
   function catOf(t) { return CATS[t && t.category] || null; }
@@ -157,6 +162,8 @@
     if (pick.length < 4 && words.length > 1) pick = words[0];
     return pick.replace(/'/g, '').toUpperCase().slice(0, 8) || 'TOUR';
   }
+  /* The place a pass is headed, set large: "Naivasha", not "NAIVASHA". */
+  function placeName(t) { var c = codeOf(t).toLowerCase(); return c.charAt(0).toUpperCase() + c.slice(1); }
   function priceOf(t) {
     var free = Number(t.price_kes) === 0;
     return { free: free, v: free ? 'Free' : money(t.price_kes), u: free ? 'pay what you like' : (t.price_basis === 'per_group' ? 'per group' : 'per person') };
@@ -168,85 +175,41 @@
     return (p === 'Guide' ? 'Guided by ' : 'By ') + (t.operator_name || 'a local operator');
   }
 
-  /* ═══ ILLUSTRATED COVERS ════════════════════════════════════════════
-     A tour without a photo still gets a picture of the kind of place it
-     goes: savanna, lake, city, peaks, coast or a patterned culture
-     scene, coloured and composed from its own id so no two match. */
+  /* ═══ CONTOUR PLATES ══════════════════════════════════════════════
+     What a tour shows until its operator uploads a photo, and the
+     quiet background behind a few headers: the category's colours and
+     a set of contour lines, like the terrain on a walking map. Drawn
+     from the tour's own id, so no two are the same. Never a picture of
+     a place, because a made-up picture of a place is a promise. */
+  var PLATE = {
+    savanna: ['#1F0B17', '#6B2330', '#FFB020'],
+    lake: ['#06152B', '#0E466E', '#12E0D0'],
+    city: ['#0B0918', '#28206E', '#B98CFF'],
+    peaks: ['#0C0A22', '#2B2766', '#FFE0B8'],
+    coast: ['#0A1A33', '#145A83', '#FF6FA8'],
+    culture: ['#1A0A2A', '#521C74', '#FF6FA8']
+  };
   function art(seed, scene, o) {
     o = o || {};
-    var r = rng(seed + ':' + scene), W = o.w || 400, H = o.h || 500, id = 'a' + (hash(seed + scene) % 1e8);
-    var pal = {
-      savanna: ['#2B1140', '#8C2F5C', '#FF7A3A', '#FFC15E', '#1A0D24', '#3A1733'],
-      lake: ['#0B1C3F', '#1F5FA8', '#46D6D0', '#FFD08A', '#08142B', '#0E2E55'],
-      city: ['#0B0918', '#28206A', '#6A4BFF', '#12E0D0', '#07061A', '#1A1545'],
-      peaks: ['#130F33', '#3C2F8F', '#B98CFF', '#FFE6C2', '#0C0A22', '#231C55'],
-      coast: ['#16134A', '#FF6FA8', '#FFB020', '#12E0D0', '#0B2B4C', '#1270A0'],
-      culture: ['#1D0B2E', '#7A2BD8', '#FF6FA8', '#FFB020', '#12E0D0', '#3B5BFF']
-    }[scene] || ['#0B0918', '#3B5BFF', '#B98CFF', '#FFB020', '#07061A', '#1A1545'];
-    var sky = '<linearGradient id="' + id + 's" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + pal[0] + '"/><stop offset=".55" stop-color="' + pal[1] + '"/><stop offset="1" stop-color="' + pal[2] + '"/></linearGradient>';
-    var sunG = '<radialGradient id="' + id + 'g"><stop offset="0" stop-color="#FFF4D6"/><stop offset=".45" stop-color="' + pal[3] + '"/><stop offset="1" stop-color="' + pal[3] + '" stop-opacity="0"/></radialGradient>';
-    var sx = W * (0.25 + r() * 0.5), sy = H * (0.36 + r() * 0.12), sr = W * (0.12 + r() * 0.08);
-    var body = '<rect width="' + W + '" height="' + H + '" fill="url(#' + id + 's)"/>';
-    function ridge(base, amp, col, n, cls) {
-      var d = 'M0 ' + H + ' L0 ' + base;
-      for (var i = 0; i <= n; i++) { var x = (i / n) * W, y = base - Math.sin(i * 1.3 + r() * 2) * amp * (0.4 + r() * 0.6); d += ' Q' + (x - W / n / 2) + ' ' + (y - amp * r()) + ' ' + x + ' ' + y; }
-      return '<path class="' + (cls || '') + '" d="' + d + ' L' + W + ' ' + H + ' Z" fill="' + col + '"/>';
-    }
-    function stars(n) { var s = ''; for (var i = 0; i < n; i++) s += '<circle class="twinkle" style="animation-delay:' + (r() * 3).toFixed(2) + 's" cx="' + (r() * W).toFixed(1) + '" cy="' + (r() * H * 0.45).toFixed(1) + '" r="' + (0.6 + r() * 1.3).toFixed(2) + '" fill="#FFF6E0"/>'; return s; }
-    function acacia(x, y, s, col) {
-      return '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') scale(' + s.toFixed(2) + ')" fill="' + col + '">' +
-        '<path d="M-2 0 L-1 -40 Q-14 -52 -30 -56 L-26 -60 Q-8 -56 0 -46 Q6 -58 26 -62 L28 -58 Q10 -52 2 -40 L3 0 Z"/>' +
-        '<ellipse cx="0" cy="-62" rx="58" ry="11"/><ellipse cx="-22" cy="-66" rx="30" ry="8"/><ellipse cx="24" cy="-67" rx="28" ry="7"/></g>';
-    }
-    function birds(n, col) { var s = '<g class="fly" style="animation-duration:' + (18 + r() * 12).toFixed(1) + 's">'; for (var i = 0; i < n; i++) { var bx = r() * W * 0.4, by = H * (0.16 + r() * 0.18); s += '<path d="M' + bx + ' ' + by + ' q6 -6 12 0 q6 -6 12 0" fill="none" stroke="' + col + '" stroke-width="1.6" stroke-linecap="round"/>'; } return s + '</g>'; }
-
-    if (scene === 'city') {
-      body += stars(40) + '<circle cx="' + sx + '" cy="' + (sy - 40) + '" r="' + (sr * 0.55) + '" fill="#FFF3D1" opacity=".9"/>';
-      var x = 0, sky2 = '';
-      while (x < W) {
-        var bw = 22 + r() * 46, bh = H * (0.18 + r() * 0.34), top = H - bh;
-        sky2 += '<rect x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) + '" fill="' + (r() > .5 ? pal[4] : pal[5]) + '"/>';
-        for (var wy = top + 10; wy < H - 10; wy += 13) for (var wx = x + 5; wx < x + bw - 6; wx += 9) if (r() > .72) sky2 += '<rect class="twinkle" style="animation-delay:' + (r() * 3).toFixed(2) + 's;animation-duration:' + (3 + r() * 5).toFixed(1) + 's" x="' + wx.toFixed(1) + '" y="' + wy.toFixed(1) + '" width="4" height="6" fill="' + (r() > .5 ? pal[3] : '#FFD27A') + '"/>';
-        x += bw + 2;
+    var r = rng(seed + ':' + scene), W = o.w || 400, H = o.h || 500, id = 'p' + (hash(seed + scene) % 1e8);
+    var pal = PLATE[scene] || PLATE.city;
+    var M = Math.max(W, H), cx = W * (0.28 + r() * 0.44), cy = H * (0.3 + r() * 0.4);
+    var base = M * (0.05 + r() * 0.03), gap = M * (0.058 + r() * 0.02), phase = r() * 6.283, wob = 0.16 + r() * 0.12;
+    var sx = 1.05 + r() * 0.25, sy = 0.8 + r() * 0.2, lines = '';
+    for (var k = 0; k < 14; k++) {
+      var rad = base + k * gap, d = '';
+      for (var i = 0; i <= 64; i++) {
+        var a = (i / 64) * 6.2832;
+        var rr = rad * (1 + wob * 0.55 * Math.sin(a * 3 + phase + k * 0.33) + wob * 0.3 * Math.sin(a * 5 - phase * 1.7 + k * 0.21));
+        d += (i ? 'L' : 'M') + (cx + Math.cos(a) * rr * sx).toFixed(1) + ' ' + (cy + Math.sin(a) * rr * sy).toFixed(1);
       }
-      body += sky2 + '<rect y="' + (H * .93) + '" width="' + W + '" height="' + (H * .07) + '" fill="' + pal[4] + '"/>';
-    } else if (scene === 'coast') {
-      body += '<circle cx="' + sx + '" cy="' + (sy + 20) + '" r="' + sr * 2.2 + '" fill="url(#' + id + 'g)"/>' + '<circle cx="' + sx + '" cy="' + (sy + 20) + '" r="' + sr * 0.8 + '" fill="#FFF1C9"/>';
-      var sea = H * 0.62;
-      body += '<rect y="' + sea + '" width="' + W + '" height="' + (H - sea) + '" fill="' + pal[4] + '"/>';
-      for (var i = 0; i < 9; i++) body += '<rect class="drift" x="' + (sx - 80 + r() * 60) + '" y="' + (sea + 8 + i * 14) + '" width="' + (60 + r() * 100) + '" height="2.4" rx="1.2" fill="#FFD9A0" opacity="' + (0.7 - i * 0.07).toFixed(2) + '"/>';
-      body += '<g class="drift-2"><path d="M' + (W * .18) + ' ' + (sea + 6) + ' l40 0 l-6 10 l-28 0 Z" fill="#150F2E"/><path d="M' + (W * .2 + 12) + ' ' + (sea + 4) + ' L' + (W * .2 + 12) + ' ' + (sea - 50) + ' L' + (W * .2 + 40) + ' ' + (sea - 4) + ' Z" fill="#150F2E"/></g>';
-      body += '<path d="M' + (W * .82) + ' ' + H + ' q-6 -120 14 -210" fill="none" stroke="#120C26" stroke-width="7" stroke-linecap="round"/>';
-      for (var p = 0; p < 6; p++) { var a = -2.6 + p * 0.55; body += '<path d="M' + (W * .82 + 14) + ' ' + (H - 210) + ' q' + (Math.cos(a) * 50) + ' ' + (Math.sin(a) * 30 - 10) + ' ' + (Math.cos(a) * 80) + ' ' + (Math.sin(a) * 40 + 30) + '" fill="none" stroke="#120C26" stroke-width="6" stroke-linecap="round"/>'; }
-      body += birds(3, '#2A1646');
-    } else if (scene === 'culture') {
-      body = '<rect width="' + W + '" height="' + H + '" fill="' + pal[0] + '"/><circle cx="' + sx + '" cy="' + sy + '" r="' + (W * .7) + '" fill="url(#' + id + 'g)" opacity=".35"/>';
-      var cols = [pal[1], pal[2], pal[3], pal[4], pal[5]];
-      for (var row = 0; row < 7; row++) for (var c = 0; c < 5; c++) {
-        var cx = c * (W / 4), cy = row * (H / 6), rr = W / 7 + r() * 16, col = cols[Math.floor(r() * cols.length)];
-        body += '<circle class="drift" cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + rr.toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="' + (8 + r() * 10).toFixed(1) + '" opacity=".5"/>';
-        if (r() > .55) body += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (rr * .35).toFixed(1) + '" fill="' + cols[Math.floor(r() * cols.length)] + '" opacity=".72"/>';
-      }
-    } else {
-      body += (scene === 'peaks' ? stars(30) : '') + '<circle class="rise" cx="' + sx + '" cy="' + sy + '" r="' + sr * 2.4 + '" fill="url(#' + id + 'g)"/><circle class="rise" cx="' + sx + '" cy="' + sy + '" r="' + sr * .78 + '" fill="#FFF1C9"/>';
-      if (scene === 'peaks') {
-        var pk = 'M0 ' + H * .75, n = 5;
-        for (var k = 0; k <= n; k++) { var px = (k / n) * W; pk += ' L' + (px - W / n / 2) + ' ' + (H * (.32 + r() * .2)) + ' L' + px + ' ' + (H * (.62 + r() * .1)); }
-        body += '<path d="' + pk + ' L' + W + ' ' + H + ' L0 ' + H + ' Z" fill="' + pal[5] + '"/>';
-        body += ridge(H * .8, 24, pal[4], 6);
-      } else {
-        body += ridge(H * .66, 26, pal[5], 5, 'drift-2') + ridge(H * .76, 18, pal[4], 7);
-        if (scene === 'lake') {
-          body += '<rect y="' + (H * .8) + '" width="' + W + '" height="' + (H * .2) + '" fill="' + pal[1] + '" opacity=".55"/>';
-          for (var l = 0; l < 6; l++) body += '<rect class="drift" x="' + (sx - 60 + r() * 40) + '" y="' + (H * .82 + l * 10) + '" width="' + (50 + r() * 80) + '" height="2" fill="#FFE0A8" opacity="' + (0.6 - l * 0.08).toFixed(2) + '"/>';
-          body += birds(4, '#101B3A');
-        } else {
-          body += acacia(W * (.2 + r() * .15), H * .82, .9 + r() * .5, pal[4]) + acacia(W * (.66 + r() * .2), H * .8, .6 + r() * .4, pal[4]);
-          body += birds(3, '#1A0D24');
-        }
-      }
+      var strong = k % 4 === 3;
+      lines += '<path d="' + d + 'Z" fill="none" stroke="rgba(255,248,239,' + Math.max(0.05, (strong ? 0.26 : 0.15) - k * 0.008).toFixed(3) + ')" stroke-width="' + (strong ? 1.5 : 0.9) + '"/>';
     }
-    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + esc(o.label || 'Illustration') + '"><defs>' + sky + sunG + '</defs>' + body + '</svg>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + esc(o.label || '') + '"><defs>' +
+      '<linearGradient id="' + id + 'b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + pal[0] + '"/><stop offset="1" stop-color="' + pal[1] + '"/></linearGradient>' +
+      '<radialGradient id="' + id + 'g" cx="' + (cx / W).toFixed(3) + '" cy="' + (cy / H).toFixed(3) + '" r=".75"><stop offset="0" stop-color="' + pal[2] + '" stop-opacity=".5"/><stop offset=".55" stop-color="' + pal[2] + '" stop-opacity=".08"/><stop offset="1" stop-color="' + pal[2] + '" stop-opacity="0"/></radialGradient>' +
+      '</defs><rect width="' + W + '" height="' + H + '" fill="url(#' + id + 'b)"/><rect width="' + W + '" height="' + H + '" fill="url(#' + id + 'g)"/>' + lines + '</svg>';
   }
   function tourArt(t) { var c = catOf(t); return '<div class="ct-art" aria-hidden="true">' + art(String(t.id), c ? c.scene : 'savanna', { label: t.title }) + '</div>'; }
   function coverHTML(t, alt) {
@@ -255,7 +218,7 @@
       ? '<img src="' + esc(src) + '" alt="' + esc(alt == null ? t.title : alt) + '" loading="lazy" decoding="async" data-ct-tid="' + esc(t.id) + '" data-ct-scene="' + esc((catOf(t) || { scene: 'savanna' }).scene) + '" onerror="window.CabanaTours&&CabanaTours._fallback(this)"/>'
       : tourArt(t);
   }
-  /* A cover that fails to load becomes its drawing, never a broken frame. */
+  /* A cover that fails to load becomes its plate, never a broken frame. */
   function fallback(img) {
     if (!img || !img.parentNode) return;
     var id = img.getAttribute('data-ct-tid') || 'x', t = st.byId[id] || { id: id, category: null };
@@ -264,10 +227,19 @@
     img.parentNode.replaceChild(wrap.firstChild, img);
   }
 
+  /* ═══ THE PAGE, AS THE TEAM WROTE IT ═══════════════════════════════
+     Copy, order and switches for every section of /tours, edited in the
+     console and stored in tour_page_blocks. The launch copy lives in
+     cabana-tours-page.js (shared with the console), so the page reads
+     right even before the table answers. */
+  var PAGE_DEFAULTS = Array.isArray(global.CabanaToursPageDefaults) ? global.CabanaToursPageDefaults : [];
+  function clonePage(list) { return JSON.parse(JSON.stringify(list)); }
+
   /* ═══ STATE ════════════════════════════════════════════════════════ */
   var st = {
     tours: [], byId: {}, deps: {}, pop: {}, loaded: false, depsLoaded: false,
-    user: null, saves: [], listeners: { data: [], saves: [], user: [] }
+    page: clonePage(PAGE_DEFAULTS), pageLoaded: false,
+    user: null, saves: [], listeners: { data: [], saves: [], user: [], page: [] }
   };
   function emit(k) { (st.listeners[k] || []).forEach(function (fn) { safe(function () { fn(api); }); }); }
   function on(k, fn) {
@@ -276,6 +248,68 @@
     if (k === 'data' && st.loaded) safe(function () { fn(api); });
     if (k === 'saves') safe(function () { fn(api); });
     if (k === 'user' && st.userKnown) safe(function () { fn(api); });
+    if (k === 'page' && st.pageLoaded) safe(function () { fn(api); });
+  }
+
+  /* Stored blocks win over the defaults field by field, so a block saved
+     before a new field existed still gets that field's default. */
+  function loadPage() {
+    var c = sb();
+    if (!c) { st.pageLoaded = true; applyPage(); emit('page'); return Promise.resolve(); }
+    return c.from('tour_page_blocks').select('id,kind,position,enabled,content').order('position', { ascending: true })
+      .then(function (r) {
+        var rows = Array.isArray(r && r.data) ? r.data : null;
+        if (rows && rows.length) {
+          var byId = {};
+          PAGE_DEFAULTS.forEach(function (b) { byId[b.id] = clonePage([b])[0]; });
+          rows.forEach(function (row) {
+            var base = byId[row.id] || { id: row.id, kind: row.kind, content: {} };
+            base.kind = row.kind; base.position = Number(row.position) || 0; base.enabled = row.enabled !== false;
+            var stored = row.content || {}, merged = Object.assign({}, base.content, stored);
+            // Categories merge one by one, so editing one keeps the rest.
+            if (base.content && base.content.items && stored.items) {
+              merged.items = {};
+              Object.keys(Object.assign({}, base.content.items, stored.items)).forEach(function (k) {
+                merged.items[k] = Object.assign({}, base.content.items[k] || {}, stored.items[k] || {});
+              });
+            }
+            base.content = merged;
+            byId[row.id] = base;
+          });
+          st.page = Object.keys(byId).map(function (k) { return byId[k]; });
+        }
+      }, function () {})
+      .then(function () {
+        st.page.sort(function (a, b) { return (a.position || 0) - (b.position || 0); });
+        st.pageLoaded = true; applyPage(); emit('page'); syncTabs();
+      });
+  }
+  function block(id) { for (var i = 0; i < st.page.length; i++) if (st.page[i].id === id) return st.page[i]; return null; }
+  function applyPage() {
+    var k = block('kinds'), items = (k && k.content && k.content.items) || {};
+    Object.keys(CATS).forEach(function (key) {
+      var it = items[key]; if (!it) return;
+      if (it.name) CATS[key].name = String(it.name);
+      if (it.blurb != null) CATS[key].blurb = String(it.blurb);
+      CATS[key].image = it.image || null;
+      CATS[key].hidden = !!it.hidden;
+      CATS[key].position = Number(it.position) || 0;
+    });
+  }
+  /* Header tabs follow the page: no Departures tab when nothing is
+     scheduled, no VR tab while the Immersive room is switched off. */
+  function syncTabs() {
+    var top = el('ct-top'); if (!top) return;
+    var imm = block('immersive'), dep = block('departures');
+    var showImm = !!(imm && imm.enabled);
+    var showDep = !!(dep && dep.enabled) && (!st.loaded || upcoming(30).length > 0);
+    $$('.ct-tab[href*="#immersive"]', top).forEach(function (a) { a.hidden = !showImm; });
+    $$('.ct-tab[href*="#departures"]', top).forEach(function (a) { a.hidden = !showDep; });
+    try { global.dispatchEvent(new Event('resize')); } catch (e) {}
+  }
+  /* "Words in *stars* are the accent", everywhere the team writes a title. */
+  function headline(h) {
+    return String(h || '').split('*').map(function (seg, i) { return i % 2 ? '<em>' + esc(seg) + '</em>' : esc(seg); }).join('');
   }
 
   function load() {
@@ -303,6 +337,7 @@
       st.loaded = true; st.depsLoaded = true;
       emit('data');
       afterLoad();
+      if (st.pageLoaded) syncTabs();
     });
   }
   function tour(id) { return st.byId[String(id)] || null; }
@@ -370,7 +405,7 @@
     if (btn) { btn.classList.remove('pop'); void btn.offsetWidth; if (!was) btn.classList.add('pop'); }
     emit('saves');
     if (st.user && /^\d+$/.test(id)) syncSaves(was ? [] : [Number(id)], was ? [Number(id)] : []);
-    else if (!was && !store.get('saves-hint')) { store.set('saves-hint', '1'); toast('Saved on this device. Sign in and it follows you everywhere.'); }
+    else if (!was && !store.get('saves-hint')) { store.set('saves-hint', '1'); toast('Saved. Sign in to keep your saved tours on every device.'); }
     else toast(was ? 'Removed from saved' : 'Saved');
     return !was;
   }
@@ -488,8 +523,8 @@
         '<div class="ct-card-top">' + tag + heart(t.id) + '</div>' +
         '<div class="ct-card-where">' +
           (where ? '<span class="d">' + ICON.pin + esc(where) + '</span>' : '') +
-          (dep ? '<span class="next">Next <b>' + esc(fmtDay(dep.departs_on).toUpperCase()) + '</b>' + (t.departure_time ? ' · ' + esc(fmtTime(t.departure_time)) : '') + '</span>'
-               : t.schedule_type === 'on_request' ? '<span class="next">Any day <b>ON REQUEST</b></span>' : '') +
+          (dep ? '<span class="next">Next <b>' + esc(fmtDay(dep.departs_on).replace(',', '')) + '</b>' + (t.departure_time ? ' · ' + esc(fmtTime(t.departure_time)) : '') + '</span>'
+               : t.schedule_type === 'on_request' ? '<span class="next">Runs <b>ON REQUEST</b></span>' : '') +
         '</div>' +
       '</div>' +
       '<div class="ct-card-body">' +
@@ -512,19 +547,19 @@
       '<div class="ct-pass-media" data-ct-open="' + esc(t.id) + '">' + coverHTML(t, '') +
         (vr ? '<span class="ct-tag ct-tag-sweep">' + ICON.vr + '360°</span>' : (t.operator_kind === 'cabana' ? '<span class="ct-tag ct-tag-sweep">Cabana</span>' : '')) +
         heart(t.id) +
-        '<div class="ct-pass-code"><small>' + esc((catOf(t) || { name: 'Tour' }).name) + '</small>' + esc(codeOf(t)) + '</div>' +
+        '<div class="ct-pass-code"><small>' + esc((catOf(t) || { name: 'Tour' }).name) + '</small>' + esc(placeName(t)) + '</div>' +
       '</div>' +
       '<div class="ct-pass-body">' +
         '<h3 class="ct-pass-t" data-ct-open="' + esc(t.id) + '">' + esc(t.title) + '</h3>' +
         '<div class="ct-pass-op">' + (t.operator_verified ? ICON.verified : '') + esc(whoOf(t)) + '</div>' +
         '<div class="ct-pass-grid">' +
-          '<div><small>Departs</small><b>' + esc(fmtDay(d.departs_on).toUpperCase()) + '</b></div>' +
-          '<div><small>Time</small><b>' + esc(t.departure_time ? fmtTime(t.departure_time) : 'TBC') + '</b></div>' +
-          '<div><small>Seats</small><b>' + (left == null ? '—' : left > 0 ? esc(left + ' left') : 'FULL') + '</b></div>' +
+          '<div><small>Date</small><b>' + esc(fmtDay(d.departs_on).replace(',', '')) + '</b></div>' +
+          '<div><small>Leaves</small><b>' + esc(t.departure_time ? fmtTime(t.departure_time) : 'To confirm') + '</b></div>' +
+          '<div><small>Seats</small><b>' + (left == null ? '—' : left > 0 ? esc(left + ' left') : 'Full') + '</b></div>' +
         '</div>' +
         (pct ? '<div class="ct-seats' + (left != null && left <= 3 ? ' low' : '') + '" title="' + esc((total - left) + ' of ' + total + ' seats taken') + '"><i style="width:' + pct + '%"></i></div>' : '') +
         '<div class="ct-pass-tear" aria-hidden="true"></div>' +
-        '<div class="ct-pass-count"><span class="lbl">Departs<br>in</span><span data-cd="' + esc(d.departs_at) + '" data-cd-done="Departing"></span></div>' +
+        '<div class="ct-pass-count"><span class="lbl">Leaves<br>in</span><span data-cd="' + esc(d.departs_at) + '" data-cd-done="Departing"></span></div>' +
         (closesMs > 0 && closesMs < 72 * 3600e3 ? '<span class="ct-closes">' + ICON.clock + 'Booking closes in ' + esc(dur(closesMs)) + '</span>' : '') +
         '<div class="ct-pass-foot"><div class="ct-price' + (p.free ? ' free' : '') + '"><b>' + esc(p.v) + '</b><small>' + esc(p.u) + '</small></div>' +
           '<button class="ct-icon-b" type="button" data-ct-msg="' + esc(t.id) + '" data-date="' + esc(d.departs_on) + '" aria-label="Message the guide about ' + esc(t.title) + '">' + ICON.chat + '</button>' +
@@ -635,7 +670,7 @@
     if (t.group_max) facts.push((t.group_min || 1) + '–' + t.group_max + ' people');
     if (t.schedule_type === 'daily') facts.push('Runs daily');
     else if (t.schedule_type === 'weekly') facts.push('Weekly: ' + arr(t.departure_days).map(function (d) { return String(d).slice(0, 3).replace(/^./, function (x) { return x.toUpperCase(); }); }).join(', '));
-    else if (t.schedule_type === 'on_request') facts.push('Any day, on request');
+    else if (t.schedule_type === 'on_request') facts.push('Runs on request');
     if (t.departure_time) facts.push('Leaves ' + fmtTime(t.departure_time));
     arr(t.languages).slice(0, 3).forEach(function (l) { facts.push(l); });
     var inc = arr(t.includes_list), exc = arr(t.excludes_list), itin = arr(t.itinerary), high = arr(t.highlights), bring = arr(t.what_to_bring);
@@ -653,9 +688,9 @@
           '<h2 class="ct-sheet-title">' + esc(t.title) + '</h2>' +
           '<div class="ct-sheet-meta">' + facts.map(function (f) { return '<span class="ct-fact">' + esc(f) + '</span>'; }).join('') + '</div>' +
           '<div class="ct-sheet-op"><span class="av">' + av + '</span><div class="who"><b>' + esc(t.operator_name || 'Local operator') + (t.operator_verified ? ICON.verified : '') + '</b><small>' +
-            esc([t.operator_persona === 'guide' ? 'Local guide' : 'Tour operator', t.operator_county, t.operator_tagline].filter(Boolean).join(' · ')) + '</small></div>' +
+            esc([t.operator_persona === 'guide' ? 'Guide' : 'Tour operator', t.operator_county, t.operator_tagline].filter(Boolean).join(' · ')) + '</small></div>' +
             '<button class="ct-btn ct-btn-s" type="button" data-ct-msg="' + esc(t.id) + '">' + ICON.chat + 'Message</button></div>' +
-          (deps.length ? '<div class="ct-sheet-deps"><div class="ct-sec-h" style="margin-top:6px">Next departures</div><div class="ct-dates" role="group" aria-label="Choose a departure">' +
+          (deps.length ? '<div class="ct-sheet-deps"><div class="ct-sec-h" style="margin-top:6px">Upcoming dates</div><div class="ct-dates" role="group" aria-label="Choose a departure">' +
             deps.slice(0, 12).map(function (d) {
               var left = d.seats_left == null ? null : Number(d.seats_left);
               return '<button class="ct-date' + (left != null && left <= 3 ? ' low' : '') + '" type="button" data-date="' + esc(d.departs_on) + '" aria-pressed="' + (d.departs_on === sheetState.date) + '"' + (left === 0 ? ' disabled' : '') + '>' +
@@ -665,15 +700,15 @@
           (t.summary ? '<p class="ct-sheet-desc">' + esc(t.summary) + '</p>' : '') +
           (t.description ? '<p class="ct-sheet-desc">' + esc(t.description) + '</p>' : '') +
           (high.length ? '<div class="ct-sec-h">Highlights</div><div class="ct-inc">' + list(high, 'yes', ICON.star) + '</div>' : '') +
-          (itin.length ? '<div class="ct-sec-h">The day, step by step</div><div class="ct-itin">' + itin.map(function (d, i) {
+          (itin.length ? '<div class="ct-sec-h">Itinerary</div><div class="ct-itin">' + itin.map(function (d, i) {
             return '<div class="ct-day"><div class="ct-day-t"><small>' + esc(d.time || ('DAY ' + (d.day || i + 1))) + '</small>' + esc(d.title || '') + '</div>' + (d.desc ? '<div class="ct-day-d">' + esc(d.desc) + '</div>' : '') + '</div>';
           }).join('') + '</div>' : '') +
           ((inc.length || exc.length) ? '<div class="ct-sec-h">What’s included</div><div class="ct-inc">' + list(inc, 'yes', ICON.check) + list(exc, 'no', ICON.cross) + '</div>' : '') +
-          (bring.length ? '<div class="ct-sec-h">Bring with you</div><div class="ct-inc">' + list(bring, 'yes', ICON.check) + '</div>' : '') +
-          (t.meeting_point ? '<div class="ct-sec-h">Where you meet</div><div class="ct-day-d">' + esc(t.meeting_point) + '</div>' : '') +
-          (t.accessibility ? '<div class="ct-sec-h">Access</div><div class="ct-day-d">' + esc(t.accessibility) + '</div>' : '') +
-          (t.cancellation ? '<div class="ct-sec-h">If plans change</div><div class="ct-day-d">' + esc(t.cancellation) + '</div>' : '') +
-          '<div class="ct-note" style="margin-top:26px">' + ICON.shield + '<span>Pay and chat on Cabana. The guide’s number and the meeting details unlock the moment your booking is paid' + (Number(t.deposit_pct) > 0 && Number(t.deposit_pct) < 100 && !p.free ? ', and you pay the balance on the day' : '') + '.</span></div>' +
+          (bring.length ? '<div class="ct-sec-h">What to bring</div><div class="ct-inc">' + list(bring, 'yes', ICON.check) + '</div>' : '') +
+          (t.meeting_point ? '<div class="ct-sec-h">Meeting point</div><div class="ct-day-d">' + esc(t.meeting_point) + '</div>' : '') +
+          (t.accessibility ? '<div class="ct-sec-h">Accessibility</div><div class="ct-day-d">' + esc(t.accessibility) + '</div>' : '') +
+          (t.cancellation ? '<div class="ct-sec-h">Cancellation</div><div class="ct-day-d">' + esc(t.cancellation) + '</div>' : '') +
+          '<div class="ct-note" style="margin-top:26px">' + ICON.shield + '<span>Book and message on Cabana. Your guide’s number and the exact meeting point are shared as soon as your booking is paid' + (Number(t.deposit_pct) > 0 && Number(t.deposit_pct) < 100 && !p.free ? '. You pay the balance to your guide on the day' : '') + '.</span></div>' +
         '</div>' +
       '</div>' +
       '<div class="ct-sheet-bar">' +
@@ -740,13 +775,13 @@
     var d = el('ct-drawer'); if (!d) return;
     var list = st.saves.map(function (id) { return st.byId[id]; }).filter(Boolean);
     d.innerHTML = '<div class="ct-drawer-h"><div><h3>Saved tours</h3><small>' +
-      (st.user ? 'On every device you sign in to.' : 'On this device. <a href="#" data-ct-signin style="color:var(--ct-turq)">Sign in</a> to keep them everywhere.') +
+      (st.user ? 'Kept on every device you sign in to.' : 'Kept on this device. <a href="#" data-ct-signin style="color:var(--ct-turq)">Sign in</a> to see them everywhere.') +
       '</small></div><button class="ct-sheet-close" style="position:static" type="button" aria-label="Close">' + ICON.close + '</button></div>' +
       '<div class="ct-drawer-b">' + (list.length ? list.map(function (t) {
         var p = priceOf(t), dep = nextDep(t.id);
         return '<div class="ct-mini" role="button" tabindex="0" data-ct-open="' + esc(t.id) + '"><span class="ct-mini-m">' + coverHTML(t, '') + '</span><span class="ct-mini-b"><b>' + esc(t.title) + '</b><small>' +
           esc([t.destination, dep ? 'Next ' + fmtDay(dep.departs_on) : ''].filter(Boolean).join(' · ')) + '</small><span class="p">' + esc(p.v) + '</span></span>' + heart(t.id) + '</div>';
-      }).join('') : '<div class="ct-blank" style="border-style:dashed"><div class="ct-blank-mark">' + ICON.heart + '</div><h3>Nothing saved yet</h3><p>Tap the heart on any tour and it waits for you here.</p><div class="ct-blank-acts"><a class="ct-btn ct-btn-sun" href="/tours-catalogue">Browse tours</a></div></div>') + '</div>';
+      }).join('') : '<div class="ct-blank" style="border-style:dashed"><div class="ct-blank-mark">' + ICON.heart + '</div><h3>Nothing saved yet</h3><p>Tap the heart on any tour to keep it here for later.</p><div class="ct-blank-acts"><a class="ct-btn ct-btn-sun" href="/tours-catalogue">Browse tours</a></div></div>') + '</div>';
     $('.ct-sheet-close', d).addEventListener('click', closeDrawer);
     var si = $('[data-ct-signin]', d); if (si) si.addEventListener('click', function (e) { e.preventDefault(); signIn(); });
     $$('[data-ct-open]', d).forEach(function (n) { n.addEventListener('click', function () { closeDrawer(true); }, true); });
@@ -765,7 +800,7 @@
       o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Search tours');
       o.innerHTML = '<button class="ct-sheet-close ct-search-x" type="button" aria-label="Close search">' + ICON.close + '</button>' +
         '<form class="ct-search-box" role="search" action="/tours-catalogue">' + ICON.search +
-          '<input name="q" type="search" placeholder="Where to? A place, a kind of tour, a guide" autocomplete="off" aria-label="Search tours"/>' +
+          '<input name="q" type="search" placeholder="Search by place, kind of tour or guide" autocomplete="off" aria-label="Search tours"/>' +
           '<button class="ct-btn ct-btn-ink ct-btn-s" type="submit">Search</button></form>' +
         '<div class="ct-search-sug" id="ct-search-sug"></div><div class="ct-search-res" id="ct-search-res"></div>';
       doc.body.appendChild(o);
@@ -785,16 +820,15 @@
     var places = {}, list = st.tours;
     list.forEach(function (t) { var p = t.destination || t.county; if (p) places[p] = (places[p] || 0) + 1; });
     var top = Object.keys(places).sort(function (a, b) { return places[b] - places[a]; }).slice(0, 6);
-    ['Masai Mara', 'Nairobi', 'Naivasha', 'Diani', 'Amboseli'].forEach(function (x) { if (top.length < 8 && top.indexOf(x) === -1) top.push(x); });
     sug.innerHTML = top.map(function (p) { return '<a class="ct-chip" href="/tours-catalogue?q=' + encodeURIComponent(p) + '">' + ICON.pin.replace('<svg', '<svg width="14" height="14"') + esc(p) + '</a>'; }).join('') +
-      Object.keys(CATS).slice(0, 4).map(function (k) { return '<a class="ct-chip" href="/tours-catalogue?cat=' + k + '">' + esc(CATS[k].name) + '</a>'; }).join('');
+      CAT_ORDER.filter(function (k) { return list.some(function (t) { return t.category === k; }); }).slice(0, 4).map(function (k) { return '<a class="ct-chip" href="/tours-catalogue?cat=' + k + '">' + esc(CATS[k].name) + '</a>'; }).join('');
     q = String(q || '').trim().toLowerCase();
     if (!q) { res.innerHTML = ''; return; }
     var hits = list.filter(function (t) { return [t.title, t.destination, t.county, t.operator_name, t.summary].concat(arr(t.tags)).join(' ').toLowerCase().indexOf(q) !== -1; }).slice(0, 6);
     res.innerHTML = hits.length ? hits.map(function (t) {
       var p = priceOf(t);
       return '<div class="ct-mini" role="button" tabindex="0" data-ct-open="' + esc(t.id) + '"><span class="ct-mini-m">' + coverHTML(t, '') + '</span><span class="ct-mini-b"><b>' + esc(t.title) + '</b><small>' + esc([t.destination, t.operator_name].filter(Boolean).join(' · ')) + '</small><span class="p">' + esc(p.v) + '</span></span></div>';
-    }).join('') : '<p style="color:var(--ct-cream-3);font:500 14px var(--ct-f);margin:6px 4px">Nothing listed matches “' + esc(q) + '” yet. Press Search to look across the whole catalogue.</p>';
+    }).join('') : '<p style="color:var(--ct-cream-3);font:500 14px var(--ct-f);margin:6px 4px">No tours match “' + esc(q) + '” yet. Press Search to see the full catalogue.</p>';
   }
   function closeSearch() {
     var o = el('ct-search'); if (!o || !o.classList.contains('open')) return;
@@ -877,6 +911,7 @@
     mountHeader();
     initUser();
     mountCountdowns(doc);
+    loadPage();
     load();
     // A tab brought back after hours should not show yesterday's board.
     var hiddenAt = 0;
@@ -895,7 +930,9 @@
     saved: function () { return st.saves.slice(); }, isSaved: isSaved, toggleSave: toggleSave, heart: heart, paintHearts: paintHearts,
     card: card, pass: pass, skeletons: skeletonCards, reveal: reveal, countdowns: mountCountdowns,
     message: message, book: book, inbox: openInbox, signIn: signIn, toast: toast, drawer: openDrawer, search: openSearch,
-    art: art, tourArt: tourArt, cover: coverHTML, accent: accentOf, cat: catOf, CATS: CATS, reach: reachOf, code: codeOf, price: priceOf,
+    art: art, tourArt: tourArt, cover: coverHTML, accent: accentOf, cat: catOf, CATS: CATS, CAT_ORDER: CAT_ORDER, reach: reachOf, code: codeOf, price: priceOf,
+    page: function () { return st.page.slice(); }, block: block, pageLoaded: function () { return st.pageLoaded; }, headline: headline,
+    PAGE_DEFAULTS: clonePage(PAGE_DEFAULTS),
     popularity: function (id) { return st.pop[String(id)] || 0; },
     sb: sb, esc: esc, arr: arr, money: money, fmtDay: fmtDay, fmtTime: fmtTime, nboClock: nboClock, dur: dur, today: nboToday,
     icon: ICON, thrifty: thrifty, reduced: reduced, hash: hash, _fallback: fallback

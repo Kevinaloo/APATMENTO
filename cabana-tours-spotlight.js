@@ -1,23 +1,26 @@
 /* ═══════════════════════════════════════════════════════════════════
    CABANA TOURS · the Spotlight
    ───────────────────────────────────────────────────────────────────
-   The first thing on /tours: a full-bleed slideshow of film, photos and
-   drawn scenes, with words laid over them and a horizon along the
-   bottom where a sun travels across each slide as it plays. When the
-   slide changes, the next one opens from wherever the sun is.
+   The first thing on /tours: a full-bleed slideshow of film and photos
+   with words laid over them, and a horizon along the bottom where a
+   sun travels across each slide as it plays. When the slide changes,
+   the next one opens from wherever the sun is.
 
    What fills it, in order:
      1. Sponsored slides guides and operators bought (tour_spotlight_feed,
         marked Sponsored, always first)
-     2. Tours the console chose to feature
-     3. Up to two real departures leaving soonest, when the reel is short
-     4. Cabana's own: Immersive VR, the guides, "this could be your tour"
-   If the network fails, the house slides are built in, so the top of
-   the page is never a grey box.
+     2. Tours the Cabana team chose to feature
+     3. Up to two real departures leaving soonest, when the reel is
+        short (only tours with a photo; switchable in the console)
+     4. Cabana's own slides, made in the console with real photos or film
+   With nothing to show, it is not a slideshow at all: it is the cover
+   the team wrote in the console (Tours → Page → Cover), with search.
+   Nothing here draws a pretend place.
 
    Nothing plays that is not on screen. Save-Data and reduced motion get
-   stills, and reduced motion also waits for a tap instead of rotating. The studio reuses this file to preview a slide before it is
-   paid for: CabanaSpotlight.create(root, { preview: true }).
+   stills, and reduced motion also waits for a tap instead of rotating.
+   The studio and the console reuse this file to preview a slide before
+   it runs: CabanaSpotlight.create(root, { preview: true }).
    ═══════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
@@ -41,19 +44,6 @@
     heart: I('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.7Z"/>')
   };
 
-  /* The house slides, built in so a failed request still has a first act. */
-  var HOUSE = [
-    { id: 'house-world', kind: 'house', media_kind: 'world', art: 'world', accent: '#7C5CFF', kicker: 'Cabana Immersive · VR and 360°',
-      headline: 'Step into the wild *before you book*', subline: 'Step inside safaris, reefs and cities in 360°. Move your phone, slot it into a viewer, or put on a headset.',
-      cta_label: 'Step inside', cta_url: '#immersive' },
-    { id: 'house-guides', kind: 'house', media_kind: 'art', art: 'guides', accent: '#12E0D0', kicker: 'The people who take you there',
-      headline: 'Guides who live *where they walk*', subline: 'Message a guide before you book. Every conversation stays on Cabana, and their number unlocks the moment you pay.',
-      cta_label: 'Meet the guides', cta_url: '/tour-guides' },
-    { id: 'house-featured', kind: 'house', media_kind: 'art', art: 'featured', accent: '#FFB020', kicker: 'For guides and operators',
-      headline: 'This could be *your tour*', subline: 'Put a departure, a film or your whole company in the Spotlight: the first thing every traveller on Cabana Tours sees.',
-      cta_label: 'Get featured', cta_url: '/tours-studio?tab=spotlight' }
-  ];
-
   /* ── headline: *these words* are set in the serif ────────────────── */
   function headlineHTML(h) {
     var out = [], wi = 0, parts = String(h || '').split('*');
@@ -67,78 +57,13 @@
   }
   function plain(h) { return String(h || '').replace(/\*/g, ''); }
 
-  /* ── drawn scenes ────────────────────────────────────────────────── */
-  function person(x, y, s, o) {
-    o = o || {};
-    var g = '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')" fill="' + (o.c || '#081226') + '">' +
-      '<circle cx="0" cy="-92" r="11"/>' +
-      '<path d="M-12 -78 Q0 -84 12 -78 L16 -36 L9 -34 L7 0 L-1 0 L0 -30 L-3 0 L-11 0 L-9 -34 L-16 -36 Z"/>';
-    if (o.pack) g += '<path d="M-19 -74 Q-26 -70 -25 -50 L-13 -48 L-12 -74 Z"/>';
-    if (o.staff) g += '<path d="M20 -86 L26 2" stroke="' + (o.c || '#081226') + '" stroke-width="3.5" stroke-linecap="round"/><path d="M14 -60 L22 -58" stroke="' + (o.c || '#081226') + '" stroke-width="4" stroke-linecap="round"/>';
-    if (o.hat) g += '<ellipse cx="0" cy="-101" rx="17" ry="4"/><path d="M-9 -101 Q0 -114 9 -101 Z"/>';
-    return g + '</g>';
-  }
-  function acacia(x, y, s, c) {
-    return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')" fill="' + c + '"><path d="M-3 0 L-1 -70 Q-22 -86 -48 -92 L-42 -98 Q-12 -92 0 -78 Q9 -96 42 -102 L45 -96 Q16 -86 3 -70 L4 0 Z"/><ellipse cx="0" cy="-102" rx="96" ry="17"/><ellipse cx="-36" cy="-108" rx="50" ry="12"/><ellipse cx="40" cy="-110" rx="46" ry="11"/></g>';
-  }
-  function stars(n, seed, w, h) { var r = K() ? K().hash : null, s = '', x = 7; for (var i = 0; i < n; i++) { x = (x * 9301 + 49297 + seed) % 233280; var a = x / 233280; x = (x * 9301 + 49297) % 233280; var b = x / 233280; s += '<circle class="twinkle" style="animation-delay:' + (a * 3).toFixed(2) + 's" cx="' + (a * w).toFixed(0) + '" cy="' + (b * h).toFixed(0) + '" r="' + (0.8 + ((a * 7) % 1.4)).toFixed(2) + '" fill="#FFF6E0"/>'; } return s; }
-  function sceneGuides() {
-    return '<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>' +
-      '<linearGradient id="sgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070F2B"/><stop offset=".45" stop-color="#173C7A"/><stop offset=".72" stop-color="#2E8FB0"/><stop offset=".86" stop-color="#9FD9C4"/><stop offset="1" stop-color="#FFC98A"/></linearGradient>' +
-      '<radialGradient id="sgU"><stop offset="0" stop-color="#FFF7DC"/><stop offset=".35" stop-color="#FFD27A"/><stop offset="1" stop-color="#FFB020" stop-opacity="0"/></radialGradient>' +
-      '<linearGradient id="sgP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E5A8A"/><stop offset="1" stop-color="#13284D"/></linearGradient></defs>' +
-      '<rect width="1600" height="900" fill="url(#sgS)"/>' + stars(70, 11, 1600, 360) +
-      '<g class="rise"><circle cx="1130" cy="610" r="330" fill="url(#sgU)"/><circle cx="1130" cy="610" r="92" fill="#FFF2CE"/></g>' +
-      '<path class="drift-2" d="M-60 640 Q160 560 360 600 T760 590 T1160 560 T1660 600 L1660 900 L-60 900 Z" fill="#1A3F73" opacity=".85"/>' +
-      '<path class="drift" d="M-60 700 Q220 640 520 682 T1080 670 T1660 690 L1660 900 L-60 900 Z" fill="#102A52"/>' +
-      '<path d="M-60 760 Q300 720 700 760 T1660 740 L1660 900 L-60 900 Z" fill="#081630"/>' +
-      '<path d="M1600 900 C1300 880 1180 820 980 800 C780 780 620 790 480 770 L520 760 C660 776 820 768 990 786 C1200 806 1330 860 1600 870 Z" fill="url(#sgP)" opacity=".9"/>' +
-      acacia(260, 760, 1.25, '#06112A') + acacia(1420, 748, .9, '#06112A') + acacia(1540, 770, .6, '#06112A') +
-      person(760, 786, 1.05, { staff: true, hat: true, c: '#050D22' }) + person(860, 794, .92, { pack: true, c: '#050D22' }) + person(930, 798, .86, { pack: true, c: '#050D22' }) +
-      '<g class="fly" style="animation-duration:26s"><path d="M120 250 q10 -10 20 0 q10 -10 20 0" fill="none" stroke="#0A1B3A" stroke-width="3" stroke-linecap="round"/><path d="M190 214 q8 -8 16 0 q8 -8 16 0" fill="none" stroke="#0A1B3A" stroke-width="2.6" stroke-linecap="round"/><path d="M60 290 q7 -7 14 0 q7 -7 14 0" fill="none" stroke="#0A1B3A" stroke-width="2.4" stroke-linecap="round"/></g>' +
-      '</svg>';
-  }
-  function sceneFeatured() {
-    var rays = '';
-    for (var i = 0; i < 28; i++) { var a = (i / 28) * Math.PI * 2, x2 = 1120 + Math.cos(a) * 1300, y2 = 520 + Math.sin(a) * 1300, a2 = a + 0.05, x3 = 1120 + Math.cos(a2) * 1300, y3 = 520 + Math.sin(a2) * 1300; rays += '<path d="M1120 520 L' + x2.toFixed(0) + ' ' + y2.toFixed(0) + ' L' + x3.toFixed(0) + ' ' + y3.toFixed(0) + ' Z"/>'; }
-    var sparks = '';
-    [[930, 250], [1320, 210], [1410, 420], [880, 470], [1260, 640], [1010, 170]].forEach(function (p, i) { sparks += '<path class="twinkle" style="animation-delay:' + (i * .45) + 's" d="M' + p[0] + ' ' + (p[1] - 16) + ' L' + (p[0] + 4) + ' ' + (p[1] - 4) + ' L' + (p[0] + 16) + ' ' + p[1] + ' L' + (p[0] + 4) + ' ' + (p[1] + 4) + ' L' + p[0] + ' ' + (p[1] + 16) + ' L' + (p[0] - 4) + ' ' + (p[1] + 4) + ' L' + (p[0] - 16) + ' ' + p[1] + ' L' + (p[0] - 4) + ' ' + (p[1] - 4) + ' Z" fill="#FFE7A8"/>'; });
-    return '<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>' +
-      '<radialGradient id="sfB" cx=".7" cy=".58" r=".9"><stop offset="0" stop-color="#5A1A2E"/><stop offset=".5" stop-color="#2A0C1F"/><stop offset="1" stop-color="#0F0612"/></radialGradient>' +
-      '<radialGradient id="sfU"><stop offset="0" stop-color="#FFF4D0"/><stop offset=".3" stop-color="#FFB020"/><stop offset=".62" stop-color="#FF5A36"/><stop offset="1" stop-color="#FF5A36" stop-opacity="0"/></radialGradient>' +
-      '<linearGradient id="sfF" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE3A0"/><stop offset=".5" stop-color="#FF8A3D"/><stop offset="1" stop-color="#FF6FA8"/></linearGradient>' +
-      '<linearGradient id="sfW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A3A" stop-opacity=".55"/><stop offset="1" stop-color="#120612" stop-opacity="0"/></linearGradient></defs>' +
-      '<rect width="1600" height="900" fill="url(#sfB)"/>' +
-      '<g class="spin" fill="#FFB020" opacity=".07">' + rays + '</g>' +
-      '<g class="rise"><circle cx="1120" cy="520" r="420" fill="url(#sfU)"/><circle cx="1120" cy="520" r="150" fill="#FFE9B0"/></g>' +
-      '<rect x="0" y="690" width="1600" height="210" fill="#120612"/><rect x="0" y="690" width="1600" height="210" fill="url(#sfW)"/>' +
-      '<g class="drift">' + [0, 1, 2, 3, 4, 5].map(function (k) { return '<rect x="' + (980 + k * 6) + '" y="' + (712 + k * 22) + '" width="' + (280 - k * 30) + '" height="4" rx="2" fill="#FFB36B" opacity="' + (0.6 - k * 0.09).toFixed(2) + '"/>'; }).join('') + '</g>' +
-      '<g transform="rotate(-7 1120 430)"><rect x="930" y="300" width="380" height="250" rx="26" fill="rgba(18,6,18,.28)" stroke="url(#sfF)" stroke-width="5"/>' +
-      '<rect x="956" y="326" width="120" height="14" rx="7" fill="#FFE3A0" opacity=".85"/><rect x="956" y="352" width="220" height="30" rx="10" fill="#FFF3DA" opacity=".92"/><rect x="956" y="392" width="170" height="30" rx="10" fill="#FFF3DA" opacity=".92"/>' +
-      '<rect x="956" y="486" width="118" height="38" rx="19" fill="url(#sfF)"/></g>' + sparks +
-      '</svg>';
-  }
-  function sceneWorld() {
-    var poster = '';
-    try { if (global.CabanaImmersive && global.CabanaImmersive.poster) poster = global.CabanaImmersive.poster() || ''; } catch (e) {}
-    var pan = poster
-      ? '<div class="ct-world-pan"><img alt="" decoding="async" src="' + esc(poster) + '"/><img alt="" decoding="async" src="' + esc(poster) + '"/></div>'
-      : '<div class="ct-art">' + (K() ? K().art('immersive', 'peaks', { w: 1600, h: 900 }) : '') + '</div>';
-    return '<div class="ct-world" data-world="' + (poster ? '1' : '0') + '">' + pan +
-      '<div class="ct-world-hud"><span class="scan"></span><span class="ring"></span><span class="deg" data-world-deg>N 000°</span></div></div>';
-  }
-
   /* ── one slide ───────────────────────────────────────────────────── */
   function ytId(u) { var m = String(u || '').match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : (/^[A-Za-z0-9_-]{11}$/.test(String(u || '')) ? String(u) : ''); }
+  function plate(seed, w, h) { return '<div class="ct-art">' + (K() ? K().art(String(seed), 'city', { w: w, h: h }) : '') + '</div>'; }
   function mediaHTML(s, mode) {
     var k = s.media_kind, focal = esc(s.focal || '50% 50%');
-    if (k === 'world') return sceneWorld();
-    if (k === 'art') {
-      if (s.art === 'guides') return '<div class="ct-art">' + sceneGuides() + '</div>';
-      if (s.art === 'featured') return '<div class="ct-art">' + sceneFeatured() + '</div>';
-      var cat = s.tour && K() && K().tour(s.tour.id) ? K().cat(K().tour(s.tour.id)) : null;
-      return '<div class="ct-art">' + (K() ? K().art(String((s.tour && s.tour.id) || s.id), (cat && cat.scene) || s.art || 'savanna', { w: 1600, h: 900 }) : '') + '</div>';
-    }
+    // Only a preview with nothing chosen yet gets here without media.
+    if (k === 'art') return plate(s.id, 1600, 900);
     if (k === 'youtube') {
       var id = ytId(s.media_url);
       var poster = s.poster_url || (id ? 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg' : '');
@@ -149,7 +74,7 @@
     }
     var src = k === 'video' ? (s.poster_url || (s.tour && s.tour.cover) || '') : s.media_url;
     if (!src && s.tour && s.tour.cover) src = s.tour.cover;
-    if (!src) return '<div class="ct-art">' + (K() ? K().art(String(s.id), 'savanna', { w: 1600, h: 900 }) : '') + '</div>';
+    if (!src) return plate(s.id, 1600, 900);
     return (s.media_mobile_url ? '<picture><source media="(max-width: 700px)" srcset="' + esc(s.media_mobile_url) + '"/>' : '') +
       '<img src="' + esc(src) + '" alt="" decoding="async" style="object-position:' + focal + ';--focal:' + focal + '"' + (s._first ? ' fetchpriority="high"' : ' loading="lazy"') + '/>' +
       (s.media_mobile_url ? '</picture>' : '');
@@ -161,7 +86,6 @@
     if (s.kind === 'sponsored') kick += '<span class="ct-tag ct-tag-sun" title="A guide or operator paid to show this here">Sponsored</span>';
     else if (s._auto) kick += '<span class="ct-tag ct-tag-live">Departing soon</span>';
     else if (s.kind === 'tour') kick += '<span class="ct-tag ct-tag-sweep">Featured</span>';
-    else if (s.media_kind === 'world') kick += '<span class="ct-tag ct-tag-live">360° · Live now</span>';
     if (s.kicker) kick += '<span class="k">' + esc(s.kicker) + '</span>';
     var meta = [];
     if (op && op.name) meta.push('<span class="op">' + (op.logo ? '<img src="' + esc(op.logo) + '" alt="" loading="lazy"/>' : '<span class="av">' + esc(op.name.charAt(0).toUpperCase()) + '</span>') + esc(op.name) + (op.verified ? '<span style="color:var(--ct-turq);display:inline-flex">' + IC.verified.replace('<svg', '<svg width="15" height="15"') + '</span>' : '') + '</span>');
@@ -169,22 +93,16 @@
     if (t && t.duration) meta.push('<span>' + IC.clock + esc(t.duration) + '</span>');
     if (t && t.price != null) meta.push('<span class="price">' + (Number(t.price) === 0 ? '<b>Free</b>' : 'From <b>' + esc((kit ? kit.money(t.price) : 'KES ' + t.price)) + '</b>' + (t.price_basis === 'per_group' ? ' a group' : ' pp')) + '</span>');
     var clock = t && t.next_departure && new Date(t.next_departure).getTime() > Date.now()
-      ? '<div class="ct-clock"><span class="ct-clock-l">Next departure in</span><span data-cd="' + esc(t.next_departure) + '" data-cd-done="Departing now"></span></div>' : '';
+      ? '<div class="ct-clock"><span class="ct-clock-l">Leaves in</span><span data-cd="' + esc(t.next_departure) + '" data-cd-done="Departing now"></span></div>' : '';
     var acts = '';
     if (t) {
       acts = '<button class="ct-btn ct-btn-sun" type="button" data-sl-act="book" data-tour="' + esc(t.id) + '">' + esc(s.cta_label || (Number(t.price) === 0 ? 'Reserve a place' : 'Book this tour')) + IC.arrow + '</button>' +
         '<button class="ct-btn ct-btn-glass" type="button" data-sl-act="msg" data-tour="' + esc(t.id) + '">' + IC.chat + '<span>Message <span class="lbl-long">the guide</span></span></button>' +
         (kit && !mode.preview ? kit.heart(t.id) : '');
-    } else if (s.media_kind === 'world') {
-      acts = '<button class="ct-btn ct-btn-sweep" type="button" data-sl-act="vr">' + IC.vr + esc(s.cta_label || 'Step inside') + '</button>' +
-        '<a class="ct-btn ct-btn-glass" href="#immersive" data-sl-act="link">How it works</a>';
     } else if (s.kind === 'sponsored' && op) {
       acts = '<a class="ct-btn ct-btn-sun" href="/tours-catalogue?op=' + encodeURIComponent(op.id) + '" data-sl-act="link">' + esc(s.cta_label || 'See their tours') + IC.arrow + '</a>';
     } else if (s.cta_url) {
-      var href = String(s.cta_url);
-      if (!/^(\/|#)/.test(href)) href = '/tours';
-      acts = '<a class="ct-btn ' + (s.art === 'featured' ? 'ct-btn-sun' : 'ct-btn-sweep') + '" href="' + esc(href) + '" data-sl-act="link">' + esc(s.cta_label || 'Explore') + IC.arrow + '</a>' +
-        (s.art === 'featured' ? '<a class="ct-btn ct-btn-glass" href="#featured" data-sl-act="link">See prices</a>' : s.art === 'guides' ? '<a class="ct-btn ct-btn-glass" href="/tours-catalogue" data-sl-act="link">All tours</a>' : '');
+      acts = '<a class="ct-btn ct-btn-sun" href="' + esc(safeHref(s.cta_url)) + '" data-sl-act="link">' + esc(s.cta_label || 'Find out more') + IC.arrow + '</a>';
     }
     return '<article class="ct-slide" data-i="' + i + '" data-id="' + esc(s.id) + '" data-kind="' + esc(s.kind) + '" data-media="' + esc(s.media_kind) + '" style="--acc:' + acc + '" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' of ' + n + ': ' + esc(plain(s.headline)) + '"' + (i ? ' aria-hidden="true"' : '') + '>' +
       '<div class="ct-slide-media">' + mediaHTML(s, mode) + '</div><div class="ct-slide-wash"></div>' +
@@ -197,19 +115,22 @@
         (acts ? '<div class="ct-slide-acts">' + acts + '</div>' : '') +
       '</div></article>';
   }
+  /* Cabana's own slides may point anywhere on Cabana, never off it. */
+  function safeHref(u) {
+    var h = String(u || '').trim();
+    if (/^(\/(?!\/)|#)/.test(h)) return h;
+    var m = h.match(/^https:\/\/(www\.)?cabana\.africa(\/[^\s]*)?$/i);
+    return m ? (m[2] || '/') : '/tours';
+  }
   function thumbHTML(s) {
     if (s.media_kind === 'image' && s.media_url) return '<img src="' + esc(s.media_url) + '" alt="" loading="lazy"/>';
     if ((s.media_kind === 'video' || s.media_kind === 'youtube') && (s.poster_url || ytId(s.media_url))) return '<img src="' + esc(s.poster_url || ('https://i.ytimg.com/vi/' + ytId(s.media_url) + '/mqdefault.jpg')) + '" alt="" loading="lazy"/>';
     if (s.tour && s.tour.cover) return '<img src="' + esc(s.tour.cover) + '" alt="" loading="lazy"/>';
-    if (s.art === 'guides') return '<div class="ct-art">' + sceneGuides() + '</div>';
-    if (s.art === 'featured') return '<div class="ct-art">' + sceneFeatured() + '</div>';
-    return '<div class="ct-art">' + (K() ? K().art(String(s.id), s.media_kind === 'world' ? 'peaks' : 'savanna', { w: 400, h: 300 }) : '') + '</div>';
+    return plate(s.id, 400, 300);
   }
   function short(s) {
     if (s.kind === 'sponsored') return (s.operator && s.operator.name) || plain(s.headline);
-    if (s.media_kind === 'world') return 'Immersive · VR';
-    if (s.art === 'guides') return 'The guides';
-    if (s.art === 'featured') return 'Get featured';
+    if (s.kind === 'house') return s.kicker || plain(s.headline);
     return (s.tour && s.tour.destination) || plain(s.headline);
   }
 
@@ -219,8 +140,10 @@
     var kit = K();
     var mode = kit ? kit.thrifty() : { still: false, noVideo: false };
     if (opts.preview) mode = { still: false, noVideo: false, preview: true };
+    var offs = [];
+    function listen(target, ev, fn, o) { target.addEventListener(ev, fn, o); offs.push(function () { target.removeEventListener(ev, fn, o); }); }
     var S = { slides: [], i: 0, t0: 0, elapsed: 0, paused: false, hover: false, visible: true, raf: 0, muted: true, gated: !opts.preview, seen: {}, dwell: 0, userPaused: false };
-    var DUR = { image: 7600, art: 7200, world: 8200, video: 11000, youtube: 12000 };
+    var DUR = { image: 7600, art: 7200, video: 11000, youtube: 12000 };
     if (mode.still) root.classList.add('ct-still');
 
     root.innerHTML =
@@ -248,7 +171,7 @@
 
     function set(slides) {
       var keep = S.slides[S.i] && S.slides[S.i].id;
-      S.slides = (slides && slides.length ? slides : HOUSE).slice(0, 12);
+      S.slides = (slides || []).slice(0, 12);
       var n = S.slides.length;
       S.slides.forEach(function (s, i) { s._first = i === 0; });
       stage.innerHTML = S.slides.map(function (s, i) { return slideHTML(s, i, n, mode); }).join('');
@@ -321,13 +244,6 @@
       if (!to) return;
       to.classList.add('is-on');
       startMedia(to);
-      var s = S.slides[+to.getAttribute('data-i')];
-      if (s && s.media_kind === 'world') upgradeWorld(to);
-    }
-    function upgradeWorld(to) {
-      var w = $('.ct-world', to);
-      if (!w || w.getAttribute('data-world') === '1') return;
-      try { if (global.CabanaImmersive && global.CabanaImmersive.poster && global.CabanaImmersive.poster()) { var m = $('.ct-slide-media', to); if (m) m.innerHTML = sceneWorld(); } } catch (e) {}
     }
     function startMedia(sl) {
       if (!sl || mode.noVideo) return;
@@ -364,6 +280,7 @@
     }
     var last = 0;
     function loop(now) {
+      if (S.dead) return;
       S.raf = requestAnimationFrame(loop);
       var dt = last ? Math.min(100, now - last) : 16; last = now;
       if (!S.slides.length) return;
@@ -374,13 +291,9 @@
         paintSun(mode.still ? p : easeSun(p));
         if (p >= 1) next();
       }
-      if (running() && !opts.preview && s && !S.seen[s.id] && !/^house-|^auto-/.test(s.id)) {
+      if (running() && !opts.preview && s && !S.seen[s.id] && !/^auto-/.test(s.id)) {
         S.dwell += dt;
         if (S.dwell > 1500) { S.seen[s.id] = true; track(s.id, 'view'); }
-      }
-      if (s && s.media_kind === 'world' && running()) {
-        var deg = $('.ct-slide.is-on [data-world-deg]', stage);
-        if (deg) { var d = Math.round((now / 90000 * 360) % 360); deg.textContent = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(d / 45) % 8] + ' ' + String(d).padStart(3, '0') + '°'; }
       }
     }
     function easeSun(p) { return p; }
@@ -397,7 +310,7 @@
     }
 
     /* input */
-    root.addEventListener('click', function (e) {
+    listen(root, 'click', function (e) {
       var b = e.target.closest('[data-sl]'), go = e.target.closest('[data-go]'), act = e.target.closest('[data-sl-act]');
       if (go) { show(+go.getAttribute('data-go')); return; }
       if (b) {
@@ -420,12 +333,7 @@
         track(s.id, 'click');
         if (a === 'book') { e.preventDefault(); kitReady(function () { if (K().tour(tid)) K().book(tid); else K().toast('This tour is not taking bookings right now.'); }); }
         else if (a === 'msg') { e.preventDefault(); K() && K().message(tid); }
-        else if (a === 'vr') {
-          e.preventDefault();
-          var imm = global.CabanaImmersive;
-          if (imm && imm.open) { var l = imm.list && imm.list(); imm.open(l && l[0] ? l[0] : 'amboseli-at-dusk'); }
-          else { var sec = doc.getElementById('immersive'); if (sec) sec.scrollIntoView({ behavior: 'smooth' }); }
-        } else if (a === 'link') {
+        else if (a === 'link') {
           var href = act.getAttribute('href') || '';
           if (href.charAt(0) === '#') {
             var target = doc.querySelector(href);
@@ -437,36 +345,37 @@
     function kitReady(fn) { if (K() && K().loaded()) fn(); else if (K()) K().on('data', function once() { fn(); }); }
     if (global.matchMedia && global.matchMedia('(hover: hover) and (pointer: fine)').matches) {
       var copy = function (e) { return e.target.closest && (e.target.closest('.ct-slide-copy') || e.target.closest('.ct-sl-ui')); };
-      root.addEventListener('mouseover', function (e) { S.hover = !!copy(e); });
-      root.addEventListener('mouseleave', function () { S.hover = false; });
+      listen(root, 'mouseover', function (e) { S.hover = !!copy(e); });
+      listen(root, 'mouseleave', function () { S.hover = false; });
     }
-    root.addEventListener('focusin', function (e) { if (e.target.closest('.ct-slide-copy')) S.paused = true; });
-    root.addEventListener('focusout', function () { S.paused = false; });
+    listen(root, 'focusin', function (e) { if (e.target.closest('.ct-slide-copy')) S.paused = true; });
+    listen(root, 'focusout', function () { S.paused = false; });
     root.setAttribute('tabindex', root.getAttribute('tabindex') || '-1');
-    root.addEventListener('keydown', function (e) {
+    listen(root, 'keydown', function (e) {
       if (/input|textarea/i.test(e.target.tagName)) return;
       if (e.key === 'ArrowRight') { e.preventDefault(); next(); } else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
     });
     /* swipe */
     var sx = 0, sy = 0, st0 = 0, swiping = false;
-    root.addEventListener('pointerdown', function (e) { if (e.pointerType === 'mouse') return; sx = e.clientX; sy = e.clientY; st0 = Date.now(); swiping = true; }, { passive: true });
-    root.addEventListener('pointerup', function (e) {
+    listen(root, 'pointerdown', function (e) { if (e.pointerType === 'mouse') return; sx = e.clientX; sy = e.clientY; st0 = Date.now(); swiping = true; }, { passive: true });
+    listen(root, 'pointerup', function (e) {
       if (!swiping) return; swiping = false;
       var dx = e.clientX - sx, dy = e.clientY - sy;
       if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4 && Date.now() - st0 < 800) { if (dx < 0) next(); else prev(); }
     }, { passive: true });
-    root.addEventListener('pointercancel', function () { swiping = false; }, { passive: true });
+    listen(root, 'pointercancel', function () { swiping = false; }, { passive: true });
     if ('IntersectionObserver' in global) {
-      new IntersectionObserver(function (es) {
+      var io = new IntersectionObserver(function (es) {
         es.forEach(function (e) {
           S.visible = e.isIntersecting && e.intersectionRatio > 0.2;
           var cur = slideEl(S.i);
           if (!S.visible) stopMedia(cur); else if (!S.gated && cur) startMedia(cur);
         });
-      }, { threshold: [0, 0.2, 0.5] }).observe(root);
+      }, { threshold: [0, 0.2, 0.5] });
+      io.observe(root); offs.push(function () { io.disconnect(); });
     }
-    doc.addEventListener('visibilitychange', function () { var cur = slideEl(S.i); if (doc.hidden) stopMedia(cur); else if (S.visible && !S.gated) startMedia(cur); });
-    global.addEventListener('resize', function () { paintSun(Math.min(1, S.elapsed / durOf(S.slides[S.i] || {}))); }, { passive: true });
+    listen(doc, 'visibilitychange', function () { var cur = slideEl(S.i); if (doc.hidden) stopMedia(cur); else if (S.visible && !S.gated) startMedia(cur); });
+    listen(global, 'resize', function () { paintSun(Math.min(1, S.elapsed / durOf(S.slides[S.i] || {}))); }, { passive: true });
 
     /* The page opens behind the jungle gate. The first slide performs when
        the gate lifts, not while nobody can see it. */
@@ -490,33 +399,82 @@
       go: show, next: next, prev: prev,
       pause: function (v) { S.userPaused = v !== false; },
       slides: function () { return S.slides.slice(); },
-      destroy: function () { cancelAnimationFrame(S.raf); stopMedia(slideEl(S.i)); root.innerHTML = ''; }
+      destroy: function () {
+        S.dead = true; cancelAnimationFrame(S.raf); stopMedia(slideEl(S.i));
+        offs.forEach(function (f) { try { f(); } catch (e) {} }); offs = [];
+        root.innerHTML = '';
+      }
     };
   }
 
+  /* ═══ THE COVER: what the top of /tours is when nothing is playing ═ */
+  function coverHTML(h) {
+    var kit = K(), c = (h && h.content) || {};
+    var shade = Math.max(0, Math.min(90, Number(c.shade == null ? 55 : c.shade))) / 100;
+    var focal = esc(c.focal || '50% 50%'), media = '';
+    if (c.video && !(kit && kit.thrifty().noVideo)) {
+      media = '<video muted loop playsinline autoplay preload="metadata" src="' + esc(c.video) + '"' + (c.image ? ' poster="' + esc(c.image) + '"' : '') + ' style="object-position:' + focal + '" aria-hidden="true" tabindex="-1"></video>';
+    } else if (c.image) {
+      media = (c.image_mobile ? '<picture><source media="(max-width: 700px)" srcset="' + esc(c.image_mobile) + '"/>' : '') +
+        '<img src="' + esc(c.image) + '" alt="" fetchpriority="high" decoding="async" style="object-position:' + focal + '"/>' + (c.image_mobile ? '</picture>' : '');
+    }
+    var links = (Array.isArray(c.links) ? c.links : []).filter(function (l) { return l && l.label && l.url; }).slice(0, 6);
+    return '<div class="ct-cover' + (media ? ' has-media' : '') + '" style="--shade:' + shade + '">' +
+      '<div class="ct-cover-media">' + (media || '<div class="ct-cover-sky" aria-hidden="true"></div>' + plate('cover', 1600, 900)) + '</div><div class="ct-cover-wash"></div>' +
+      '<div class="ct-wrap ct-cover-in">' +
+        (c.eyebrow ? '<span class="ct-eyebrow">' + esc(c.eyebrow) + '</span>' : '') +
+        '<h2 class="ct-cover-h">' + (kit ? kit.headline(c.title) : esc(plain(c.title))) + '</h2>' +
+        (c.lede ? '<p class="ct-cover-lede">' + esc(c.lede) + '</p>' : '') +
+        '<form class="ct-cover-q" action="/tours-catalogue" method="get" role="search">' + IC.pin +
+          '<input name="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="' + esc(c.search_placeholder || 'Where do you want to go?') + '" aria-label="Search tours by place"/>' +
+          '<button class="ct-btn ct-btn-sun" type="submit">Search</button></form>' +
+        (links.length ? '<nav class="ct-cover-links" aria-label="Quick searches">' + links.map(function (l) { return '<a href="' + esc(safeHref(l.url)) + '">' + esc(l.label) + '</a>'; }).join('') + '</nav>' : '') +
+        '<ul class="ct-cover-trust"><li>' + IC.verified + 'Guides vetted by Cabana</li><li>' + IC.clock + 'Deposit by M-Pesa, balance on the day</li><li>' + IC.chat + 'Message the guide before you book</li></ul>' +
+      '</div></div>';
+  }
+
   /* ═══ /tours: fetch, merge with real departures, show ══════════════ */
+  var live = [];
   function boot() {
     var root = doc.getElementById('ct-spotlight');
-    if (!root || root.__sl) return;
-    var sl = root.__sl = create(root, {});
-    var feed = null;
-    sl.set(HOUSE.map(function (h) { return Object.assign({}, h); }));
+    if (!root || root.__booted) return;
+    root.__booted = true;
+    var sl = null, feed = null, fed = false, mode = '';
+    function cover() {
+      var kit = K(), h = kit && kit.block ? kit.block('hero') : null;
+      if (sl) { sl.destroy(); sl = null; root.__sl = null; }
+      root.classList.remove('ct-sl-single', 'is-paused', 'ct-still');
+      root.classList.add('is-cover');
+      root.setAttribute('aria-roledescription', 'banner'); root.setAttribute('aria-label', 'Cabana Tours');
+      root.innerHTML = coverHTML(h);
+      mode = 'cover';
+    }
+    function slides(list) {
+      if (mode !== 'slides' || !sl) {
+        root.classList.remove('is-cover'); root.innerHTML = '';
+        root.setAttribute('aria-roledescription', 'carousel'); root.setAttribute('aria-label', 'Spotlight');
+        sl = root.__sl = create(root, {});
+        mode = 'slides';
+      }
+      sl.set(list);
+    }
     function merge() {
-      var list = (feed && feed.length ? feed : HOUSE).map(function (x) { return Object.assign({}, x); });
+      var kit = K();
+      var list = (feed || []).map(function (x) { return Object.assign({}, x); });
       var paid = list.filter(function (x) { return x.kind === 'sponsored'; });
       var feat = list.filter(function (x) { return x.kind === 'tour'; });
-      var house = list.filter(function (x) { return x.kind === 'house'; });
-      if (!house.length) house = HOUSE.map(function (h) { return Object.assign({}, h); });
+      var house = list.filter(function (x) { return x.kind === 'house' && x.media_kind !== 'art' && x.media_kind !== 'world'; });
+      var hero = kit && kit.block ? kit.block('hero') : null;
+      var autoOn = !hero || !hero.content || hero.content.auto_departures !== false;
       var auto = [];
-      var kit = K();
-      if (kit && kit.loaded() && paid.length + feat.length < 3) {
+      if (autoOn && kit && kit.loaded() && paid.length + feat.length < 3) {
         var have = {};
         paid.concat(feat).forEach(function (x) { if (x.tour) have[String(x.tour.id)] = true; });
-        kit.upcoming(30).filter(function (u) { return !have[String(u.tour.id)]; }).slice(0, 2).forEach(function (u) {
-          var t = u.tour, c = kit.cat(t), cover = kit.arr(t.photos)[0] || t.cover_url || '';
+        kit.upcoming(30).filter(function (u) { return !have[String(u.tour.id)] && (kit.arr(u.tour.photos)[0] || u.tour.cover_url); }).slice(0, 2).forEach(function (u) {
+          var t = u.tour, c = kit.cat(t), cover = kit.arr(t.photos)[0] || t.cover_url;
           auto.push({
-            id: 'auto-' + t.id, kind: 'tour', _auto: true, media_kind: t.showcase_video && !kit.thrifty().noVideo ? 'video' : (cover ? 'image' : 'art'),
-            media_url: t.showcase_video || cover, poster_url: t.video_poster || cover, art: c ? c.scene : 'savanna', focal: '50% 50%',
+            id: 'auto-' + t.id, kind: 'tour', _auto: true, media_kind: t.showcase_video && !kit.thrifty().noVideo ? 'video' : 'image',
+            media_url: t.showcase_video || cover, poster_url: t.video_poster || cover, focal: '50% 50%',
             accent: kit.accent(t), kicker: (c ? c.name : 'Tour') + (t.destination ? ' · ' + t.destination : ''),
             headline: t.showcase_headline || t.title, subline: t.summary || '',
             tour: { id: t.id, title: t.title, destination: t.destination || t.county, price: t.price_kes, price_basis: t.price_basis, deposit_pct: t.deposit_pct,
@@ -525,25 +483,22 @@
           });
         });
       }
-      sl.set(paid.concat(feat, auto, house));
+      live = paid.concat(feat, auto, house);
+      if (live.length) slides(live); else cover();
+      try { doc.dispatchEvent(new CustomEvent('ct:spotlight', { detail: { slides: live.slice() } })); } catch (e) {}
     }
     var kit = K(), c = kit && kit.sb();
+    // The cover paints at once; the slideshow takes over if the feed has anything.
+    cover();
     if (c) c.rpc('tour_spotlight_feed').then(function (r) {
-      feed = r && Array.isArray(r.data) ? r.data : null;
-      merge();
-    }, function () { merge(); });
-    if (kit) kit.on('data', function () { merge(); });
-    // The Immersive poster arrives later than the page; redraw the world slide once it does.
-    var tries = 0, iv = setInterval(function () {
-      tries++;
-      if (global.CabanaImmersive && global.CabanaImmersive.poster && global.CabanaImmersive.poster()) {
-        clearInterval(iv);
-        $$('.ct-slide[data-media="world"]', root).forEach(function (s) { var m = $('.ct-slide-media', s); if (m && $('.ct-world', m) && $('.ct-world', m).getAttribute('data-world') !== '1') m.innerHTML = sceneWorld(); });
-      }
-      if (tries > 40) clearInterval(iv);
-    }, 500);
+      feed = r && Array.isArray(r.data) ? r.data : []; fed = true; merge();
+    }, function () { feed = []; fed = true; merge(); });
+    if (kit) {
+      kit.on('data', function () { if (fed) merge(); });
+      kit.on('page', function () { if (mode === 'cover') cover(); else if (fed) merge(); });
+    }
   }
 
-  global.CabanaSpotlight = { create: create, house: function () { return HOUSE.map(function (h) { return Object.assign({}, h); }); }, headline: headlineHTML, scenes: { guides: sceneGuides, featured: sceneFeatured, world: sceneWorld } };
+  global.CabanaSpotlight = { create: create, headline: headlineHTML, live: function () { return live.slice(); } };
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', boot); else boot();
 })(window);

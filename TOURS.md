@@ -12,9 +12,11 @@ code and this document disagree, the code is wrong — fix the code.*
 had tagged two tours with a video. It now opens on the **Spotlight**, a paid,
 full-bleed slideshow that guides and operators buy from their own studio;
 under it a **departure board** of every tour leaving in the next thirty days,
-each with a clock counting to a real departure; then categories, the 360° /
-VR room, the guides, a preview of the catalogue and the pitch to get
-featured. The full catalogue and the guides directory have pages of their
+each with a clock counting to a real departure; then categories, the
+team's curated collections, the guides, a preview of the catalogue and the
+pitch to get featured. Every section below the Spotlight is edited in the
+console (Tours → Page), and **the page never invents content**: a section
+with nothing real in it stays hidden until something real arrives. The full catalogue and the guides directory have pages of their
 own, the header carries Saved and Messages on every tours page, and the
 messenger that stays use now speaks tours: dates, group sizes and private
 offers a guide can send and a traveller can book in one tap.
@@ -23,15 +25,16 @@ offers a guide can send and a traveller can book in one tap.
 
 | Page | What it is | Script |
 |---|---|---|
-| `/tours` | Spotlight, departure board, categories, Immersive, guides, grid preview, "get featured" | `cabana-tours-home.js` |
+| `/tours` | Spotlight (or the cover), departure board, categories, collections, Immersive (off by default), guides, grid preview, "get featured", invite | `cabana-tours-home.js` |
 | `/tours-catalogue` | Every tour, with filters that live in the URL (`q`, `cat`, `when`, `len`, `price`, `op`, `saved`, `vr`, `group`, `sort`) | `cabana-tours-catalogue.js` |
 | `/tour-guides` | The guides and operators, searchable, with their tours and a Message button | `cabana-tours-guides.js` |
 | `/tours-studio` | For guides: buy a Spotlight, see bookings, feature a tour (noindex, no ads) | `cabana-tours-studio.js` |
 | `/list-your-tour` | Onboarding: guide or company, then the tour and its schedule | `cabana-list-tour.js` |
-| Console → Tours | Moderation, operators, and the **Spotlight desk** | `cabana-tours-admin.js` |
+| Console → Tours | Moderation, operators, the **Spotlight desk** and the **Page** editor | `cabana-tours-admin.js`, `cabana-tours-page-admin.js` |
 
 Every page shares **`cabana-tours.js`** (the kit: data, saves, cards, the
-tour sheet, countdowns, header, search, generated art) and
+tour sheet, countdowns, header, search, the contour plates that stand in for
+a missing photo) and
 **`cabana-tours-kit.css`**. The catalogue, guides and studio pages are built
 from `tours.html`'s header and footer so the four cannot drift apart; if you
 change the header, change it in `tours.html` and rebuild the other three the
@@ -42,10 +45,39 @@ The tours pages draw their own brand. Each sets `data-brand="own"` on
 none loads `brand.css`, `brand.js`, `cabana-rebrand.js` or `cabana-ds.css`.
 The palette is the lilac-breasted roller: night `#0B0918`, turquoise
 `#12E0D0`, ultramarine `#3B5BFF`, lilac `#B98CFF`, flamingo `#FF6FA8`, sun
-`#FFB020`, ember `#FF5A36`. Type is Mona Sans (variable width), Instrument
-Serif italic for accents, Big Shoulders Display for clocks, JetBrains Mono
-for small caps. All four fonts are self-hosted under `assets/fonts/` with
-their OFL licences.
+`#FFB020`, ember `#FF5A36`. Type is the rest of Cabana's: **Cabana Display**
+(Fraunces, `SOFT` axis at 100, upright and italic, `/fonts/`) for headlines
+and the italic accent, **Geist** for everything you read and tap, and **Geist
+Mono** for clocks and references. Tokens: `--ct-display`, `--ct-f`,
+`--ct-flap`, `--ct-soft`. All are self-hosted with their OFL licences.
+
+## The page editor
+
+`cabana-tours-page-admin.js` · table `tour_page_blocks` · launch copy `cabana-tours-page.js`
+
+Each row is one section of `/tours`: `kind`, `position`, `enabled` and its
+`content`. The page reads the table (public read, admin write) and merges
+each block over the launch copy field by field, so a half-filled block never
+blanks a section. `*stars*` in any title set those words in the italic accent.
+
+| Block | What the console sets | Shows when |
+|---|---|---|
+| `hero` | The **cover**: photo (desktop and phone), film, focal point, shade, words, search placeholder, quick links; whether "Departing soon" slides run | No Spotlight slide is live |
+| `departures` | Words; the clock on or off | A scheduled tour has seats in the next 30 days |
+| `kinds` | Words; per category a name, line, photo, order and visibility; show empty categories or not | At least one category has a tour |
+| `collection-*` | Words and hand-picked tours (add as many as you like) | At least one picked tour is published |
+| `immersive` | On or off | Switched on (off at launch) |
+| `guides` | Words; optional hand-picked guides first | A guide has a published tour |
+| `catalogue` | Words, how many to show, the "nothing yet" message | Always (the message when empty) |
+| `pitch` | Words, points, button | Spotlight sales are on |
+| `invite` | Words, points, button | Switched on |
+
+Sections move with ↑↓ and switch on and off from the list. **Cabana
+Spotlight slides** (the team's own, kind `house`) are made in the same
+editor from real photos or film and can be paused, resumed, ended or
+deleted. Uploads go to the public `tours` bucket under
+`<uid>/tours-page/`. The launch copy in `cabana-tours-page.js` and the seed
+in the migration are kept identical by the tests.
 
 ## The Spotlight
 
@@ -53,9 +85,11 @@ their OFL licences.
 
 **What plays, in order:** paid Spotlights → tours the console features for
 free → up to two automatic "Departing soon" slides when fewer than three of
-those are running → Cabana's own slides (Immersive, the guides, "This could
-be your tour"). The house slides are also built into the script, so a
-network failure never leaves the top of the page empty.
+those are running (only tours with a photo; switchable) → Cabana's own
+slides, made in the page editor from real media. With nothing to play, the
+top of the page is the **cover** from the `hero` block: a photo or film,
+the headline, search and quick links. Nothing illustrated stands in for a
+real slide.
 
 **Media:** a photo, an uploaded video or a YouTube film (played from
 `youtube-nocookie.com`). Photos and videos must be uploaded through the
@@ -167,7 +201,8 @@ traveller gets the guide's number only on a paid booking.
 
 `/tours`, `/tours-catalogue` and `/tour-guides` are ad surfaces in
 `apa-ad-registry.js` (in the results grid, before the closing band, corner
-card). `/tours-studio` is on the never list and does not load the ad engine.
+card). They carry paid placements only: Cabana's own house ads are off
+(`house: false`) so nothing on the page is filler. `/tours-studio` is on the never list and does not load the ad engine.
 
 ## Migrations
 
@@ -178,6 +213,7 @@ card). `/tours-studio` is on the never list and does not load the ad engine.
 | `20260928102000_tours_v2_operator_privacy_and_directory.sql` | `tour_operator_me`, `admin_tour_operators`, `tour_guides_directory`, `tour_operator_bookings` |
 | `20260928103000_tours_v2_messenger.sql` | tour conversations, `tour_offers`, the tour chat RPCs |
 | `20260928104000_tours_v2_spotlight.sql` | the Spotlight: tables, feed, tracking, quote, calendar, create, cancel, console desk, inbox queue, payment trigger, house slides |
+| `20260929090000_tours_page_content.sql` | `tour_page_blocks` and the launch copy; retires the illustrated house slides |
 
 ## Tests
 

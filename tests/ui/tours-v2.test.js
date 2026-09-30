@@ -8,12 +8,16 @@
 
    What this suite holds in place:
 
-     SPOTLIGHT  Never empty. With no data at all Cabana's own slides run;
-                the arrows move it; reduced motion keeps it still.
+     TOP        Never a stand-in. With slides running it is a slideshow
+                the arrows move and reduced motion holds still; with none,
+                it is the cover the team wrote, with a working search.
+
+     BLOCKS     The page follows tour_page_blocks: a section switched off
+                is gone, a curated collection appears with its tours, and
+                a section with nothing real in it (no departures) hides.
 
      BOARD      Only departures inside thirty days, never a full one, never
-                an on-request tour, and the clocks actually tick. With no
-                departures the board says so instead of showing a blank rail.
+                an on-request tour, and the clocks actually tick.
 
      SAVES      A heart is a real save: pressed state, the header counter
                 and local storage all agree after one tap.
@@ -100,6 +104,18 @@ function departures() {
   return out.sort((a, b) => a.departs_at.localeCompare(b.departs_at));
 }
 
+/* Cabana's own slides, as the console stores them (real media only). */
+const HOUSE = [
+  { id: '0a0a0a0a-0000-4000-8000-000000000001', kind: 'house', sponsored: false, media_kind: 'image', media_url: '/og-tours.jpg', focal: '50% 50%', kicker: 'New on Cabana', headline: 'The Mara, *before the crowds*', subline: 'Three days, two nights.', cta_label: 'See the tours', cta_url: '/tours-catalogue?cat=big-safari', accent: '#FFB020' },
+  { id: '0a0a0a0a-0000-4000-8000-000000000002', kind: 'house', sponsored: false, media_kind: 'image', media_url: '/og-tours.jpg', focal: '50% 50%', kicker: 'Weekends', headline: 'Out Saturday, *home for dinner*', subline: '', cta_label: 'This weekend', cta_url: 'https://evil.example.com/', accent: '#12E0D0' }
+];
+/* What the team saved in the console. */
+const BLOCKS = [
+  { id: 'invite', kind: 'invite', position: 90, enabled: false, content: {} },
+  { id: 'collection-weekend', kind: 'collection', position: 25, enabled: true, content: { eyebrow: 'Collection', title: 'Weekend *escapes*', tour_ids: [202, 203, 999] } },
+  { id: 'hero', kind: 'hero', position: 0, enabled: true, content: { title: 'Tours with *people who know*' } }
+];
+
 const GUIDES = [
   { id: 4, slug: 'savanna-trails', name: 'Savanna Trails', tagline: 'Dawn drives.', county: 'Nairobi', kind: 'partner', persona: 'guide', verified: true, tours: 3, from_kes: 2500, languages: ['English'], places: ['Nairobi'], messageable: true },
   { id: 5, slug: 'rift-rovers', name: 'Rift Rovers', tagline: 'Naivasha.', county: 'Nakuru', kind: 'partner', persona: 'operator', verified: true, tours: 1, from_kes: 48000, languages: ['English'], places: ['Naivasha'], messageable: true }
@@ -141,7 +157,8 @@ async function visit(browser, url, opts = {}) {
     if (/tours_public/.test(u)) body = empty ? [] : TOURS;
     else if (/rpc\/tour_departures/.test(u)) body = empty ? [] : departures();
     else if (/rpc\/tour_guides_directory/.test(u)) body = empty ? [] : GUIDES;
-    else if (/rpc\/tour_spotlight_feed/.test(u)) body = [];
+    else if (/rpc\/tour_spotlight_feed/.test(u)) body = opts.slides ? HOUSE : [];
+    else if (/tour_page_blocks/.test(u)) body = opts.blocks ? BLOCKS : [];
     else if (/rpc\/immersive_state/.test(u)) body = { open: true, trial: true, banner: { enabled: false } };
     else if (/\/auth\/v1\//.test(u)) body = {};
     return r.fulfill({ status: 200, headers: Object.assign({ 'content-type': 'application/json' }, cors()), body: JSON.stringify(body) });
@@ -164,7 +181,7 @@ const activeSlide = page => page.evaluate(() => {
 
   // ── SPOTLIGHT + BOARD, with data ──────────────────────────────────────
   {
-    const { page, ctx, errors } = await visit(browser, '/tours.html');
+    const { page, ctx, errors } = await visit(browser, '/tours.html', { slides: true });
     const s = await page.evaluate(() => ({
       gate: !!document.getElementById('jungle-gate'),
       slides: document.querySelectorAll('#ct-spotlight .ct-slide').length,
@@ -173,7 +190,9 @@ const activeSlide = page => page.evaluate(() => {
     }));
     check('gate clears on its own', !s.gate);
     check('no page errors on the home page', errors.length === 0, errors.join('; '));
-    check('spotlight has slides and exactly one showing', s.slides >= 3 && s.on === 1, JSON.stringify(s));
+    check('spotlight runs the slides it was given, one at a time', s.slides === 2 && s.on === 1, JSON.stringify(s));
+    const hrefs = await page.evaluate(() => Array.from(document.querySelectorAll('#ct-spotlight .ct-slide a[data-sl-act]')).map(a => a.getAttribute('href')));
+    check('a slide link can never leave Cabana', hrefs.length === 2 && hrefs.every(h => /^\//.test(h)), JSON.stringify(hrefs));
 
     const before = await activeSlide(page);
     await page.click('#ct-spotlight [data-sl="next"]');
@@ -218,22 +237,55 @@ const activeSlide = page => page.evaluate(() => {
     const { page, ctx, errors } = await visit(browser, '/tours.html', { empty: true });
     const s = await page.evaluate(() => ({
       slides: document.querySelectorAll('#ct-spotlight .ct-slide').length,
-      emptyBoard: !!document.querySelector('#ct-dep-rail .ct-board-empty'),
-      passes: document.querySelectorAll('#ct-dep-rail .ct-pass').length
+      cover: !!document.querySelector('#ct-spotlight .ct-cover'),
+      title: (document.querySelector('#ct-spotlight .ct-cover-h') || {}).textContent || '',
+      search: !!document.querySelector('#ct-spotlight form[action="/tours-catalogue"] input[name="q"]'),
+      hidden: ['departures', 'kinds', 'guides'].filter(id => document.getElementById(id).hidden),
+      blank: (document.querySelector('#ct-grid .ct-blank h3') || {}).textContent || '',
+      art: document.querySelectorAll('.ct-world, .ct-board-empty, svg.glyph').length
     }));
-    check('spotlight still runs with no data (house slides)', s.slides >= 3, JSON.stringify(s));
-    check('empty board explains itself', s.emptyBoard && s.passes === 0, JSON.stringify(s));
+    check('with nothing running, the top is the cover, not a slideshow', s.cover && s.slides === 0, JSON.stringify(s));
+    check('the cover carries the launch copy and a working search', /booked direct/.test(s.title) && s.search, JSON.stringify(s));
+    check('sections with nothing real in them hide', s.hidden.length === 3, JSON.stringify(s.hidden));
+    check('the catalogue says plainly that tours are coming', /first tours are on their way/.test(s.blank), s.blank);
+    check('no illustrated stand-ins anywhere', s.art === 0, String(s.art));
     check('no page errors when empty', errors.length === 0, errors.join('; '));
+    await page.fill('#ct-spotlight input[name="q"]', 'naivasha');
+    await Promise.all([page.waitForURL(/tours-catalogue\?q=naivasha/, { timeout: 6000 }).catch(() => null), page.press('#ct-spotlight input[name="q"]', 'Enter')]);
+    check('cover search goes to the catalogue', /tours-catalogue\?q=naivasha/.test(page.url()), page.url());
     await ctx.close();
   }
 
   // ── REDUCED MOTION ───────────────────────────────────────────────────
   {
-    const { page, ctx } = await visit(browser, '/tours.html', { reduced: true, wait: 5000 });
+    const { page, ctx } = await visit(browser, '/tours.html', { reduced: true, slides: true, wait: 5000 });
     const a = await activeSlide(page);
     await page.waitForTimeout(9000);
     const b = await activeSlide(page);
     check('reduced motion holds the spotlight still', a !== null && a === b, a + ' → ' + b);
+    await ctx.close();
+  }
+
+  // ── THE PAGE FOLLOWS THE CONSOLE ─────────────────────────────────────
+  {
+    const { page, ctx, errors } = await visit(browser, '/tours.html', { blocks: true });
+    const s = await page.evaluate(() => {
+      const coll = document.getElementById('c-collection-weekend');
+      const order = Array.from(document.querySelectorAll('main > section')).filter(x => !x.hidden).map(x => x.id);
+      return {
+        invite: document.getElementById('invite').hidden,
+        coll: !!coll && !coll.hidden, collTitle: coll ? coll.querySelector('h2').innerHTML : '',
+        collIds: coll ? Array.from(coll.querySelectorAll('.ct-card[data-id]')).map(c => c.getAttribute('data-id')) : [],
+        cover: (document.querySelector('#ct-spotlight .ct-cover-h') || {}).textContent || '',
+        order
+      };
+    });
+    check('a section switched off in the console is gone', s.invite === true, JSON.stringify(s));
+    check('a curated collection shows its live tours, in order', s.coll && s.collIds.join(',') === '202,203', JSON.stringify(s));
+    check('stars in a title become the accent', /<em>escapes<\/em>/.test(s.collTitle), s.collTitle);
+    check('the collection sits where the console put it', s.order.indexOf('c-collection-weekend') > s.order.indexOf('kinds') && s.order.indexOf('c-collection-weekend') < s.order.indexOf('all'), JSON.stringify(s.order));
+    check('the cover uses the team’s words', /people who know/.test(s.cover), s.cover);
+    check('no page errors with console content', errors.length === 0, errors.join('; '));
     await ctx.close();
   }
 

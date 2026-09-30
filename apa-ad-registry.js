@@ -114,25 +114,27 @@
       slots: [
         { id: 'tours.feed', label: 'In results', kind: 'infeed', formats: ['native', 'carousel'] },
         { id: 'tours.end', label: 'After tours', kind: 'section', formats: ['window', 'video', 'split', 'carousel'],
-          anchor: ['.ct-invite', 'section.seo-content'], mode: 'before', fallback: 'footer.site-footer', house: true },
+          anchor: ['.ct-invite', 'section.seo-content'], mode: 'before', fallback: 'footer.site-footer', house: false },
         { id: 'tours.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
       ], shadow: true },
 
     // The full catalogue and the guides directory sit under Tours and
-    // share its engine; the operator studio is on the never list.
+    // share its engine; the operator studio is on the never list. The
+    // tours pages carry paid campaigns only: no house promos, so an empty
+    // slot stays empty instead of showing a stand-in.
     { page: 'tours-catalogue', label: 'Tours · all tours', service: true,
       feed: { grid: ['#ct-grid'], label: 'tour cards' },
       slots: [
         { id: 'tours-catalogue.feed', label: 'In results', kind: 'infeed', formats: ['native', 'carousel'] },
         { id: 'tours-catalogue.end', label: 'After results', kind: 'section', formats: ['window', 'video', 'split', 'carousel'],
-          anchor: ['.ct-band'], mode: 'before', fallback: 'footer.site-footer', house: true },
+          anchor: ['.ct-band'], mode: 'before', fallback: 'footer.site-footer', house: false },
         { id: 'tours-catalogue.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
       ], shadow: true },
 
     { page: 'tour-guides', label: 'Tours · guides', service: true,
       slots: [
         { id: 'tour-guides.end', label: 'After guides', kind: 'section', formats: ['window', 'video', 'split', 'carousel'],
-          anchor: ['.ct-band'], mode: 'before', fallback: 'footer.site-footer', house: true },
+          anchor: ['.ct-band'], mode: 'before', fallback: 'footer.site-footer', house: false },
         { id: 'tour-guides.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
       ], shadow: true },
 

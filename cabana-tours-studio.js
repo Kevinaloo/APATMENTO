@@ -28,7 +28,7 @@
     return m.slice(0, 240) || 'Something went wrong. Please try again.';
   }
 
-  var PK = [['day', '1 day', 'A launch or a flash departure'], ['week', '7 days', 'The one most guides pick'], ['fortnight', '14 days', 'Two weekends of travellers'], ['month', '30 days', 'A whole season up front']];
+  var PK = [['day', '1 day', 'A launch or a one-off date'], ['week', '7 days', 'Most guides start here'], ['fortnight', '14 days', 'Covers two weekends'], ['month', '30 days', 'A full month at the top']];
   var SW = ['#FFB020', '#12E0D0', '#3B5BFF', '#B98CFF', '#FF6FA8', '#3EE08F'];
   var S = {
     tab: 'spotlight', user: null, op: null, opLoaded: false, tours: [], spots: null, bookings: null, scope: 'upcoming',
@@ -73,13 +73,13 @@
   function paint() {
     var kit = K(), esc = kit.esc, I = kit.icon, root = el('cs-root'); if (!root) return;
     if (!S.user) {
-      root.innerHTML = '<div class="cs-gate"><h2>Your tours, your Spotlight, your bookings.</h2><p>Sign in with the account you listed your tours with. Everything a guide or operator needs on Cabana Tours lives here.</p><div class="acts"><button class="ct-btn ct-btn-sun" type="button" data-signin>Sign in</button><a class="ct-btn" href="/list-your-tour">List your first tour</a></div></div>';
+      root.innerHTML = '<div class="cs-gate"><h2>The studio for guides and operators</h2><p>Sign in with the account you list your tours with to see your bookings, manage your tours and put a tour in the Spotlight.</p><div class="acts"><button class="ct-btn ct-btn-sun" type="button" data-signin>Sign in</button><a class="ct-btn" href="/list-your-tour">List your first tour</a></div></div>';
       $('[data-signin]', root).addEventListener('click', function () { kit.signIn(); });
       return;
     }
     if (!S.opLoaded) { root.innerHTML = '<div class="ct-wrap"><div class="ct-skel" style="height:420px;margin-top:20px"></div></div>'; return; }
     if (!S.op) {
-      root.innerHTML = '<div class="cs-gate"><h2>First, tell travellers who you are.</h2><p>List a tour as a guide or an operator. Once a person at Cabana has checked it, this studio opens: bookings, messages, private offers and the Spotlight.</p><div class="acts"><a class="ct-btn ct-btn-sun" href="/list-your-tour">List a tour</a><a class="ct-btn" href="/help" data-cbn-support>Talk to us</a></div></div>';
+      root.innerHTML = '<div class="cs-gate"><h2>List your first tour to open the studio</h2><p>Tell us who you are and what you run. Once our team has checked your profile, this is where you see bookings, reply to travellers, send private prices and buy a place in the Spotlight.</p><div class="acts"><a class="ct-btn ct-btn-sun" href="/list-your-tour">List a tour</a><a class="ct-btn" href="/help" data-cbn-support>Talk to us</a></div></div>';
       return;
     }
     var op = S.op;
@@ -139,7 +139,7 @@
               '<div id="cs-media" style="margin-top:14px"></div>' +
             '</div>' +
             '<div class="cs-card"><div class="cs-step"><i>3</i>Your words</div>' +
-              '<p class="cs-hint">Wrap words in *stars* to set them in the gold italic. No phone numbers, links or handles: travellers reach you through Cabana.</p>' +
+              '<p class="cs-hint">Wrap words in *stars* to set them in the italic accent. No phone numbers, links or handles: travellers reach you through Cabana.</p>' +
               field('kicker', 'Small line above', 40, 'Day safari · Nairobi National Park') +
               field('headline', 'Headline', 70, 'Lions at *first light*') +
               field('subline', 'One or two sentences', 160, 'Out through the gate as the park wakes, back in town by lunch.', true) +
@@ -159,7 +159,7 @@
               '<div class="ct-sum" id="cs-sum"></div>' +
               '<div class="ct-err" id="cs-err"></div>' +
               '<button class="ct-btn ct-btn-sun ct-btn-block" type="button" id="cs-go">Pay and send for review</button>' +
-              '<p class="cs-hint" style="margin:0">A person checks every Spotlight before it goes live, usually within a day. If it is not approved, the full amount comes back to you as Cabana credit. Review time is never taken from your days.</p>' +
+              '<p class="cs-hint" style="margin:0">Our team checks every Spotlight before it goes live, usually within a day. If it is not approved, the full amount comes back to you as Cabana credit. Review time is never taken from your days.</p>' +
             '</div>' +
           '</div>' +
           '<div class="cs-preview">' +

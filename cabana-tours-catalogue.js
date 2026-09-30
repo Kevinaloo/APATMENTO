@@ -17,7 +17,7 @@
 
   var F = { q: '', cat: [], when: 'any', date: '', len: [], price: 'any', op: '', saved: false, vr: false, group: false, sort: 'recommended', shown: PAGE, place: null };
   var WHEN = [['any', 'Any time'], ['weekend', 'This weekend'], ['7', 'Next 7 days'], ['30', 'Next 30 days'], ['date', 'Pick a day']];
-  var LEN = [['0', 'In the city'], ['1', 'Day trip'], ['2', 'Overnight'], ['3', 'Expedition']];
+  var LEN = [['0', 'A few hours'], ['1', 'A full day'], ['2', '2 to 3 days'], ['3', '4 days or more']];
   var PRICE = [['any', 'Any'], ['free', 'Free'], ['u5', 'Under 5K'], ['5-15', '5K–15K'], ['15+', '15K +']];
   var SORT = [['recommended', 'Recommended'], ['soonest', 'Leaving soonest'], ['price-asc', 'Price: low to high'], ['price-desc', 'Price: high to low'], ['short', 'Shortest first'], ['new', 'Newest']];
 
@@ -173,8 +173,8 @@
     if (!res.length) {
       var none = !kit.get().length;
       g.innerHTML = '<div class="ct-blank"><div class="ct-blank-mark">' + kit.icon.compass + '</div>' +
-        (none ? '<h3>The catalogue opens with its first tour</h3><p>Guides and operators are being checked and added. List yours, or step into a safari in 360° while you wait.</p><div class="ct-blank-acts"><a class="ct-btn ct-btn-sun" href="/list-your-tour">List a tour</a><a class="ct-btn" href="/tours#immersive">Step inside in VR</a></div>'
-              : '<h3>Nothing on this stretch of the map</h3><p>No tour matches every filter. Loosen one, or ask a guide: many run private days on request.</p><div class="ct-blank-acts"><button class="ct-btn ct-btn-ink" type="button" data-rm="all">Clear all filters</button><a class="ct-btn" href="/tour-guides">Ask a guide</a></div>') + '</div>';
+        (none ? '<h3>The first tours are on their way</h3><p>Every guide and operator is vetted by our team before their tours go live. New tours appear here as soon as they are approved.</p><div class="ct-blank-acts"><a class="ct-btn ct-btn-sun" href="/list-your-tour">List your tours</a></div>'
+              : '<h3>No tours match all of these</h3><p>Try removing a filter. Or message a guide: most will run a private day for your group.</p><div class="ct-blank-acts"><button class="ct-btn ct-btn-ink" type="button" data-rm="all">Clear all filters</button><a class="ct-btn" href="/tour-guides">Message a guide</a></div>') + '</div>';
       return;
     }
     g.innerHTML = res.slice(0, F.shown).map(function (t) { return kit.card(t); }).join('');
@@ -235,7 +235,11 @@
     var all = kit.get(), ops = {}, places = {};
     all.forEach(function (t) { if (t.operator_id != null) ops[t.operator_id] = 1; var p = t.destination || t.county; if (p) places[p] = 1; });
     var soon = kit.upcoming(30).length;
-    box.innerHTML = all.length ? '<span><b>' + all.length + '</b>tours live</span><span><b>' + Object.keys(ops).length + '</b>guides &amp; operators</span><span><b>' + Object.keys(places).length + '</b>places</span><span><b>' + soon + '</b>leaving in 30 days</span>' : '';
+    // Only numbers worth saying: none of these shows as a zero.
+    var parts = [[all.length, all.length === 1 ? 'tour' : 'tours'], [Object.keys(ops).length, Object.keys(ops).length === 1 ? 'guide or operator' : 'guides and operators'],
+                 [Object.keys(places).length, Object.keys(places).length === 1 ? 'place' : 'places'], [soon, 'leaving in the next 30 days']].filter(function (p) { return p[0] > 0; });
+    box.innerHTML = all.length ? parts.map(function (p) { return '<span><b>' + p[0] + '</b>' + p[1] + '</span>'; }).join('') : '';
+    box.hidden = !all.length;
   }
 
   function start() {
