@@ -792,7 +792,7 @@
       { id: 'listings', label: 'Listings', icon: 'building', keys: 'g l', tone: 'warn', badge: function () { return c('listings') + c('tour3d') + c('conflicts'); } },
       { id: 'food', label: 'Food orders', icon: 'utensils', tone: 'info', badge: function () { return n(CX.pulse.food_live); } },
       { id: 'flights', label: 'Flight desk', icon: 'plane', tone: 'warn', desk: 's-flights', badge: function () { return c('flights'); } },
-      { id: 'tours', label: 'Tours', icon: 'map', tone: 'warn', desk: 's-tours', badge: function () { return c('tours') + c('operators') + c('spotlights'); } },
+      { id: 'tours', label: 'Tours', icon: 'map', tone: 'warn', desk: 's-tours', badge: function () { return c('tours') + c('operators') + c('spotlights') + c('tour_changes') + c('tour_film'); } },
       { id: 'immersive', label: 'Immersive', icon: 'vr', tone: 'info', badge: function () { return c('immersive_requests'); } },
       { id: 'move', label: 'Cabana Move', icon: 'car', tone: 'warn', desk: 's-transport', badge: function () { return c('rides'); } },
       { id: 'offers', label: 'Offers', icon: 'tag', desk: 's-offers' },
@@ -836,7 +836,7 @@
     ] }
   ];
   var NAV_BY = {}; NAV.forEach(function (g) { g.items.forEach(function (i) { i.group = g.g; NAV_BY[i.id] = i; }); });
-  var INBOX_KEYS = ['profiles', 'kyc', 'tours', 'events', 'operators', 'checkin', 'support', 'refunds', 'listings', 'withdrawals', 'disputes', 'uploads', 'sos', 'ops', 'tour3d', 'conflicts', 'leads', 'flights', 'rides', 'host_review', 'immersive_requests'];
+  var INBOX_KEYS = ['profiles', 'kyc', 'tours', 'events', 'operators', 'checkin', 'support', 'refunds', 'listings', 'withdrawals', 'disputes', 'uploads', 'sos', 'ops', 'tour3d', 'conflicts', 'leads', 'flights', 'rides', 'host_review', 'immersive_requests', 'tour_changes', 'tour_film'];
   function inboxTotal() { return INBOX_KEYS.reduce(function (s, k) { return s + c(k); }, 0); }
 
   function renderNav() {
@@ -954,7 +954,7 @@
      are prefetched once the console is idle, so the first click is warm. */
   var DESK_JS = {
     flights: ['/fd-atlas.js', '/cabana-flights-admin.js'],
-    tours: ['/cabana-tours-page.js', '/cabana-tours-admin.js', '/cabana-tours-page-admin.js'],
+    tours: ['/cabana-tours-page.js', '/cabana-tours-spotlight.js', '/cabana-tours-admin.js', '/cabana-tours-page-admin.js'],
     events: ['/cabana-events-admin.js'],
     move: ['/cabana-rides-admin.js?v=3'],
     offers: ['/cabana-offers.js']

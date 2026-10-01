@@ -128,17 +128,17 @@
   /* Names, lines and photos are edited in the console (Tours → Page →
      Categories) and merged in when the page content arrives. */
   var CATS = {
-    'day-safari': { name: 'Day safaris', blurb: 'Game drives you can fit between breakfast and dinner.', a: '#FFB020', b: '#FF5A36', scene: 'savanna', image: null },
-    'big-safari': { name: 'Multi-day safaris', blurb: 'The Mara, Amboseli and Tsavo, with nights in camp.', a: '#FF6FA8', b: '#6A2BD8', scene: 'savanna', image: null },
-    'day-trip': { name: 'Day trips', blurb: 'Lakes, gorges and hills a short drive from the city.', a: '#12E0D0', b: '#1B7CF0', scene: 'lake', image: null },
-    'city-tour': { name: 'City walks', blurb: 'Food, history, art and nightlife, on foot with a local.', a: '#3B5BFF', b: '#B98CFF', scene: 'city', image: null },
-    'adventure': { name: 'Adventure', blurb: 'Hikes, climbs, cycling and white water.', a: '#3EE08F', b: '#0B6E63', scene: 'peaks', image: null },
-    'culture': { name: 'Culture & community', blurb: 'Markets, music and craft, and the people behind them.', a: '#B98CFF', b: '#FF6FA8', scene: 'culture', image: null },
-    'beach': { name: 'Coast & water', blurb: 'Dhows, reefs, islands and long afternoons by the sea.', a: '#12E0D0', b: '#3B5BFF', scene: 'coast', image: null },
-    'expedition': { name: 'Expeditions', blurb: 'Four days or more, for the big mountains and far corners.', a: '#FF5A36', b: '#3B1C4A', scene: 'peaks', image: null }
+    'day-safari': { name: 'Day safaris', blurb: 'Game drives between breakfast and dinner.', a: '#FFB21E', b: '#F2541B', scene: 'savanna', image: null, photo: 'day-safari' },
+    'big-safari': { name: 'Multi-day safaris', blurb: 'Nights in camp, days on the plains.', a: '#F2541B', b: '#7457F2', scene: 'savanna', image: null, photo: 'big-safari' },
+    'day-trip': { name: 'Day trips', blurb: 'Lakes, gorges and hills within reach of the city.', a: '#0FA3B8', b: '#13925F', scene: 'lake', image: null, photo: 'day-trip' },
+    'city-tour': { name: 'City walks', blurb: 'Food, history and nightlife, on foot with a local.', a: '#7457F2', b: '#F24E7A', scene: 'city', image: null, photo: 'city-tour' },
+    'adventure': { name: 'Adventure', blurb: 'Hikes, climbs, cycling and white water.', a: '#13925F', b: '#0FA3B8', scene: 'peaks', image: null, photo: 'adventure' },
+    'culture': { name: 'Culture & community', blurb: 'Markets, music, craft and the people behind them.', a: '#F24E7A', b: '#FFB21E', scene: 'culture', image: null, photo: 'culture' },
+    'beach': { name: 'Coast & water', blurb: 'Dhows, reefs and islands.', a: '#0FA3B8', b: '#7457F2', scene: 'coast', image: null, photo: 'beach' },
+    'expedition': { name: 'Expeditions', blurb: 'Four days or more, for the big mountains.', a: '#F2541B', b: '#16120D', scene: 'peaks', image: null, photo: 'expedition' }
   };
   var CAT_ORDER = ['day-safari', 'big-safari', 'day-trip', 'city-tour', 'adventure', 'culture', 'beach', 'expedition'];
-  var ACCENTS = ['#12E0D0', '#3B5BFF', '#B98CFF', '#FF6FA8', '#FFB020', '#3EE08F'];
+  var ACCENTS = ['#F2541B', '#13925F', '#0FA3B8', '#7457F2', '#F24E7A', '#FFB21E'];
   function accentOf(t) { return ACCENTS[hash((t && t.id) || 'x') % ACCENTS.length]; }
   function catOf(t) { return CATS[t && t.category] || null; }
   /* Where a tour sits by how far it carries you: 0 city, 1 day, 2 overnight, 3 expedition. */
@@ -239,7 +239,8 @@
   var st = {
     tours: [], byId: {}, deps: {}, pop: {}, loaded: false, depsLoaded: false,
     page: clonePage(PAGE_DEFAULTS), pageLoaded: false,
-    user: null, saves: [], listeners: { data: [], saves: [], user: [], page: [] }
+    places: [], placeById: {}, placesLoaded: false, follows: [], followsKnown: false,
+    user: null, saves: [], listeners: { data: [], saves: [], user: [], page: [], places: [], follows: [] }
   };
   function emit(k) { (st.listeners[k] || []).forEach(function (fn) { safe(function () { fn(api); }); }); }
   function on(k, fn) {
@@ -249,6 +250,8 @@
     if (k === 'saves') safe(function () { fn(api); });
     if (k === 'user' && st.userKnown) safe(function () { fn(api); });
     if (k === 'page' && st.pageLoaded) safe(function () { fn(api); });
+    if (k === 'places' && st.placesLoaded) safe(function () { fn(api); });
+    if (k === 'follows' && st.followsKnown) safe(function () { fn(api); });
   }
 
   /* Stored blocks win over the defaults field by field, so a block saved
@@ -300,12 +303,92 @@
      scheduled, no VR tab while the Immersive room is switched off. */
   function syncTabs() {
     var top = el('ct-top'); if (!top) return;
-    var imm = block('immersive'), dep = block('departures');
+    var imm = block('immersive'), dep = block('departures'), pl = block('places');
     var showImm = !!(imm && imm.enabled);
     var showDep = !!(dep && dep.enabled) && (!st.loaded || upcoming(30).length > 0);
+    var showPl = !!(pl && pl.enabled) && (!st.placesLoaded || st.places.length > 0);
     $$('.ct-tab[href*="#immersive"]', top).forEach(function (a) { a.hidden = !showImm; });
     $$('.ct-tab[href*="#departures"]', top).forEach(function (a) { a.hidden = !showDep; });
+    $$('.ct-tab[href*="#places"]', top).forEach(function (a) { a.hidden = !showPl; });
     try { global.dispatchEvent(new Event('resize')); } catch (e) {}
+  }
+
+  /* ═══ PLACES ═══════════════════════════════════════════════════════
+     The destinations the team keeps in the console (tour_places): name,
+     photo, words and a spot on the map. A tour carries place_id, which
+     the database guesses from its destination until someone pins it. */
+  function loadPlaces() {
+    var c = sb();
+    if (!c) { st.placesLoaded = true; emit('places'); return Promise.resolve(); }
+    return c.from('tour_places').select('id,name,country,region,line,image,focal,lat,lng,position,enabled,featured')
+      .order('position', { ascending: true })
+      .then(function (r) {
+        st.places = (Array.isArray(r && r.data) ? r.data : []).filter(function (p) { return p && p.id && p.enabled !== false; });
+      }, function () { st.places = []; })
+      .then(function () {
+        st.placeById = {};
+        st.places.forEach(function (p) { st.placeById[p.id] = p; });
+        st.placesLoaded = true; emit('places'); syncTabs();
+      });
+  }
+  function placeOf(t) { return (t && t.place_id && st.placeById[t.place_id]) || null; }
+  function placeCount(id) { var n = 0; st.tours.forEach(function (t) { if (t.place_id === id) n++; }); return n; }
+
+  /* ═══ FOLLOWS ══════════════════════════════════════════════════════
+     "Tell me when": a traveller follows a place or a kind of trip and
+     hears first when a guide lists one (tour_alert_set). Signed-out, the
+     tap goes to sign-in and comes back with ?follow= to finish the job. */
+  function followKey(place, cat) { return (place || '') + '|' + (cat || ''); }
+  function loadFollows() {
+    var c = sb();
+    if (!c || !st.user) { st.follows = []; st.followsKnown = true; emit('follows'); paintFollows(); return Promise.resolve(); }
+    return c.rpc('tour_alerts_mine').then(function (r) {
+      st.follows = Array.isArray(r && r.data) ? r.data.map(function (a) { return followKey(a.place_id, a.category); }) : [];
+    }, function () {}).then(function () { st.followsKnown = true; emit('follows'); paintFollows(); });
+  }
+  function isFollowing(place, cat) { return st.follows.indexOf(followKey(place, cat)) !== -1; }
+  function followName(place, cat) {
+    if (place && st.placeById[place]) return st.placeById[place].name;
+    if (cat && CATS[cat]) return CATS[cat].name.toLowerCase();
+    return 'this';
+  }
+  function follow(place, cat, on) {
+    place = place || null; cat = cat || null;
+    if (!place && !cat) return Promise.resolve(false);
+    var key = followKey(place, cat), want = on == null ? !isFollowing(place, cat) : !!on;
+    if (!st.user) {
+      var u; try { u = new URL(global.location.href); u.searchParams.set('follow', (place ? 'place:' + place : 'cat:' + cat)); } catch (e) {}
+      toast('Sign in and we will tell you the moment one opens.');
+      setTimeout(function () { signIn(u ? u.pathname + u.search + u.hash : null); }, 700);
+      return Promise.resolve(false);
+    }
+    var c = sb(); if (!c) return Promise.resolve(false);
+    // Paint first, settle with the database after.
+    st.follows = want ? st.follows.concat([key]) : st.follows.filter(function (k) { return k !== key; });
+    paintFollows(); emit('follows');
+    return c.rpc('tour_alert_set', { p_place: place, p_category: cat, p_on: want }).then(function (r) {
+      if (r && r.error) throw r.error;
+      var name = followName(place, cat);
+      toast(want ? (place ? 'Following ' + name + '. We will tell you the moment a tour opens there.' : 'Following ' + name + '. We will tell you when one is listed.') : 'You will no longer hear about ' + name + '.', 3600);
+      return want;
+    }).catch(function (e) {
+      st.follows = want ? st.follows.filter(function (k) { return k !== key; }) : st.follows.concat([key]);
+      paintFollows(); emit('follows');
+      toast((e && e.message) || 'That did not save. Try again in a moment.');
+      return !want;
+    });
+  }
+  /* Any [data-ct-follow="place:<id>"] or "cat:<key>" button keeps its
+     pressed state and words in step with the account. */
+  function followArgs(v) { var m = String(v || '').match(/^(place|cat):([a-z0-9-]+)$/); return m ? (m[1] === 'place' ? [m[2], null] : [null, m[2]]) : null; }
+  function paintFollows() {
+    $$('[data-ct-follow]').forEach(function (b) {
+      var a = followArgs(b.getAttribute('data-ct-follow')); if (!a) return;
+      var on = isFollowing(a[0], a[1]);
+      b.setAttribute('aria-pressed', String(on));
+      var l = b.querySelector('[data-follow-l]');
+      if (l) l.textContent = on ? (b.getAttribute('data-on') || 'Following') : (b.getAttribute('data-off') || 'Tell me when');
+    });
   }
   /* "Words in *stars* are the accent", everywhere the team writes a title. */
   function headline(h) {
@@ -368,11 +451,12 @@
 
   function initUser() {
     var S = global.ApaSession;
-    if (!S || !S.ready) { st.userKnown = true; emit('user'); return; }
+    if (!S || !S.ready) { st.userKnown = true; emit('user'); loadFollows(); return; }
     S.ready(function (s) {
       st.user = (s && s.user) || null; st.userKnown = true;
       emit('user');
       if (st.user) syncSaves(numericIds(st.saves), []);
+      loadFollows().then(resumeFollow);
     });
     if (S.subscribe) safe(function () {
       S.subscribe(function (s) {
@@ -380,6 +464,7 @@
         if ((u && u.id) === (st.user && st.user.id)) return;
         st.user = u; emit('user');
         if (u) syncSaves(numericIds(st.saves), []);
+        loadFollows();
       });
     });
   }
@@ -590,6 +675,8 @@
     var t = e.target;
     var save = t.closest && t.closest('[data-ct-save]');
     if (save) { e.preventDefault(); e.stopPropagation(); toggleSave(save.getAttribute('data-ct-save'), save); return; }
+    var fol = t.closest && t.closest('[data-ct-follow]');
+    if (fol) { e.preventDefault(); e.stopPropagation(); var fa = followArgs(fol.getAttribute('data-ct-follow')); if (fa) follow(fa[0], fa[1]); return; }
     var msg = t.closest && t.closest('[data-ct-msg]');
     if (msg) { e.preventDefault(); e.stopPropagation(); message(msg.getAttribute('data-ct-msg'), { date: msg.getAttribute('data-date') || null }); return; }
     var bk = t.closest && t.closest('[data-ct-book]');
@@ -892,6 +979,23 @@
   }
 
   /* ═══ DEEP LINKS ═══════════════════════════════════════════════════ */
+  /* Back from sign-in with ?follow=place:<id>: finish what they asked. */
+  var _resumed = false;
+  function resumeFollow() {
+    if (_resumed || !st.user) return; _resumed = true;
+    var done = false;
+    function go() {
+      if (done) return; done = true;
+      safe(function () {
+        var u = new URL(global.location.href), a = followArgs(u.searchParams.get('follow'));
+        if (!a) return;
+        u.searchParams.delete('follow'); global.history.replaceState(null, '', u.pathname + u.search + u.hash);
+        if (!isFollowing(a[0], a[1])) follow(a[0], a[1], true);
+      });
+    }
+    // Wait for the places, so the confirmation can name the place.
+    if (st.placesLoaded) go(); else on('places', go);
+  }
   var _linked = false;
   function afterLoad() {
     paintHearts();
@@ -913,6 +1017,7 @@
     mountCountdowns(doc);
     loadPage();
     load();
+    loadPlaces();
     // A tab brought back after hours should not show yesterday's board.
     var hiddenAt = 0;
     doc.addEventListener('visibilitychange', function () {
@@ -932,6 +1037,9 @@
     message: message, book: book, inbox: openInbox, signIn: signIn, toast: toast, drawer: openDrawer, search: openSearch,
     art: art, tourArt: tourArt, cover: coverHTML, accent: accentOf, cat: catOf, CATS: CATS, CAT_ORDER: CAT_ORDER, reach: reachOf, code: codeOf, price: priceOf,
     page: function () { return st.page.slice(); }, block: block, pageLoaded: function () { return st.pageLoaded; }, headline: headline,
+    places: function () { return st.places.slice(); }, place: function (id) { return st.placeById[id] || null; }, placeOf: placeOf,
+    placeCount: placeCount, placesLoaded: function () { return st.placesLoaded; },
+    follow: follow, isFollowing: isFollowing, paintFollows: paintFollows,
     PAGE_DEFAULTS: clonePage(PAGE_DEFAULTS),
     popularity: function (id) { return st.pop[String(id)] || 0; },
     sb: sb, esc: esc, arr: arr, money: money, fmtDay: fmtDay, fmtTime: fmtTime, nboClock: nboClock, dur: dur, today: nboToday,

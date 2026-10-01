@@ -3,8 +3,11 @@
    ───────────────────────────────────────────────────────────────────
    Every live tour, with the filters people actually use: what kind,
    when it leaves (a real departure on a real day, or a day you pick),
-   how long, how much, who runs it. Every filter lives in the address,
-   so a filtered list can be shared or bookmarked and opens the same.
+   how long, how much, who runs it, where it goes (the places kept in
+   the console) and how many of you there are. Every filter lives in
+   the address, so a filtered list can be shared or bookmarked and
+   opens the same. A place or a kind with nothing listed yet offers
+   "tell me when" (tour_alert_set).
    ═══════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
@@ -15,7 +18,7 @@
   function el(id) { return doc.getElementById(id); }
   var PAGE = 24;
 
-  var F = { q: '', cat: [], when: 'any', date: '', len: [], price: 'any', op: '', saved: false, vr: false, group: false, sort: 'recommended', shown: PAGE, place: null };
+  var F = { q: '', cat: [], when: 'any', date: '', len: [], price: 'any', op: '', saved: false, vr: false, group: false, sort: 'recommended', shown: PAGE, place: null, pid: '', people: 0 };
   var WHEN = [['any', 'Any time'], ['weekend', 'This weekend'], ['7', 'Next 7 days'], ['30', 'Next 30 days'], ['date', 'Pick a day']];
   var LEN = [['0', 'A few hours'], ['1', 'A full day'], ['2', '2 to 3 days'], ['3', '4 days or more']];
   var PRICE = [['any', 'Any'], ['free', 'Free'], ['u5', 'Under 5K'], ['5-15', '5K–15K'], ['15+', '15K +']];
@@ -36,12 +39,16 @@
       F.vr = p.get('vr') === '1';
       F.group = p.get('group') === '1';
       F.sort = p.get('sort') || 'recommended';
+      F.pid = /^[a-z0-9][a-z0-9-]{1,47}$/.test(p.get('place') || '') ? p.get('place') : '';
+      F.people = Math.max(0, Math.min(60, parseInt(p.get('people') || '0', 10) || 0));
     } catch (e) {}
   }
   function writeURL() {
     try {
       var u = new URL(global.location.href), p = u.searchParams;
-      ['q', 'cat', 'when', 'date', 'len', 'price', 'op', 'saved', 'vr', 'group', 'sort', 'dest', 'destination'].forEach(function (k) { p.delete(k); });
+      ['q', 'cat', 'when', 'date', 'len', 'price', 'op', 'saved', 'vr', 'group', 'sort', 'dest', 'destination', 'place', 'people'].forEach(function (k) { p.delete(k); });
+      if (F.pid) p.set('place', F.pid);
+      if (F.people) p.set('people', String(F.people));
       if (F.q) p.set('q', F.q);
       if (F.cat.length) p.set('cat', F.cat.join(','));
       if (F.when !== 'any') p.set('when', F.when);
@@ -101,6 +108,9 @@
       if (F.saved && !kit.isSaved(t.id)) return false;
       if (F.group && t.price_basis !== 'per_group') return false;
       if (F.vr && !(vrOn && global.CabanaImmersive.forTour(t.id))) return false;
+      if (F.pid && t.place_id !== F.pid) return false;
+      // A group fits a tour that takes that many (tours with no limit fit anyone).
+      if (F.people && Number(t.group_max) > 0 && Number(t.group_max) < F.people) return false;
       return priceOk(t) && inWindow(t) && (F.place ? true : textOk(t));
     });
     if (F.place && global.ApaGeo) {
@@ -133,11 +143,16 @@
     var ops = {};
     all.forEach(function (t) { if (t.operator_id != null) ops[t.operator_id] = t.operator_name; });
     var hasVR = global.CabanaImmersive && global.CabanaImmersive.forTour && all.some(function (t) { return global.CabanaImmersive.forTour(t.id); });
+    var pc = {};
+    all.forEach(function (t) { if (t.place_id) pc[t.place_id] = (pc[t.place_id] || 0) + 1; });
+    var places = kit.places().filter(function (p) { return pc[p.id] || p.id === F.pid; });
     box.innerHTML =
+      (places.length ? '<div class="ct-fg"><h4>Where to</h4><div class="ct-fopts">' + places.map(function (p) { return opt('place', p.id, p.name, F.pid === p.id, pc[p.id] || 0); }).join('') + '</div></div>' : '') +
       '<div class="ct-fg"><h4>Kind of tour</h4><div class="ct-fopts">' + Object.keys(kit.CATS).map(function (k) { var c = kit.CATS[k]; return opt('cat', k, c.name, F.cat.indexOf(k) !== -1, n[k] || 0, c.a); }).join('') + '</div></div>' +
       '<div class="ct-fg"><h4>When</h4><div class="ct-fopts">' + WHEN.map(function (w) { return opt('when', w[0], w[1], F.when === w[0]); }).join('') + '</div>' +
         (F.when === 'date' ? '<div class="ct-fdate"><input class="ct-input" type="date" id="ct-fdate" min="' + kit.today() + '" value="' + kit.esc(F.date) + '" aria-label="Day of the tour"/></div>' : '') + '</div>' +
       '<div class="ct-fg"><h4>How long</h4><div class="ct-fopts">' + LEN.map(function (l) { return opt('len', l[0], l[1], F.len.indexOf(l[0]) !== -1); }).join('') + '</div></div>' +
+      '<div class="ct-fg"><h4>How many of you</h4><div class="ct-fopts">' + [[0, 'Any size'], [2, '2+'], [4, '4+'], [6, '6+'], [10, '10+']].map(function (x) { return opt('people', String(x[0]), x[1], F.people === x[0]); }).join('') + '</div></div>' +
       '<div class="ct-fg"><h4>Price per person</h4><div class="ct-fopts">' + PRICE.map(function (p) { return opt('price', p[0], p[1], F.price === p[0]); }).join('') + '</div></div>' +
       (Object.keys(ops).length > 1 ? '<div class="ct-fg"><h4>Guide or operator</h4><div class="ct-fopts">' + Object.keys(ops).map(function (id) { return opt('op', id, ops[id] || 'Operator', String(F.op) === String(id)); }).join('') + '</div></div>' : '') +
       '<div class="ct-fg">' +
@@ -150,6 +165,8 @@
   function activeChips() {
     var kit = K(), chips = [];
     if (F.q) chips.push(['q', '“' + F.q + '”']);
+    if (F.pid) { var pl = kit.place(F.pid); chips.push(['pid', pl ? pl.name : 'One place']); }
+    if (F.people) chips.push(['people', F.people + (F.people === 1 ? ' person' : ' people')]);
     F.cat.forEach(function (c) { chips.push(['cat:' + c, kit.CATS[c].name]); });
     if (F.when !== 'any') chips.push(['when', F.when === 'date' ? (F.date ? kit.fmtDay(F.date) : 'Pick a day') : WHEN.filter(function (w) { return w[0] === F.when; })[0][1]]);
     F.len.forEach(function (l) { chips.push(['len:' + l, LEN[+l][1]]); });
@@ -170,6 +187,7 @@
     if (act) act.innerHTML = activeChips();
     var fb = el('ct-fbtn-n'); if (fb) { var c = (act ? act.querySelectorAll('[data-rm]:not([data-rm="all"])').length : 0); fb.textContent = c ? '(' + c + ')' : ''; }
     var go = el('ct-fgo'); if (go) go.textContent = 'Show ' + res.length + (res.length === 1 ? ' tour' : ' tours');
+    paintContext(res);
     if (!res.length) {
       var none = !kit.get().length;
       g.innerHTML = '<div class="ct-blank"><div class="ct-blank-mark">' + kit.icon.compass + '</div>' +
@@ -181,6 +199,25 @@
     var more = el('ct-more');
     if (more) more.innerHTML = res.length > F.shown ? '<button class="ct-btn ct-btn-ink" type="button" data-more>Show ' + Math.min(PAGE, res.length - F.shown) + ' more</button>' : '';
     kit.reveal(g); kit.paintHearts();
+  }
+  /* Above the results: the place you picked, and a way to hear first
+     about a place or a kind of trip that has little or nothing yet. */
+  function paintContext(res) {
+    var kit = K(), box = el('tw-context');
+    if (!box) { var act = el('ct-active'); if (!act) return; box = doc.createElement('div'); box.id = 'tw-context'; act.parentNode.insertBefore(box, act.nextSibling); }
+    var pl = F.pid ? kit.place(F.pid) : null, cat = F.cat.length === 1 ? F.cat[0] : null, html = '';
+    if (pl) html += '<div class="tw-place-head">' + (pl.image ? '<img src="' + kit.esc(String(pl.image).replace(/-1400\.webp$/, '-720.webp')) + '" alt=""/>' : '<span></span>') +
+      '<div><b>' + kit.esc(pl.name) + '</b><span>' + kit.esc([pl.country, pl.line].filter(Boolean).join(' · ')) + '</span></div></div>';
+    var target = pl ? 'place:' + pl.id : cat ? 'cat:' + cat : null;
+    if (target && res.length < 4) {
+      var name = pl ? pl.name : kit.CATS[cat].name.toLowerCase(), on = kit.isFollowing(pl ? pl.id : null, pl ? null : cat);
+      html += '<div class="tw-followbar"><p>' + (res.length ? 'Only ' + res.length + (res.length === 1 ? ' tour' : ' tours') + ' so far. ' : 'Nothing listed yet. ') +
+        '<b>Hear first</b> when a guide lists ' + (pl ? 'a tour in ' : 'new ') + kit.esc(name) + '.</p>' +
+        '<button class="tw-follow" type="button" data-ct-follow="' + target + '" aria-pressed="' + on + '" data-off="Tell me when" data-on="Following">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>' +
+        '<span data-follow-l>' + (on ? 'Following' : 'Tell me when') + '</span></button></div>';
+    }
+    box.innerHTML = html;
   }
   function update() { writeURL(); paintFilters(); paint(); }
 
@@ -194,12 +231,16 @@
         else if (g === 'when') { F.when = F.when === k && k !== 'any' ? 'any' : k; if (F.when !== 'date') F.date = ''; }
         else if (g === 'price') F.price = F.price === k ? 'any' : k;
         else if (g === 'op') F.op = String(F.op) === String(k) ? '' : k;
+        else if (g === 'place') F.pid = F.pid === k ? '' : k;
+        else if (g === 'people') F.people = Number(k) || 0;
         F.shown = PAGE; update(); return;
       }
       var rm = e.target.closest('[data-rm]');
       if (rm) {
         var r = rm.getAttribute('data-rm');
-        if (r === 'all') { F.q = ''; F.cat = []; F.when = 'any'; F.date = ''; F.len = []; F.price = 'any'; F.op = ''; F.saved = false; F.vr = false; F.group = false; F.place = null; var q = el('ct-q'); if (q) q.value = ''; }
+        if (r === 'all') { F.q = ''; F.cat = []; F.when = 'any'; F.date = ''; F.len = []; F.price = 'any'; F.op = ''; F.saved = false; F.vr = false; F.group = false; F.place = null; F.pid = ''; F.people = 0; var q = el('ct-q'); if (q) q.value = ''; }
+        else if (r === 'pid') F.pid = '';
+        else if (r === 'people') F.people = 0;
         else if (r === 'q') { F.q = ''; F.place = null; var qq = el('ct-q'); if (qq) qq.value = ''; }
         else if (r.indexOf('cat:') === 0) F.cat = F.cat.filter(function (c) { return c !== r.slice(4); });
         else if (r.indexOf('len:') === 0) F.len = F.len.filter(function (c) { return c !== r.slice(4); });
@@ -246,6 +287,8 @@
     var kit = K(); if (!kit) return;
     readURL(); wire(); paintFilters(); paint();
     kit.on('data', function () { paintFilters(); paint(); stats(); });
+    kit.on('places', function () { paintFilters(); paint(); });
+    kit.on('follows', function () { kit.paintFollows(); });
     kit.on('saves', function () { if (F.saved) paint(); });
     var bg = $('.ct-art-bg'); if (bg) bg.innerHTML = kit.art('catalogue', 'savanna', { w: 800, h: 800 });
   }

@@ -3,7 +3,7 @@
    ───────────────────────────────────────────────────────────────────
    The words /tours opens with, section by section, before the Cabana
    team edits anything in the console (Tours → Page). The same copy is
-   seeded into tour_page_blocks by 20260929090000_tours_page_content.sql;
+   seeded into tour_page_blocks by 20260930210000_tours_v3_world.sql;
    tests/tours-v2.test.mjs keeps the two in step.
 
    Shared by the tours pages (as the fallback when the table has not
@@ -15,10 +15,10 @@
   g.CabanaToursPageDefaults = [
     { id: 'hero', kind: 'hero', position: 0, enabled: true, content: {
       eyebrow: 'Cabana Tours',
-      title: 'Safaris, day trips and city walks, *booked direct.*',
-      lede: 'Pick a date, message your guide and pay the deposit by M-Pesa. Every guide on Cabana is vetted by our team, and the price you see is the price they set.',
-      image: null, image_mobile: null, video: null, focal: '50% 50%', shade: 55,
-      search_placeholder: 'Where to? Try Naivasha, Diani or the Mara',
+      title: 'Safaris, day trips and city walks, *straight from the guide.*',
+      lede: 'Real departures, real prices and the guide behind every tour. Message them first, then pay the deposit by M-Pesa.',
+      image: null, image_mobile: null, video: null, focal: '50% 50%', shade: 45,
+      search_placeholder: 'Where to? Try the Mara, Diani or Zanzibar',
       auto_departures: true,
       links: [
         { label: 'This weekend', url: '/tours-catalogue?when=weekend' },
@@ -29,63 +29,74 @@
       ] } },
     { id: 'departures', kind: 'departures', position: 10, enabled: true, content: {
       eyebrow: 'Departures',
-      title: 'Leaving in the *next 30 days*',
-      lede: 'Scheduled tours that still have seats. Each card counts down to the moment the tour leaves.',
+      title: 'Leaving *soon*',
+      lede: 'Every scheduled tour with seats in the next 30 days, counting down on Nairobi time.',
       show_clock: true } },
     { id: 'kinds', kind: 'kinds', position: 20, enabled: true, content: {
       eyebrow: 'Ways to travel',
-      title: 'From sunrise game drives to *Friday-night food walks*',
-      lede: 'Every tour sits in one of these, so you can go straight to the kind of day you want.',
-      cta_label: 'Browse all tours',
-      show_empty: false,
+      title: 'Choose the *kind of day* you want',
+      lede: 'From a morning game drive to four days on a mountain.',
+      cta_label: 'All tours',
+      show_empty: true,
       items: {
-        'day-safari': { name: 'Day safaris', blurb: 'Game drives you can fit between breakfast and dinner.', image: null, hidden: false, position: 1 },
-        'big-safari': { name: 'Multi-day safaris', blurb: 'The Mara, Amboseli and Tsavo, with nights in camp.', image: null, hidden: false, position: 2 },
-        'day-trip': { name: 'Day trips', blurb: 'Lakes, gorges and hills a short drive from the city.', image: null, hidden: false, position: 3 },
-        'city-tour': { name: 'City walks', blurb: 'Food, history, art and nightlife, on foot with a local.', image: null, hidden: false, position: 4 },
+        'day-safari': { name: 'Day safaris', blurb: 'Game drives between breakfast and dinner.', image: null, hidden: false, position: 1 },
+        'big-safari': { name: 'Multi-day safaris', blurb: 'Nights in camp, days on the plains.', image: null, hidden: false, position: 2 },
+        'day-trip': { name: 'Day trips', blurb: 'Lakes, gorges and hills within reach of the city.', image: null, hidden: false, position: 3 },
+        'city-tour': { name: 'City walks', blurb: 'Food, history and nightlife, on foot with a local.', image: null, hidden: false, position: 4 },
         'adventure': { name: 'Adventure', blurb: 'Hikes, climbs, cycling and white water.', image: null, hidden: false, position: 5 },
-        'culture': { name: 'Culture & community', blurb: 'Markets, music and craft, and the people behind them.', image: null, hidden: false, position: 6 },
-        'beach': { name: 'Coast & water', blurb: 'Dhows, reefs, islands and long afternoons by the sea.', image: null, hidden: false, position: 7 },
-        'expedition': { name: 'Expeditions', blurb: 'Four days or more, for the big mountains and far corners.', image: null, hidden: false, position: 8 }
+        'culture': { name: 'Culture & community', blurb: 'Markets, music, craft and the people behind them.', image: null, hidden: false, position: 6 },
+        'beach': { name: 'Coast & water', blurb: 'Dhows, reefs and islands.', image: null, hidden: false, position: 7 },
+        'expedition': { name: 'Expeditions', blurb: 'Four days or more, for the big mountains.', image: null, hidden: false, position: 8 }
       } } },
-    { id: 'immersive', kind: 'immersive', position: 40, enabled: false, content: {} },
+    { id: 'immersive', kind: 'immersive', position: 30, enabled: true, content: {
+      eyebrow: 'Cabana Immersive · VR & 360°',
+      title: 'Stand in it *before you book.*',
+      lede: 'Look around a place in 360° on your phone, in a VR viewer or in a headset, then book the real thing.' } },
+    { id: 'places', kind: 'places', position: 40, enabled: true, content: {
+      eyebrow: 'Where to',
+      title: 'Where do you *want to go?*',
+      lede: 'Pick a place to see its tours. If none are listed yet, ask to hear first and we will tell you the moment one opens.',
+      cta_label: 'Open the catalogue',
+      show_map: true } },
     { id: 'guides', kind: 'guides', position: 50, enabled: true, content: {
       eyebrow: 'Guides',
       title: 'Know your guide *before you go*',
-      lede: 'See who they are and what they run, and ask them anything before you pay. Their number is shared with you once your booking is confirmed.',
-      cta_label: 'Meet all the guides',
+      lede: 'Message any guide before you pay. Their number is shared once your booking is confirmed.',
+      cta_label: 'Meet the guides',
       featured_ids: [] } },
     { id: 'catalogue', kind: 'catalogue', position: 60, enabled: true, content: {
-      eyebrow: 'The catalogue',
-      title: 'Browse *every tour*',
+      eyebrow: 'All tours',
+      title: 'Every tour, *every departure*',
       lede: 'Filter by date, price, length and group size in the full catalogue.',
-      cta_label: 'See all tours',
+      cta_label: 'Open the catalogue',
       limit: 8,
-      empty_title: 'The first tours are on their way',
-      empty_text: 'Every guide and operator is vetted by our team before their tours go live. New tours appear here as soon as they are approved.',
+      empty_title: 'The first tours are being checked',
+      empty_text: 'Every guide and every tour is reviewed before it goes live. Follow a place above and we will tell you the moment one opens.',
       empty_cta_label: 'List your tours',
       empty_cta_url: '/list-your-tour' } },
     { id: 'pitch', kind: 'pitch', position: 80, enabled: true, content: {
       eyebrow: 'For guides and operators',
-      title: 'Put your tour *at the top of the page*',
-      lede: 'The Spotlight is the first thing travellers see on Cabana Tours: your photos or film, your headline, and a Book button that goes straight to your tour.',
+      title: 'Take a slot at *the top of Cabana Tours*',
+      lede: 'Your photo or film, your headline and a Book button, in the Marquee every traveller sees first.',
       bullets: [
-        'Pay by M-Pesa and choose your start date. We review every slide within a day.',
-        'If we can’t approve it, the full amount comes back to you as Cabana credit.',
-        'Track views and taps for every day it runs.',
-        'Only a few paid slides run at once, so yours is seen.'
+        'Pay by M-Pesa and pick your dates. We review every slot within a day.',
+        'Not approved? The full amount comes back to you as Cabana credit.',
+        'Views and taps for every day it runs, in your studio.'
       ],
-      cta_label: 'Get featured',
-      cta_url: '/tours-studio?tab=spotlight' } },
+      cta_label: 'Book a slot',
+      cta_url: '/tours-studio?tab=spotlight',
+      film_title: 'Film it in *360°*',
+      film_text: 'Ask us to film your tour in 360° so travellers can stand in it before they book.',
+      film_cta: 'Ask for filming' } },
     { id: 'invite', kind: 'invite', position: 90, enabled: true, content: {
       eyebrow: 'For guides and operators',
-      title: 'Run tours? *List them on Cabana.*',
-      lede: 'Whether you guide on your own or run a fleet, list what you already offer, set your own dates and prices, and keep the full fare. We take no commission on the tour price.',
+      title: 'Run tours? *List them here.*',
+      lede: 'Set your own dates and prices and keep the full fare. We take no commission on the tour price.',
       bullets: [
         'No commission on the tour price',
-        'Your own dates, departure times, group sizes and prices',
+        'Your dates, departure times, group sizes and prices',
         'Travellers message you on Cabana and pay by M-Pesa',
-        'Send private prices to groups straight from the chat'
+        'Send private group prices straight from the chat'
       ],
       cta_label: 'List your tours',
       cta_url: '/list-your-tour' } }

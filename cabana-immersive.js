@@ -211,10 +211,12 @@
       decorateTours();
       deepLink();
       maybeBanner();
+      announce();
     }, function () {
       st.loaded = true;
       st.access = { open: true, trial: false, banner: { enabled: false } };
       renderAll();
+      announce();
     });
   }
   function refreshAccess() {
@@ -261,10 +263,69 @@
     }
   }
 
+  /* Four ways to watch, as cards that say plainly whether each one works
+     on this device, and what to do if it does not. (#cim-opts on /tours;
+     pages with the older segmented control keep #cim-seg.) */
+  var OPT = {
+    window: { title: 'On your screen', text: 'Drag to look around. On a phone, move it and the world moves with you.' },
+    full: { title: 'Fullscreen', text: 'Edge to edge on this display. Press Esc, or the button, to come back.' },
+    visor: { title: 'VR viewer', text: 'Slot your phone into a cardboard-style viewer and the screen splits into two lenses.' },
+    xr: { title: 'Headset', text: 'Opens straight in VR in the Meta Quest and Apple Vision Pro browsers.' }
+  };
+  function optStatus(k) {
+    var dn = deviceName();
+    if (k === 'window') return { ok: true, t: dn === 'phone' ? 'Ready on this phone' : dn === 'tablet' ? 'Ready on this tablet' : 'Ready in this browser' };
+    if (k === 'full') return { ok: true, t: DEV.fs ? 'Ready in this browser' : 'Fills the screen on this phone' };
+    if (k === 'visor') return modeOk('visor') ? { ok: true, t: 'Ready: this phone has motion sensors' } : { ok: false, t: caps.mobile ? 'This phone has no motion sensors' : 'Open this page on your phone' };
+    return modeOk('xr') ? { ok: true, t: 'Headset found' } : { ok: false, t: 'Open cabana.africa/tours in your headset' };
+  }
+  function shareLink() {
+    var f = featured(), u = 'https://cabana.africa/tours' + (f && !f.illustrated ? '?vr=' + encodeURIComponent(f.slug) : '#immersive');
+    return u;
+  }
+  function renderOpts(box) {
+    box.innerHTML = MODES.map(function (m) {
+      var o = OPT[m.k] || { title: m.label, text: m.hint }, s = optStatus(m.k), on = st.mode === m.k;
+      return '<div class="cim-opt' + (s.ok ? ' ok' : ' no') + (on ? ' is-on' : '') + '" data-opt="' + m.k + '">' +
+        '<span class="cim-opt-ic">' + icon(m.ic === 'screen' ? 'phone' : m.ic) + '</span>' +
+        '<b>' + esc(o.title) + '</b><p>' + esc(o.text) + '</p>' +
+        '<span class="cim-opt-st' + (s.ok ? ' ok' : '') + '"><i></i>' + esc(s.t) + '</span>' +
+        (s.ok ? '<button class="cim-opt-go" type="button" data-watch="' + m.k + '">Watch this way' + icon('arrowR') + '</button>'
+              : '<button class="cim-opt-go" type="button" data-copy="' + m.k + '">' + icon('link') + (m.k === 'xr' ? 'Copy the link for your headset' : 'Send it to my phone') + '</button>') +
+      '</div>';
+    }).join('');
+    if (box.__wired) return; box.__wired = true;
+    box.addEventListener('click', function (e) {
+      var w = e.target.closest('[data-watch]'), cp = e.target.closest('[data-copy]'), card = e.target.closest('[data-opt]');
+      if (w) {
+        var k = w.getAttribute('data-watch');
+        if (modeOk(k)) { st.mode = k; store(LS.mode, k); renderModes(); }
+        open(featured(), { from: w, mode: k });
+        return;
+      }
+      if (cp) {
+        var link = shareLink(), done = function (msg) { var T = global.CabanaTours; if (T && T.toast) T.toast(msg, 3600); };
+        if (navigator.share && caps.mobile) { navigator.share({ title: 'Cabana Immersive', url: link }).catch(noop); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(function () { done('Link copied. Open it on the device you want to watch on.'); }, function () { done(link); });
+        else done(link);
+        return;
+      }
+      if (card) { var k2 = card.getAttribute('data-opt'); if (modeOk(k2) && st.mode !== k2) { st.mode = k2; store(LS.mode, k2); renderModes(); } }
+    });
+  }
+  function announce() {
+    try { doc.dispatchEvent(new CustomEvent('cim:state', { detail: { loaded: st.loaded, count: st.list.length, mode: st.mode } })); } catch (e) {}
+  }
+
   function renderModes() {
-    var seg = $('#cim-seg', root), hint = $('#cim-modes-h', root);
-    if (!seg) return;
+    var seg = $('#cim-seg', root), hint = $('#cim-modes-h', root), optsBox = $('#cim-opts', root);
     if (!modeOk(st.mode)) st.mode = 'window';
+    if (optsBox) {
+      renderOpts(optsBox);
+      var cm = MODES.filter(function (m) { return m.k === st.mode; })[0];
+      if (hint && cm) hint.textContent = 'Watching: ' + (OPT[cm.k] ? OPT[cm.k].title : cm.label);
+    }
+    if (!seg) return;
     seg.innerHTML = MODES.map(function (m) {
       var ok = modeOk(m.k);
       // A mode this device cannot do is still shown, greyed, with the reason:
@@ -1545,7 +1606,7 @@
   function start() {
     wireSection();
     renderAll();
-    Eng.xrSupported().then(function (ok) { DEV.xr = ok; if (ok && store(LS.mode) == null) st.mode = 'xr'; renderModes(); });
+    Eng.xrSupported().then(function (ok) { DEV.xr = ok; if (ok && store(LS.mode) == null) st.mode = 'xr'; renderModes(); announce(); });
     load();
   }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start);
@@ -1556,6 +1617,15 @@
     close: function () { close(); },
     list: function () { return st.list.slice(); },
     forTour: function (id) { return st.byTour[id] || null; },
+    /* The ways to watch, each with whether it works on this device. */
+    modes: function () {
+      return MODES.map(function (m) { return { k: m.k, label: m.label, hint: m.hint, ok: modeOk(m.k), why: modeWhyNot(m.k), current: st.mode === m.k }; });
+    },
+    setMode: function (k) { if (!modeOk(k)) return false; st.mode = k; store(LS.mode, k); renderModes(); return true; },
+    state: function () {
+      var f = st.list[0] || null;
+      return { loaded: st.loaded, count: st.list.length, mode: st.mode, access: st.access, featured: f ? { slug: f.slug, title: f.title, poster_url: f.poster_url } : null };
+    },
     /* The featured world as a still panorama: the tours Spotlight pans
        across it for its VR slide. Painted once, then cached. */
     poster: function () {

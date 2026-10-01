@@ -28,7 +28,7 @@
 })(typeof window !== 'undefined' ? window : null, function () {
   'use strict';
 
-  var VERSION = '2026.09.26';
+  var VERSION = '2026.10.01';
 
   /* ── FORMATS ─────────────────────────────────────────────────────
      How a creative is presented. `spec` is what the console shows the
@@ -109,12 +109,17 @@
         { id: 'apartments.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
       ], shadow: true },
 
+    // /tours arranges its own sections from the console, so the band
+    // after the tours sits outside <main> (before the search-engine
+    // text) where re-ordering can never carry it up the page.
     { page: 'tours', label: 'Tours & Safaris', service: true,
       feed: { grid: ['#ct-grid'], label: 'tour cards' },
       slots: [
+        { id: 'tours.marquee', label: 'Marquee', kind: 'managed', formats: ['window', 'video', 'split', 'native'], probe: '#ct-spotlight',
+          note: 'The premium slots at the top of /tours. Up to four campaigns booked on this placement play in the rotation, marked Ad, after the slots guides paid for. Book it by picking this placement on the campaign.' },
         { id: 'tours.feed', label: 'In results', kind: 'infeed', formats: ['native', 'carousel'] },
         { id: 'tours.end', label: 'After tours', kind: 'section', formats: ['window', 'video', 'split', 'carousel'],
-          anchor: ['.ct-invite', 'section.seo-content'], mode: 'before', fallback: 'footer.site-footer', house: false },
+          anchor: ['section.seo-content'], mode: 'before', fallback: 'footer.site-footer', house: false },
         { id: 'tours.sticky', label: 'Corner card', kind: 'overlay', formats: ['sticky'] }
       ], shadow: true },
 

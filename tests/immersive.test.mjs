@@ -143,7 +143,7 @@ test('the console inbox learns about pass requests without forking admin_inbox',
 
 /* ── 3 · the page is wired ─────────────────────────────────────────── */
 test('the tours page carries the section and loads the engine before the controller', () => {
-  for (const id of ['immersive', 'cim-track', 'cim-seg', 'cim-hs', 'cim-go', 'cim-trial', 'cim-how']) assert.match(tours, new RegExp(`id="${id}"`), id);
+  for (const id of ['immersive', 'cim-track', 'cim-opts', 'cim-hs', 'cim-go', 'cim-trial', 'cim-how']) assert.match(tours, new RegExp(`id="${id}"`), id);
   assert.equal((tours.match(/class="cim-lens [lr]"/g) || []).length, 2);
   const at = s => tours.indexOf(s);
   assert.ok(at('/vendor-supabase-2.112.3.js') < at('/cabana-immersive-engine.js'));
@@ -210,12 +210,14 @@ test('with nothing filmed yet, the band still offers the illustrated world and s
   assert.match(cards[0].textContent, /Illustrated/);
   assert.ok(doc.querySelector('#cim-track .cim-card.soon'));
   assert.equal(doc.getElementById('cim-trial').hidden, false, 'the trial is announced in the band');
-  const modes = [...doc.querySelectorAll('#cim-seg [data-mode]')];
-  assert.deepEqual(modes.map(b => b.getAttribute('data-mode')), ['window', 'full', 'visor', 'xr']);
-  assert.ok(modes.find(b => b.dataset.mode === 'visor').disabled, 'a desktop cannot be a phone viewer');
-  assert.ok(modes.find(b => b.dataset.mode === 'xr').disabled, 'no headset, no headset mode');
-  assert.equal(modes.find(b => b.dataset.mode === 'full').disabled, false);
+  // The four ways to watch, each saying whether this device can.
+  const opts = [...doc.querySelectorAll('#cim-opts .cim-opt[data-opt]')];
+  const opt = k => opts.find(b => b.dataset.opt === k);
   dom.window.close();
+  assert.deepEqual(opts.map(b => b.getAttribute('data-opt')), ['window', 'full', 'visor', 'xr']);
+  assert.ok(opt('visor').classList.contains('no') && opt('visor').querySelector('[data-copy]'), 'a desktop cannot be a phone viewer: it offers to send the link');
+  assert.ok(opt('xr').classList.contains('no') && opt('xr').querySelector('[data-copy]'), 'no headset, no headset mode');
+  assert.ok(opt('full').classList.contains('ok') && opt('full').querySelector('[data-watch="full"]'));
 });
 
 test('a pass world shows its lock once the trial is over, and a free-trial chip while it runs', async () => {
