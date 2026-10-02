@@ -31,6 +31,11 @@
   function friendly(e) {
     var m = String((e && (e.message || e.details)) || e || '');
     if (/Failed to fetch|NetworkError/i.test(m)) return 'You seem to be offline. Try again in a moment.';
+    /* Tours go live only for a verified operator. Offer the check right
+       there; it is the same one used everywhere on Cabana. */
+    if (/Verify your identity/i.test(m) && global.CabanaIdentity && global.CabanaIdentity.ensure) {
+      setTimeout(function () { global.CabanaIdentity.ensure('tour_operator', { title: 'Verify once to publish tours' }).catch(function () {}); }, 600);
+    }
     return m.slice(0, 240) || 'Something went wrong. Please try again.';
   }
 

@@ -109,8 +109,20 @@
         render();
       }, function () { render(); });
 
-    c.from('event_organisers').select('*').order('created_at', { ascending: false })
-      .then(function (r) { state.organisers = (r && r.data) || []; renderOps(); }, function () {});
+    /* Organiser contacts are not readable through the table any more;
+       admins get them from event_organiser_contacts() and they are merged
+       in here for the review panel. */
+    c.from('event_organisers').select('id,owner_id,name,tagline,bio,city,instagram,kind,logo_url,slug,status,review_note,verified,verified_at,created_at,updated_at').order('created_at', { ascending: false })
+      .then(function (r) {
+        var rows = (r && r.data) || [];
+        state.organisers = rows; renderOps();
+        if (!rows.length) return;
+        c.rpc('event_organiser_contacts', { p_ids: rows.map(function (o) { return o.id; }) }).then(function (x) {
+          var by = {}; ((x && x.data) || []).forEach(function (k) { by[k.id] = k; });
+          rows.forEach(function (o) { var k = by[o.id]; if (k) { o.phone = k.phone; o.whatsapp = k.whatsapp; o.email = k.email; } });
+          renderOps();
+        }, function () {});
+      }, function () {});
   }
 
   /* ── moderation actions ──────────────────────────────────────────── */

@@ -135,7 +135,7 @@
   }
 
   function findOrganiser() {
-    sb.from('event_organisers').select('*').eq('owner_id', user.id).limit(1)
+    sb.from('event_organisers').select('id,owner_id,name,tagline,bio,city,instagram,kind,logo_url,slug,status,review_note,verified,verified_at,created_at,updated_at').eq('owner_id', user.id).limit(1)
       .then(function (r) {
         organiser = (r && r.data && r.data[0]) || null;
         if (organiser) {
@@ -178,7 +178,7 @@
       city: $('o-city').value.trim() || null,
       kind: 'partner',
       status: 'pending'
-    }).select().then(function (r) {
+    }).select('id,owner_id,name,tagline,bio,city,instagram,kind,logo_url,slug,status,review_note,verified,verified_at,created_at,updated_at').then(function (r) {
       if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
       if (r && r.error) { say('Could not save.'); alert('Could not save: ' + r.error.message); return; }
       organiser = (r.data && r.data[0]) || null;
@@ -280,7 +280,23 @@
       var msg = $('le-done-msg');
       if (msg && organiser && organiser.status !== 'approved') {
         msg.textContent = 'We\u2019ll review the event and your organiser details together, then be in ' +
-          'touch on ' + (organiser.email || 'your email') + '.';
+          'touch by email.';
+      }
+      /* Tickets go on sale only once the organiser is verified: one ID
+         check, recognised everywhere on Cabana. Say so now, not later. */
+      if (window.CabanaIdentity && msg) {
+        window.CabanaIdentity.status('event_organiser').then(function (st) {
+          if (st && st.identity && (st.identity.verified || st.identity.pending === 'review')) return;
+          var w = document.createElement('div');
+          w.style.cssText = 'margin:0 auto 22px;max-width:440px;padding:16px;border-radius:16px;background:rgba(139,92,255,.1);border:1px solid rgba(139,92,255,.3);text-align:left';
+          w.innerHTML = '<b style="display:block;margin-bottom:6px">One more step before tickets go on sale</b>' +
+            '<span style="font-size:13.5px;opacity:.85">Verify your identity. It takes two minutes and counts for every Cabana service.</span>' +
+            '<button type="button" class="ev-btn ev-btn-primary" style="margin-top:12px;width:100%;justify-content:center">Verify my identity</button>';
+          msg.parentNode.insertBefore(w, msg.nextSibling);
+          w.querySelector('button').onclick = function () {
+            window.CabanaIdentity.start('event_organiser', location.pathname).catch(function (e) { alert((e && e.message) || 'Could not open verification.'); });
+          };
+        }, function () {});
       }
       say('Sent for review.');
       show('p-done');
