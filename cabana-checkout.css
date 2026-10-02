@@ -489,3 +489,12 @@
   .cx *, .cx *::before, .cx *::after, .cxp, .cxp *, .cxp::before { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .cx-motif .m-draw { stroke-dashoffset: 0; }
 }
+
+/* Over the full-screen M-Pesa sheet: the card rides on top, and on a
+   phone it stays folded to its pill so it never covers the PIN prompt. */
+body:has(#cbp-root.cbp-open) .cxp { z-index: 100000; }
+@media (max-width: 640px) {
+  body:has(#cbp-root.cbp-open) .cxp:not(.is-min) .cxp-tag,
+  body:has(#cbp-root.cbp-open) .cxp:not(.is-min) .cxp-fx { display: none; }
+  body:has(#cbp-root.cbp-open) .cxp { left: auto; right: 12px; top: calc(12px + env(safe-area-inset-top)); bottom: auto; width: auto; }
+}

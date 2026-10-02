@@ -40,7 +40,7 @@
     return m.replace(/^.*?:\s(?=[A-Z])/, '').slice(0, 220) || 'Could not book this tour. Please try again.';
   }
 
-  var S = { t: null, date: null, people: 1, deps: [], offers: [], busy: false, booking: null };
+  var S = { t: null, date: null, people: 1, deps: [], offers: [], busy: false, booking: null, fee: null, feeFor: null, feeSeq: 0 };
 
   function root() {
     var r = doc.getElementById('ct-bk');
@@ -123,8 +123,24 @@
       .then(function (r) { if (r && Array.isArray(r.data) && r.data.length) { S.offers = r.data; if (!o.date && !o.people) { S.date = r.data[0].tour_date; S.people = Number(r.data[0].people) || S.people; } paint(); } }, function () {});
   }
 
+  /* Cabana's facilitation on the tour total, quoted by the server for
+     this exact amount; the insert trigger charges the same number. */
+  function feeFor(total) {
+    if (total <= 0) { S.fee = 0; S.feeFor = total; return; }
+    if (S.feeFor === total) return;
+    S.fee = null; S.feeFor = total;
+    var seq = ++S.feeSeq, c = K().sb();
+    if (!c) return;
+    c.rpc('cabana_fee_quote', { p_service: 'tours', p_subtotal: total }).then(function (r) {
+      if (seq !== S.feeSeq) return;
+      S.fee = r && !r.error && r.data != null ? Number(r.data) : null;
+      if (doc.getElementById('ct-bk') && doc.getElementById('ct-bk').classList.contains('open')) paint();
+    }, function () {});
+  }
   function paint() {
     var kit = K(), t = S.t, esc = kit.esc, I = kit.icon, q = quote(), lim = limits();
+    feeFor(q.free ? 0 : q.total);
+    var fee = S.fee, payNow = fee == null ? null : q.due + fee;
     var cutoffH = Number(t.booking_cutoff_hours) || 48;
     var minDay = new Date(Date.now() + 3 * 3600e3 + cutoffH * 3600e3 + 864e5 * 0).toISOString().slice(0, 10);
     var dateUI;
@@ -162,13 +178,14 @@
           (q.free ? '<div class="kv tot"><span>Your place</span><b>Free</b></div>'
             : '<div class="kv"><span>' + esc(kit.money(q.per)) + (t.price_basis === 'per_group' ? ' for the group' : ' × ' + S.people) + '</span><b>' + esc(kit.money(q.total)) + '</b></div>' +
               (q.offer && q.list > q.total ? '<div class="kv off"><span>Private offer saves you</span><span>− ' + esc(kit.money(q.list - q.total)) + '</span></div>' : '') +
-              '<div class="kv"><span>Cabana fee</span><b>KES 0</b></div>' +
+              (q.balance > 0 ? '<div class="kv"><span>Deposit to confirm (' + q.pct + '%)</span><b>' + esc(kit.money(q.due)) + '</b></div>' : '') +
+              '<div class="kv"><span>Cabana facilitation</span><b>' + (fee == null ? '…' : esc(kit.money(fee))) + '</b></div>' +
               (q.balance > 0 ? '<div class="kv"><span>Pay the guide on the day</span><b>' + esc(kit.money(q.balance)) + '</b></div>' : '') +
-              '<div class="kv tot"><span>' + (q.balance > 0 ? 'Pay now to confirm (' + q.pct + '%)' : 'Pay now') + '</span><b>' + esc(kit.money(q.due)) + '</b></div>') +
+              '<div class="kv tot"><span>Pay now</span><b>' + (payNow == null ? '…' : esc(kit.money(payNow))) + '</b></div>') +
         '</div>' +
         (dep && dep.closes_at ? '<div style="font:500 12.5px/1.5 var(--ct-f);color:var(--ct-cream-3);display:flex;gap:8px;align-items:center">' + I.clock.replace('<svg', '<svg width="15" height="15"') + 'Booking for this departure closes ' + esc(kit.fmtDay(String(new Date(new Date(dep.closes_at).getTime() + 3 * 3600e3).toISOString()).slice(0, 10))) + ' at ' + esc(kit.nboClock(dep.closes_at)) + '.</div>' : '') +
         '<div class="ct-err" data-bk-err role="alert"></div>' +
-        '<button class="ct-btn ct-btn-sun ct-btn-block" type="button" data-bk-go' + (S.date ? '' : ' disabled') + '>' + (q.free ? 'Reserve my place' : 'Pay ' + esc(kit.money(q.due)) + ' with M-Pesa') + '</button>' +
+        '<button class="ct-btn ct-btn-sun ct-btn-block" type="button" data-bk-go' + (S.date && (q.free || payNow != null) ? '' : ' disabled') + '>' + (q.free ? 'Reserve my place' : payNow == null ? 'Checking total…' : 'Pay ' + esc(kit.money(payNow)) + ' with M-Pesa') + '</button>' +
         '<div style="display:flex;gap:8px"><button class="ct-btn ct-btn-s" style="flex:1" type="button" data-bk-msg>' + I.chat + 'Ask the guide first</button></div>' +
       '</div>';
     var r = show(html);
@@ -211,18 +228,19 @@
       if (res.error || !res.data) { fail(friendly(res.error || 'Could not book this tour.')); return; }
       var b = S.booking = res.data;
       safeTrack('begin_checkout', b);
-      if (Number(b.grand_total) <= 0 || b.status === 'reserved') { done(b, false); return; }
+      if (Number(b.grand_total) <= 0 || b.status === 'reserved') { done(b, 'reserved'); return; }
       pay(b, phone);
     }, function (e) { S.busy = false; fail(friendly(e)); });
     function fail(msg) {
       err.textContent = msg;
-      if (go) { go.disabled = false; go.textContent = q.free ? 'Reserve my place' : 'Pay ' + kit.money(q.due) + ' with M-Pesa'; }
+      if (go) { go.disabled = false; go.textContent = q.free ? 'Reserve my place' : 'Pay ' + kit.money(q.due + (S.fee || 0)) + ' with M-Pesa'; }
     }
   }
   function pay(b, phone) {
     var kit = K(), t = S.t;
     if (!global.ApatmentoPay || !global.ApatmentoPay.start) {
-      done(b, true, 'Your place is held. Payment could not start on this page; finish it from My Bookings.');
+      /* Nothing is held until money arrives, so never say it is. */
+      done(b, 'unpaid');
       return;
     }
     close();
@@ -231,22 +249,37 @@
       amount: Number(b.grand_total), phone: phone, reference: b.payment_reference,
       description: 'Cabana Tours · ' + String(t.title).slice(0, 60),
       trip: { property: t.title, location: t.destination || t.county || '', whenText: when },
-      success: {
-        title: 'You’re going.',
-        note: Number(b.operator_balance) > 0 ? 'Deposit paid · ' + kit.money(b.operator_balance) + ' to the guide on the day' : 'Paid in full · see you on ' + kit.fmtDay(b.tour_date)
+      service: 'tours', balance: Number(b.operator_balance) || 0,
+      onSuccess: function () {
+        /* The payment sheet has already said what the money bought. This
+           card follows the booking row, never the callback: seats can be
+           lost to a faster traveller between the prompt and the PIN. */
+        var c = K().sb();
+        var after = function (st) { if (st === 'paid' || st === 'confirmed') safeTrack('purchase', b); setTimeout(function () { done(b, st); }, 400); };
+        if (!c) return after(null);
+        c.from('tour_bookings').select('status').eq('id', b.id).maybeSingle().then(function (r) { after(r && r.data && r.data.status); }, function () { after(null); });
       },
-      onSuccess: function () { safeTrack('purchase', b); setTimeout(function () { done(b, false); }, 400); },
       onFailure: function () { /* the payment sheet explains and offers a retry */ }
     });
   }
-  function done(b, pending, msg) {
+  function done(b, state) {
     var kit = K(), t = S.t, I = kit.icon, esc = kit.esc;
-    show('<div class="ct-bk-done"><div class="stamp">' + (pending ? I.clock : I.check) + '</div>' +
-      '<h3>' + (pending ? 'Your place is held' : Number(b.grand_total) > 0 ? 'You’re booked.' : 'Your place is reserved.') + '</h3>' +
-      '<p>' + esc(msg || (t.title + ' · ' + kit.fmtDay(b.tour_date) + (t.departure_time ? ' at ' + kit.fmtTime(t.departure_time) : '') + ' · ' + b.num_people + (b.num_people === 1 ? ' person.' : ' people.') +
-        ' The guide’s number and meeting details are now in your booking and your messages.')) + '</p>' +
-      '<div class="acts"><button class="ct-btn ct-btn-sweep ct-btn-block" type="button" data-bk-chat>' + I.chat + 'Message your guide</button>' +
-      '<a class="ct-btn ct-btn-block" href="/my-bookings.html">My bookings</a>' +
+    var line = t.title + ' · ' + kit.fmtDay(b.tour_date) + (t.departure_time ? ' at ' + kit.fmtTime(t.departure_time) : '') + ' · ' + b.num_people + (b.num_people === 1 ? ' person.' : ' people.');
+    var ok = state === 'paid' || state === 'confirmed' || state === 'reserved';
+    var head = state === 'reserved' ? 'Your place is reserved.'
+      : ok ? 'You’re going.'
+      : state === 'seats_unavailable' ? 'Payment received. Those seats just went.'
+      : state === 'unpaid' ? 'Not booked yet.'
+      : 'Payment received. Confirming your seats.';
+    var msg = state === 'reserved' ? line + ' The guide’s number and meeting details are in your booking.'
+      : ok ? line + (Number(b.operator_balance) > 0 ? ' ' + kit.money(b.operator_balance) + ' is paid to the guide on the day.' : '') + ' The guide’s number and meeting details are now in your booking and messages.'
+      : state === 'seats_unavailable' ? 'Someone confirmed the last seats first. Your money is kept as Cabana credit, or the team refunds it. Pick another date from My Bookings.'
+      : state === 'unpaid' ? 'Payment could not start on this page, so nothing is held yet. Finish paying from My Bookings to secure your seats.'
+      : 'M-Pesa has your payment. Your seats show as confirmed in My Bookings within a minute.';
+    show('<div class="ct-bk-done"><div class="stamp">' + (ok ? I.check : I.clock) + '</div>' +
+      '<h3>' + esc(head) + '</h3><p>' + esc(msg) + '</p>' +
+      '<div class="acts">' + (ok ? '<button class="ct-btn ct-btn-sweep ct-btn-block" type="button" data-bk-chat>' + I.chat + 'Message your guide</button>' : '') +
+      '<a class="ct-btn' + (ok ? '' : ' ct-btn-sun') + ' ct-btn-block" href="/my-bookings.html">My bookings</a>' +
       '<button class="ct-btn ct-btn-s ct-btn-block" type="button" data-bk-close>Back to tours</button></div></div>');
     var r = root(), ch = $('[data-bk-chat]', r);
     if (ch) ch.addEventListener('click', function () {

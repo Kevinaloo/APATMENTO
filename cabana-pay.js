@@ -15,6 +15,17 @@
     document.head.appendChild(l);
   }
 
+  /* ── The Checkout Atelier ─────────────────────────────────────────
+     The one function that decides what a payment is called lives in
+     cabana-checkout.js. Every page that can take money loads this file,
+     so this file makes sure the wording engine (and the Cabana Pay card)
+     is present instead of trusting each page to remember it. */
+  if (!window.CabanaCheckout && !document.querySelector('script[src*="cabana-checkout.js"]')) {
+    const k = document.createElement('script');
+    k.src = '/cabana-checkout.js'; k.defer = true;
+    document.head.appendChild(k);
+  }
+
   /* ── Video & poster map ─────────────────────────────────────────── */
   const V = {
     oldguy:   '/cabana-vid-oldguy.mp4',
@@ -916,6 +927,7 @@
 
       document.getElementById('cbp-root').classList.add('cbp-open');
       _cut(() => _setState('sending', opts));
+      try { window.CabanaCheckout?.payCard(); } catch (_) {}
 
       opts.accessToken = opts.accessToken || await _accessToken();
       if (!opts.accessToken) {
