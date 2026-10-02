@@ -1076,6 +1076,11 @@ const CabanaChat = window.CabanaChat = (() => {
       if (S.active !== a) return;
       const m = a.msgs.get(temp.id); if (m) m._state = 'failed';
       renderMessages(true);
+      if (/Unlock Cabana Rooms/i.test(String(e && e.message))) {
+        if (window.CabanaRoomsPass) window.CabanaRoomsPass.open({ title: a.meta && a.meta.listing_title });
+        else toast('Unlock Cabana Rooms to keep messaging room hosts.');
+        return;
+      }
       toast(friendly(e));
     }
   }
