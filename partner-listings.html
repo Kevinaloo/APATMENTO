@@ -241,6 +241,8 @@ body{display:flex;flex-direction:column;}
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:4px 10px;border-radius:100px;white-space:nowrap;}
 .badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .b-green{background:rgba(16,185,129,0.08);color:#059669;border:1px solid rgba(16,185,129,0.2);}.b-green::before{background:#059669;}
+.b-violet{background:rgba(124,58,237,0.08);color:#6D28D9;border:1px solid rgba(124,58,237,0.22);}.b-violet::before{background:#7C3AED;}
+.b-sun{background:linear-gradient(135deg,rgba(255,196,77,.18),rgba(242,128,58,.12));color:#9A4A06;border:1px solid rgba(242,128,58,.3);}.b-sun::before{background:#F2803A;}
 .b-amber{background:rgba(245,177,46,0.1);color:#D97706;border:1px solid rgba(245,177,46,0.25);}.b-amber::before{background:#D97706;}
 .b-grey{background:var(--s2);color:var(--faint);border:1px solid var(--line2);}.b-grey::before{background:var(--faint);}
 
@@ -1057,6 +1059,9 @@ function renderListings(list){
     const photo=l.photos?.[0];
     const svc=SVC_LABELS[l.service]||l.type||'Stay';
     const isActive=l.status==='active'||l.is_active;
+    const waiting=l.status==='pending_verification';
+    const isStay=(l.service||'stays')==='stays';
+    const isHotel=isStay&&l.booking_model==='hotel';
     const loc=[l.area,l.city].filter(Boolean).join(', ')||l.location||'Kenya';
     return`<div class="listing-card">
       ${photo
@@ -1070,13 +1075,16 @@ function renderListings(list){
         <div class="lc-price">${priceLine(l)}</div>
       </div>
       <div class="lc-right">
-        <span class="badge ${isActive?'b-green':'b-amber'}">${isActive?'Active':'Paused'}</span>
+        <span class="badge ${waiting?'b-violet':isActive?'b-green':'b-amber'}">${waiting?'Waiting on verification':isActive?'Active':'Paused'}</span>
+        ${isStay&&!isHotel&&l.day_pass_enabled?`<span class="badge b-sun" title="Day pass ${esc(String(l.day_pass_start||'').slice(0,5))}–${esc(String(l.day_pass_end||'').slice(0,5))}">Day pass on</span>`:''}
         <div class="lc-acts">
           ${(l.service==='food'||l.type==='food')?`<a href="partner-menu.html?id=${l.id}" class="btn btn-primary btn-sm" title="Add dishes, prices and offers">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
             Menu
           </a>
           <a href="partner-orders.html?id=${l.id}" class="btn btn-ghost btn-sm" title="Accept, cook and hand over orders">Orders</a>`:''}
+          ${isHotel?`<a href="partner-rooms.html?listing=${l.id}" class="btn btn-primary btn-sm" title="Room types, inventory and nightly rates">Rooms &amp; rates</a>`:''}
+          ${isStay&&!isHotel?`<button class="btn btn-ghost btn-sm" type="button" onclick="openDayPass('${l.id}')" title="Sell a daytime window at a lower rate">${l.day_pass_enabled?'Day pass':'Add day pass'}</button>`:''}
           ${(l.service||'stays')==='stays'?`<button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers('${l.id}')">Offers</button>`:''}
           ${(l.service||'stays')==='stays'?tour3dAction(l):''}
           <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm">
@@ -1087,9 +1095,9 @@ function renderListings(list){
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Ownership
           </button>
-          <button class="btn btn-danger btn-sm" onclick="toggleStatus('${l.id}','${l.status||'active'}','${l.is_active}')">
+          ${waiting?`<button class="btn btn-primary btn-sm" type="button" onclick="verifyFor('${l.id}')">Verify to go live</button>`:`<button class="btn btn-danger btn-sm" onclick="toggleStatus('${l.id}','${l.status||'active'}','${l.is_active}')">
             ${isActive?'Pause':'Activate'}
-          </button>
+          </button>`}
         </div>
       </div>
     </div>`;
@@ -1112,9 +1120,12 @@ async function openTour3d(id){
   if(!l||!window.Cabana3DUpgrade||!sb)return;
   const{data:{session}}=await sb.auth.getSession();
   const u=session&&session.user,m=(u&&u.user_metadata)||{};
+  /* Stay contacts live in the owner-only table now. */
+  const{data:pc}=await sb.from('listing_private_contacts').select('contact_whatsapp,contact_phone,contact_email').eq('listing_id',l.id).maybeSingle();
+  const ct={wa:l.contact_whatsapp||pc?.contact_whatsapp,ph:l.contact_phone||pc?.contact_phone,em:l.contact_email||pc?.contact_email};
   Cabana3DUpgrade.openSheet({
     sb,listing:{id:l.id,title:l.title},
-    prefill:{name:m.full_name||[m.first_name,m.last_name].filter(Boolean).join(' '),phone:l.contact_whatsapp||l.contact_phone||'',email:l.contact_email||(u&&u.email)||''},
+    prefill:{name:m.full_name||[m.first_name,m.last_name].filter(Boolean).join(' '),phone:ct.wa||ct.ph||'',email:ct.em||(u&&u.email)||''},
     onDone:()=>{l.tour_3d_status='requested';renderListings(activeFilter==='all'?allListings:allListings.filter(x=>(x.service||x.type||'').toLowerCase()===activeFilter||(x.type||'').toLowerCase().includes(activeFilter)));}
   });
 }
@@ -1122,9 +1133,29 @@ async function openTour3d(id){
 async function toggleStatus(id,status,isActive){
   if(!sb)return;
   const activate=(status!=='active'||isActive==='false');
-  const{error}=await sb.from('listings').update({status:activate?'active':'inactive',is_active:activate}).eq('id',id);
-  if(!error){toast(activate?'Listing activated':'Listing paused');loadListings();}
-  else toast('Failed to update',false);
+  const{data,error}=await sb.from('listings').update({status:activate?'active':'inactive',is_active:activate}).eq('id',id).select('status').maybeSingle();
+  if(error){toast('Failed to update',false);return;}
+  /* The database holds a listing back until its owner is cleared. */
+  if(activate&&data&&data.status==='pending_verification')toast('Verify your identity once and this goes live by itself');
+  else toast(activate?'Listing activated':'Listing paused');
+  loadListings();
+}
+/* Day pass: on, off and tuned from the card. */
+function openDayPass(id){
+  const l=allListings.find(x=>String(x.id)===String(id));
+  if(!l||!window.CabanaDayPassDesk)return;
+  CabanaDayPassDesk.open({sb,listing:l,onSaved:x=>{toast(x.day_pass_enabled?'Day pass is live':'Day pass switched off');renderListings(activeFilter==='all'?allListings:allListings.filter(y=>(y.service||y.type||'').toLowerCase()===activeFilter||(y.type||'').toLowerCase().includes(activeFilter)));}});
+}
+/* One identity check, for every service. The listing activates itself. */
+async function verifyFor(id){
+  const l=allListings.find(x=>String(x.id)===String(id));
+  const ctx={roommates:'roommates_host',food:'food_vendor',shopping:'shopping_seller',events:'event_organiser',tours:'tour_operator'}[(l&&l.service)||'']||'host';
+  if(!window.CabanaIdentity){location.href='partner-settings.html';return;}
+  try{
+    const r=await CabanaIdentity.start(ctx,location.pathname);
+    if(r==='approved'){toast('Verified. Your listing is going live');setTimeout(loadListings,1200);}
+    else if(r==='review')toast('Your check is in review. The listing goes live the moment it clears');
+  }catch(e){toast(e.message||'Could not open verification',false);}
 }
 
 /* ============================================
@@ -1254,5 +1285,6 @@ document.addEventListener('DOMContentLoaded',loadListings);
 <script src="/cabana-3d-upgrade.js" defer></script>
 <script src="/chat.js?v=41" defer></script>
 <script src="/cabana-identity.js" defer></script>
+<script src="/cabana-daypass-desk.js" defer></script>
 </body>
 </html>

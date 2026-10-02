@@ -263,6 +263,23 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .ppe-range input{width:100%;accent-color:var(--electric);}
 .ppe-done{width:100%;margin-top:10px;border:0;border-radius:11px;background:var(--grad);color:#fff;padding:12px;font:800 13px/1 var(--font-body);cursor:pointer;}
 .ibox{padding:13px 15px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);margin-bottom:13px;}
+.dp-card{border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:4px 0 14px;background:linear-gradient(160deg,rgba(255,196,77,.09),rgba(255,140,66,.04) 60%,transparent);position:relative;overflow:hidden;}
+.dp-card.dp-hotel{background:linear-gradient(160deg,rgba(123,47,247,.08),rgba(45,212,191,.05) 70%,transparent);}
+.dp-head{display:flex;align-items:flex-start;gap:12px;}
+.dp-head>div{flex:1;min-width:0;}
+.dp-t{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:8px;}
+.dp-d{font-size:12.5px;color:var(--text-muted,#666);line-height:1.5;margin-top:3px;}
+.dp-new{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:#1a1a1a;color:#FFD27A;}
+.dp-ico{width:34px;height:34px;flex-shrink:0;border-radius:11px;display:grid;place-items:center;background:var(--surface-2);color:inherit;}
+.dp-ico svg{width:18px;height:18px;}
+.dp-sun{background:radial-gradient(circle at 50% 50%,#FFC23D 0 26%,rgba(255,194,61,.0) 27%),repeating-conic-gradient(from 0deg,#FFB000 0 6deg,transparent 6deg 30deg);border-radius:50%;animation:dpSpin 14s linear infinite;}
+@keyframes dpSpin{to{transform:rotate(360deg)}}
+.dp-body{margin-top:14px;animation:dpIn .35s cubic-bezier(.2,.8,.2,1);}
+@keyframes dpIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.dp-days{display:flex;flex-wrap:wrap;gap:6px;}
+.dp-day{min-width:44px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s;}
+.dp-day.on{background:#1a1a1a;color:#FFD27A;border-color:#1a1a1a;}
+@media (prefers-reduced-motion:reduce){.dp-sun,.dp-body{animation:none}}
 .ibox.mint{background:rgba(45,212,191,0.06);border-color:rgba(45,212,191,0.2);}
 .ibox-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mint-dark);margin-bottom:4px;}
 .ibox-txt{font-size:13px;color:var(--ink-soft);line-height:1.6;}
@@ -946,6 +963,31 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
           <div class="field"><label for="f-dep" class="flbl" id="s5depl">Security deposit <span class="opt">(optional)</span></label><input class="finput" id="f-dep" type="number" placeholder="5000"/><div class="fhint" id="s5deph" style="display:none;">Flatmates budget for rent plus deposit together. Listings that state it get far more enquiries.</div></div>
           <div class="field"><label for="f-mn" class="flbl" id="s5mnl">Minimum nights</label><input class="finput" id="f-mn" type="number" value="1" min="1"/><select class="fsel" id="f-mnr" style="display:none;" aria-label="Minimum nights" ><option value="7">1 week</option><option value="14">2 weeks</option><option value="30">1 month</option><option value="60">2 months</option><option value="90" selected>3 months</option><option value="180">6 months</option><option value="365">1 year</option></select><div class="fhint" id="s5mnh" style="display:none;">A week is the shortest let allowed here. Anything shorter is a nightly booking, which belongs under Stays.</div></div>
         </div>
+        <!-- Hotels sell by room type; the rooms studio owns their rates. -->
+        <div class="dp-card dp-hotel" id="s5-hotel" style="display:none;">
+          <div class="dp-head"><span class="dp-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V4h14v17M9 8h1M14 8h1M9 12h1M14 12h1M10 21v-4h4v4"/></svg></span><div><div class="dp-t">Run it like a hotel</div><div class="dp-d">Sell rooms by type, with live inventory, per-night rates, meal plans and a non-refundable option. You set those up in <strong>Rooms &amp; Rates</strong> right after publishing.</div></div><button type="button" class="tog on" id="tog-hotel" aria-label="Sell by room type" onclick="this.classList.toggle('on')"></button></div>
+        </div>
+        <!-- Day pass: a daytime window at a lower rate. Off by default. -->
+        <div class="dp-card" id="s5-daypass" style="display:none;">
+          <div class="dp-head">
+            <span class="dp-ico dp-sun" aria-hidden="true"></span>
+            <div><div class="dp-t">Day Pass <span class="dp-new">New</span></div><div class="dp-d">Let guests book a few daytime hours for less than a night: work, a nap between flights, a quiet afternoon. The night stays yours to sell.</div></div>
+            <button type="button" class="tog" id="tog-daypass" aria-label="Offer a day pass" onclick="this.classList.toggle('on');dpSync()"></button>
+          </div>
+          <div class="dp-body" id="dp-body" hidden>
+            <div class="row3">
+              <div class="field"><label for="f-dp-price" class="flbl">Day pass rate</label><input class="finput" id="f-dp-price" type="number" min="1" placeholder="2500"/><div class="fhint" id="dp-price-hint">Must be below your nightly rate.</div></div>
+              <div class="field"><label for="f-dp-start" class="flbl">From</label><input class="finput" id="f-dp-start" type="time" value="10:00"/></div>
+              <div class="field"><label for="f-dp-end" class="flbl">Until</label><input class="finput" id="f-dp-end" type="time" value="17:00"/></div>
+            </div>
+            <div class="field"><span class="flbl">Days you offer it</span><div class="dp-days" id="dp-days" role="group" aria-label="Day pass weekdays"></div></div>
+            <div class="row2">
+              <div class="field"><label for="f-dp-guests" class="flbl">Guests per pass</label><input class="finput" id="f-dp-guests" type="number" min="1" placeholder="2"/></div>
+              <div class="field"><label for="f-dp-note" class="flbl">Note to day guests <span class="opt">(optional)</span></label><input class="finput" id="f-dp-note" maxlength="240" placeholder="Fast Wi-Fi, desk by the window"/></div>
+            </div>
+            <div class="fhint">The window starts no earlier than your checkout time, so a day guest never meets the night guest at the door. You can switch it on or off any time from your partner page.</div>
+          </div>
+        </div>
         <div class="ibox mint" id="s5-comm"><div class="ibox-lbl">Zero commission</div><div class="ibox-txt">You keep <strong>100% of your listed rate</strong>. Cabana charges guests a small fixed platform fee, never a percentage of your earnings.</div></div>
         <div class="ibox mint" id="s5-rides-note" style="display:none;"><div class="ibox-lbl">Public prices are approved separately</div><div class="ibox-txt">Your operator listing describes what you offer and where. <strong>No price is published from this form.</strong> Cabana adds an exact market, route and unit price only after it is approved in the Move control room.</div></div>
         <div class="ibox mint" id="s5-foodnote" style="display:none;"><div class="ibox-lbl">This is not your menu</div><div class="ibox-txt">One rough number so a diner can see roughly what a plate costs before they open you. <strong>Your real prices are the ones on your dishes</strong>, and you type those into the menu builder in a minute. Leave this empty if you would rather it waited for the menu.</div></div>
@@ -1504,7 +1546,7 @@ function canonicalStayType(value){
 
 let cur=0,cov=0;
 const LABS=['Service','Type','Location','Details','Features','Pricing','Photos','Ownership','Review'];
-const F={svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],photoPositions:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',sig:'',eat:'all',seats:'',deliv:'',lead:'',minorder:'',delfee:'',delmins:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
+const F={dp:{on:false,price:'',start:'10:00',end:'17:00',days:[0,1,2,3,4,5,6],guests:'',note:''},hotel:false,svc:null,type:null,title:'',country:'Kenya',city:'',area:'',street:'',lat:null,lng:null,desc:'',feats:[],photos:[],photoFiles:[],photoPositions:[],cur:'KES',price:'',pw:'',pm:'',dep:'',mn:'1',wa:'',ph:'',em:'',ci:'14:00',co:'11:00',inst:true,ch:true,pets:false,smk:false,rules:'',beds:'1',baths:'1',guests:'2',floor:'',sqm:'',avail:'',bills:'',furn:'',mates:'2',bath:'shared',suits:'anyone',dur:'',meet:'',lang:'',edate:'',venue:'',age:'',cuisine:'',sig:'',eat:'all',seats:'',deliv:'',lead:'',minorder:'',delfee:'',delmins:'',make:'',model:'',yr:'',fuel:'',trans:'',areas:'',veh:'',adv:'',stock:'',cond:'',brand:'',da:'',
   /* Stays — room tiers & space mode */
   roomTiers:[],spaceMode:'entire',sharingContext:'',
   /* Ownership. `own` is deliberately null until the host chooses: a
@@ -1563,6 +1605,10 @@ function bldStep(n){
     const s5fn=document.getElementById('s5-foodnote');if(s5fn)s5fn.style.display=S.food?'':'none';
     const s5c=document.getElementById('s5-comm');if(s5c)s5c.style.display=(S.food||S.priceAdmin)?'none':'';
     const s5rn=document.getElementById('s5-rides-note');if(s5rn)s5rn.style.display=S.priceAdmin?'':'none';
+    const isHotel=F.svc==='stays'&&F.type==='Hotel or Resort';
+    const s5h=document.getElementById('s5-hotel');if(s5h)s5h.style.display=isHotel?'':'none';
+    const s5d=document.getElementById('s5-daypass');if(s5d)s5d.style.display=(F.svc==='stays'&&!isHotel)?'':'none';
+    if(F.svc==='stays')dpPaint();
     const s5s=document.getElementById('s5su');
     if(s5s)s5s.textContent=S.food
       ? 'Your number, so a diner can send you their order. Then one rough price, so they know what to expect.'
@@ -2270,7 +2316,13 @@ function collect(n){
     if(F.svc==='rides'){F.areas=gv('f-areas');F.guests=gv('f-guests');F.veh=gv('f-veh');F.adv=gv('f-adv');}
     if(F.svc==='shopping'){F.stock=gv('f-stock');F.cond=gv('f-cond');F.brand=gv('f-brand');F.da=gv('f-da');}
   }
-  if(n===5){F.cur=gv('f-cur');F.price=gv('f-price');F.minorder=gv('f-minorder');F.delfee=gv('f-delfee');F.delmins=gv('f-delmins');F.pw=gv('f-pw');F.pm=gv('f-pm');F.dep=gv('f-dep');F.mn=(F.svc==='roommates'?gv('f-mnr'):gv('f-mn'))||(F.svc==='roommates'?'90':'1');F.wa=gv('f-wa').trim();F.ph=gv('f-ph').trim();F.em=gv('f-em').trim();}
+  if(n===5){F.cur=gv('f-cur');F.price=gv('f-price');F.minorder=gv('f-minorder');F.delfee=gv('f-delfee');F.delmins=gv('f-delmins');F.pw=gv('f-pw');F.pm=gv('f-pm');F.dep=gv('f-dep');F.mn=(F.svc==='roommates'?gv('f-mnr'):gv('f-mn'))||(F.svc==='roommates'?'90':'1');F.wa=gv('f-wa').trim();F.ph=gv('f-ph').trim();F.em=gv('f-em').trim();
+    if(F.svc==='stays'){
+      F.hotel=F.type==='Hotel or Resort'&&!!document.getElementById('tog-hotel')?.classList.contains('on');
+      F.dp.on=!F.hotel&&!!document.getElementById('tog-daypass')?.classList.contains('on');
+      F.dp.price=gv('f-dp-price');F.dp.start=gv('f-dp-start')||'10:00';F.dp.end=gv('f-dp-end')||'17:00';
+      F.dp.guests=gv('f-dp-guests');F.dp.note=gv('f-dp-note').trim();
+    }}
   if(n===6){F.ci=gv('f-in')||'14:00';F.co=gv('f-out')||'11:00';F.inst=document.getElementById('tog-inst')?.classList.contains('on')??true;F.ch=document.getElementById('tog-ch')?.classList.contains('on')??true;F.pets=document.getElementById('tog-pets')?.classList.contains('on')??false;F.smk=document.getElementById('tog-smk')?.classList.contains('on')??false;F.rules=gv('f-rules').trim();if(F.svc==='stays'&&window._t3d)F.tour3d=window._t3d.value();}
 }
 function restDet(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
@@ -2318,7 +2370,34 @@ function restLoc(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&
 function restPr(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};sv('f-cur',F.cur);sv('f-price',F.price);sv('f-minorder',F.minorder);sv('f-delfee',F.delfee);sv('f-delmins',F.delmins);sv('f-pw',F.pw);sv('f-pm',F.pm);sv('f-dep',F.dep);sv(F.svc==='roommates'?'f-mnr':'f-mn',F.mn);sv('f-wa',F.wa);sv('f-ph',F.ph);sv('f-em',F.em);}
 
 function al(m){const el=document.getElementById('falert');el.textContent=m;el.classList.add('show');el.scrollIntoView({behavior:'smooth',block:'nearest'});setTimeout(()=>el.classList.remove('show'),5000);}
+/* Day pass: the same rules the database enforces, said before publish
+   instead of as an error after it. */
+const DP_DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function dpPaint(){
+  const box=document.getElementById('dp-days');if(!box)return;
+  box.innerHTML=[1,2,3,4,5,6,0].map(d=>`<button type="button" class="dp-day${F.dp.days.includes(d)?' on':''}" data-d="${d}" aria-pressed="${F.dp.days.includes(d)}">${DP_DAYS[d]}</button>`).join('');
+  box.querySelectorAll('.dp-day').forEach(b=>b.onclick=()=>{const d=+b.dataset.d;F.dp.days=F.dp.days.includes(d)?F.dp.days.filter(x=>x!==d):[...F.dp.days,d].sort();dpPaint();});
+  const t=document.getElementById('tog-daypass');if(t)t.classList.toggle('on',!!F.dp.on);
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null&&v!=='')el.value=v;};
+  set('f-dp-price',F.dp.price);set('f-dp-start',F.dp.start);set('f-dp-end',F.dp.end);set('f-dp-guests',F.dp.guests);set('f-dp-note',F.dp.note);
+  const g=document.getElementById('f-dp-guests');if(g&&!g.value)g.placeholder=String(F.guests||2);
+  const nightly=dpNightly();const h=document.getElementById('dp-price-hint');
+  if(h)h.textContent=nightly?`Must be below your nightly rate (${F.cur||'KES'} ${nightly.toLocaleString()}).`:'Must be below your nightly rate.';
+  const th=document.getElementById('tog-hotel');if(th&&F.type==='Hotel or Resort')th.classList.toggle('on',F.hotel!==false||!window._eid);
+  dpSync();
+}
+function dpSync(){const on=document.getElementById('tog-daypass')?.classList.contains('on');F.dp.on=!!on;const b=document.getElementById('dp-body');if(b)b.hidden=!on;}
+function dpNightly(){const t=(F.roomTiers||[]).map(x=>parseFloat(x.price)).filter(x=>x>0);return t.length?Math.min(...t):(parseFloat(F.price)||0);}
+function dpMinutes(v){const m=/^(\d{1,2}):(\d{2})/.exec(v||'');return m?(+m[1])*60+(+m[2]):null;}
 function valid(n){
+  if(n===5&&F.svc==='stays'&&F.type!=='Hotel or Resort'&&document.getElementById('tog-daypass')?.classList.contains('on')){
+    const price=parseFloat(gv('f-dp-price')),nightly=dpNightly();
+    const a=dpMinutes(gv('f-dp-start')),b=dpMinutes(gv('f-dp-end'));
+    if(!(price>0)){al('Set a day pass rate, or switch the day pass off.');return false;}
+    if(nightly&&price>=nightly){al('A day pass has to cost less than a night ('+(F.cur||'KES')+' '+nightly.toLocaleString()+').');return false;}
+    if(a==null||b==null||b-a<120){al('Give the day pass a window of at least two hours.');return false;}
+    if(!F.dp.days.length){al('Pick at least one day for the day pass.');return false;}
+  }
   if(n===1&&!F.type){al('Select a type to continue.');return false;}
   if(n===2){if(!document.getElementById('f-title').value.trim()){al('Add a title for your listing.');return false;}if(!document.getElementById('f-city').value.trim()){al('Enter the city.');return false;}if(!document.getElementById('f-area').value.trim()){al('Enter the area or neighbourhood.');return false;}}
   if(n===3&&!document.getElementById('f-desc').value.trim()){al('Write a description.');return false;}
@@ -2712,6 +2791,20 @@ async function publish(){
        Never read for permissions — that is exactly the distinction the
        ownership model exists to draw — but an on-behalf listing that has
        been handed over should still be creditable to whoever built it. */
+    /* Day pass. The database re-checks every rule (and clamps the start
+       to checkout), so these are the host's intentions, not the truth. */
+    if(F.svc==='stays'){
+      const dpOn=!!F.dp.on&&!F.hotel;
+      Object.assign(payload,{
+        day_pass_enabled:dpOn,
+        day_pass_price:parseFloat(F.dp.price)||null,
+        day_pass_start:F.dp.start||'10:00',
+        day_pass_end:F.dp.end||'17:00',
+        day_pass_days:F.dp.days.length?F.dp.days:[0,1,2,3,4,5,6],
+        day_pass_max_guests:parseInt(F.dp.guests,10)||null,
+        day_pass_note:F.dp.note||null,
+      });
+    }
     payload.created_by=CU?.id||null;
     payload.created_by_role=ON_BEHALF_OF?ON_BEHALF_OF.role:'partner';
 
@@ -2733,6 +2826,19 @@ async function publish(){
       err=error;listingId=data?.id||null;
     }
     if(err)throw err;
+
+    /* Hotel model. Saving a room type is what switches a listing to the
+       hotel desk, so a fresh hotel goes to Rooms & Rates next. Switching
+       an existing hotel back to a single unit is explicit. */
+    let liveStatus=null;
+    if(listingId){
+      if(F.svc==='stays'&&window._eid&&F.type==='Hotel or Resort'&&!F.hotel&&F.wasHotel){
+        const{error:hErr}=await sb.rpc('hotel_set_booking_model',{p_listing:listingId,p_model:'unit'});
+        if(hErr)console.warn('[add-listing] booking model',hErr.message);
+      }
+      const{data:st}=await sb.from('listings').select('status,is_active').eq('id',listingId).maybeSingle();
+      liveStatus=st&&st.status||null;
+    }
 
     /* A restaurant's commerce facts do not fit on a listings row, which
        is why one used to end up in price_night and read back as "/ night".
@@ -2842,6 +2948,29 @@ async function publish(){
     } else {
       spv.textContent=F.cur+' '+Number(F.price||0).toLocaleString();
     }
+    if(liveStatus==='pending_verification'){
+      /* One identity check covers every service, so this is the only
+         time they will be asked. The listing switches on by itself. */
+      document.getElementById('ssub').textContent='"'+F.title+'" is saved and will go live automatically once your identity is verified. Verify once and it covers every Cabana service.';
+      const sa=document.querySelector('.sacts');
+      const ctx={roommates:'roommates_host',food:'food_vendor',shopping:'shopping_seller',events:'event_organiser',tours:'tour_operator'}[F.svc]||'host';
+      if(sa){
+        sa.innerHTML='<button type="button" class="sa-p" id="s-verify">Verify my identity</button><a href="partner-listings.html" class="sa-g">My listings</a>';
+        document.getElementById('s-verify').onclick=async e=>{
+          const b=e.currentTarget;b.disabled=true;b.textContent='Opening…';
+          try{const r=await window.CabanaIdentity.start(ctx,'/partner-listings.html');
+            if(r==='approved'){b.textContent='Verified';document.getElementById('ssub').textContent='"'+F.title+'" is live now. You are verified across Cabana.';}
+            else if(r==='review'){b.textContent='In review';document.getElementById('ssub').textContent='Your identity check is with our team. "'+F.title+'" goes live by itself the moment it clears.';}
+          }catch(x){b.disabled=false;b.textContent='Verify my identity';al(x.message||'Could not open verification.');}
+        };
+      }
+    } else if(F.svc==='stays'&&F.hotel&&listingId&&!ON_BEHALF_OF&&F.own!=='on_behalf'){
+      const spl2=document.querySelector('.sp-l');if(spl2)spl2.textContent='Next';
+      spv.textContent='Rooms & Rates';
+      document.getElementById('ssub').textContent='"'+F.title+'" is saved. Add your room types, how many of each you have and their nightly rates, and guests can start booking rooms.';
+      const sa=document.querySelector('.sacts');
+      if(sa)sa.innerHTML='<a href="partner-rooms.html?listing='+encodeURIComponent(listingId)+'" class="sa-p">Set up rooms &amp; rates</a><a href="partner-listings.html" class="sa-g">My listings</a>';
+    }
     {
       const t3n=document.getElementById('s-t3d-note');if(t3n)t3n.remove();
       if(t3dResult){
@@ -2874,6 +3003,23 @@ function loadEdit(l){
   if(l.extras){const e=l.extras;Object.assign(F,{dur:e.dur||'',meet:e.meet||'',lang:e.lang||'',edate:e.edate||'',venue:e.venue||'',age:e.age||'',cuisine:e.cuisine||'',deliv:e.deliv||'',lead:e.lead||'',make:e.make||'',model:e.model||'',yr:e.yr||'',fuel:e.fuel||'',trans:e.trans||'',areas:e.areas||'',veh:e.veh||'',adv:e.adv||'',stock:e.stock||'',cond:e.cond||'',brand:e.brand||'',da:e.da||'',avail:e.avail||'',bills:e.bills||'',furn:e.furn||'',
     roomTiers:Array.isArray(e.room_tiers)&&e.room_tiers.length?e.room_tiers:[],
     spaceMode:e.space_mode||'entire',sharingContext:e.sharing_context||'',});}
+  if(F.svc==='stays'){
+    F.wasHotel=l.booking_model==='hotel';F.hotel=F.wasHotel;
+    F.dp={on:l.day_pass_enabled===true,price:l.day_pass_price!=null?String(l.day_pass_price):'',
+      start:String(l.day_pass_start||'10:00').slice(0,5),end:String(l.day_pass_end||'17:00').slice(0,5),
+      days:Array.isArray(l.day_pass_days)&&l.day_pass_days.length?l.day_pass_days.map(Number):[0,1,2,3,4,5,6],
+      guests:l.day_pass_max_guests?String(l.day_pass_max_guests):'',note:l.day_pass_note||''};
+  }
+  /* Stay and room contacts live in a private table now, readable only by
+     the owner. Without this the edit form would open with them blank. */
+  if((F.svc==='stays'||F.svc==='roommates')&&sb&&l.id){
+    sb.from('listing_private_contacts').select('contact_whatsapp,contact_phone,contact_email').eq('listing_id',l.id).maybeSingle().then(({data:c})=>{
+      if(!c)return;
+      F.wa=F.wa||c.contact_whatsapp||'';F.ph=F.ph||c.contact_phone||'';F.em=F.em||c.contact_email||'';
+      const put=(id,v)=>{const el=document.getElementById(id);if(el&&!el.value&&v)el.value=v;};
+      put('f-wa',F.wa);put('f-ph',F.ph);put('f-em',F.em);
+    });
+  }
   /* A restaurant's numbers moved off the listings row, so an edit has to
      go and get them. Without this, opening a live restaurant and pressing
      save would quietly wipe its delivery fee and its hours back to blank. */
@@ -3010,5 +3156,6 @@ buildNav();
 <script src="/cabana-lifecycle.js" defer></script>
 <script src="/cabana-listing-cards.js" defer></script>
 <script src="/cabana-listing-journeys.js" defer></script>
+<script src="/cabana-identity.js" defer></script>
 </body>
 </html>

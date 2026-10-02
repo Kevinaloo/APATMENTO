@@ -715,6 +715,12 @@ body.map-open .split-map{display:block;}
 .dl-cta-per{font-size:12px;color:var(--ink-faint);margin-top:2px;}
 .dl-cta-note{font-size:11px;color:var(--mint-deep);font-weight:600;margin-top:3px;}
 .dl-book-btn{flex-shrink:0;padding:14px 28px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:700;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 8px 24px rgba(123,47,247,.3);white-space:nowrap;}
+.dl-daypass-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;padding:13px 16px;border-radius:14px;background:linear-gradient(180deg,#FFF6E0,#FFE6B0);color:#7A4A00;border:1px solid rgba(214,150,30,.35);font-family:var(--font-body);font-weight:700;font-size:14px;cursor:pointer;transition:transform .3s,box-shadow .3s;white-space:nowrap;}
+.dl-daypass-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(214,150,30,.28);}
+.dl-dp-sun{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#FFC23D 45%,rgba(255,194,61,0) 46%),conic-gradient(from 0deg,#FFB000 0 8%,transparent 8% 17%,#FFB000 17% 25%,transparent 25% 33%,#FFB000 33% 42%,transparent 42% 50%,#FFB000 50% 58%,transparent 58% 67%,#FFB000 67% 75%,transparent 75% 83%,#FFB000 83% 92%,transparent 92%);animation:dlDpSpin 9s linear infinite;}
+@keyframes dlDpSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.dl-dp-sun{animation:none}}
+@media (max-width:420px){.dl-daypass-btn{padding:13px 12px}.dl-book-btn{padding:14px 18px}}
 .dl-book-btn:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(123,47,247,.42);}
 .dl-wishlist-btn{width:44px;height:44px;border-radius:13px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;flex-shrink:0;}
 .dl-wishlist-btn svg{width:20px;height:20px;}
@@ -2665,6 +2671,16 @@ async function loadNativeListings() {
       instantBook: l.instant_book !== false,
       spaceMode: l.extras?.space_mode || 'entire',
       sharingContext: l.extras?.sharing_context || '',
+      /* Hotels sell rooms by type, day passes sell a daytime window.
+         Both are opt-in by the host and validated by the database. */
+      bookingModel: l.booking_model === 'hotel' ? 'hotel' : 'unit',
+      dayPass: l.day_pass_enabled === true && Number(l.day_pass_price) > 0 ? {
+        price: Number(l.day_pass_price),
+        start: String(l.day_pass_start || '10:00').slice(0, 5),
+        end: String(l.day_pass_end || '17:00').slice(0, 5),
+        days: Array.isArray(l.day_pass_days) ? l.day_pass_days : [],
+        maxGuests: Number(l.day_pass_max_guests) || l.max_guests || 2,
+      } : null,
     }));
   } catch(e) { console.warn('[listings] Exception:', e.message); return []; }
 }
@@ -3539,7 +3555,8 @@ function openDrawer(id) {
         <button class="dl-wishlist-btn" title="Save to wishlist" onclick="toggleWishlist('${apt.id}',this)">
           ${isWishlisted(apt.id)?'<svg viewBox="0 0 24 24" fill="#FF4D6D" stroke="#FF4D6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
         </button>
-        <button class="dl-book-btn" onclick="bookNow('${apt.id}')">Reserve →</button>
+        ${apt.dayPass && apt.bookingModel !== 'hotel' ? `<button class="dl-daypass-btn" onclick="bookNow('${apt.id}','daypass')" title="Day pass · ${apt.dayPass.start}–${apt.dayPass.end}"><span class="dl-dp-sun" aria-hidden="true"></span>Day pass</button>` : ''}
+        <button class="dl-book-btn" onclick="bookNow('${apt.id}')">${apt.bookingModel === 'hotel' ? 'Choose a room →' : 'Reserve →'}</button>
       </div>
     </div>
   `;
@@ -3909,11 +3926,14 @@ function closeDrawer() {
   document.body.classList.remove('lb-open');
 }
 
-function bookNow(id) {
+function bookNow(id, mode) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
   const dbId = apt._dbId || apt.id;
   const params = new URLSearchParams({ id: dbId, name: apt.name, location: apt.location, maxGuests: apt.maxGuests, guests:(_searchState.adults||1)+(_searchState.children||0) });
+  const kind = mode === 'daypass' && apt.dayPass ? 'daypass' : (apt.bookingModel === 'hotel' ? 'hotel' : 'stay');
+  if (kind !== 'stay') params.set('kind', kind);
+  if (kind === 'daypass' && _searchState.dateIn) params.set('date', _searchState.dateIn);
   if(_searchState.dateIn)params.set('checkin',_searchState.dateIn);
   if(_searchState.dateOut)params.set('checkout',_searchState.dateOut);
   /* Hand the coordinates over rather than making the payment page
