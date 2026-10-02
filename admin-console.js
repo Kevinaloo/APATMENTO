@@ -813,12 +813,14 @@
     { g: 'People', items: [
       { id: 'people', label: 'Members', icon: 'users', keys: 'g p', tone: 'warn', badge: function () { return c('host_review'); } },
       { id: 'profiles', label: 'Profiles & ticks', icon: 'shieldCheck', tone: 'warn', badge: function () { return c('profiles'); } },
+      { id: 'clearance', label: 'Clearance', icon: 'shieldCheck', tone: 'warn' },
       { id: 'agents', label: 'Agents', icon: 'idcard', tone: 'warn', badge: function () { return c('kyc'); } },
       { id: 'ambassadors', label: 'Ambassadors', icon: 'award' },
       { id: 'leads', label: 'Listing leads', icon: 'phone', tone: 'info', badge: function () { return c('leads'); } }
     ] },
     { g: 'Money', items: [
-      { id: 'finance', label: 'Finance', icon: 'wallet', keys: 'g f', tone: 'hot', badge: function () { return c('refunds') + c('withdrawals'); } }
+      { id: 'finance', label: 'Finance', icon: 'wallet', keys: 'g f', tone: 'hot', badge: function () { return c('refunds') + c('withdrawals'); } },
+      { id: 'ride-money', label: 'Ride money', icon: 'coins', tone: 'hot' }
     ] },
     { g: 'Trust', items: [
       { id: 'safety', label: 'Safety', icon: 'shield', keys: 'g s', tone: 'hot', badge: function () { return c('sos') + c('checkin') + c('disputes') + c('uploads'); } },

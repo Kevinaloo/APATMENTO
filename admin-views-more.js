@@ -230,11 +230,11 @@
     title: 'Agents',
     render: function (v) {
       var st = v.q.tab || 'submitted';
-      set(v.el, html`${pageHd('People', 'Agents', 'Agents start working the day they sign up and have 30 days to prove who they are. You confirm the document is genuine; hosts decide whether to work with them.')}${CX.skeleton('list')}`);
+      set(v.el, html`${pageHd('People', 'Agents', 'Agents operate only once their identity is verified: one check, recognised across Cabana. You confirm uploaded documents are genuine; hosts decide whether to work with them.')}${CX.skeleton('list')}`);
       return CX.api('/api/agents?action=kyc-review&status=' + encodeURIComponent(st)).then(function (j) {
         if (!v.alive()) return;
         var list = j.agents || [];
-        set(v.el, html`${pageHd('People', 'Agents', 'Agents start working the day they sign up and have 30 days to prove who they are. You confirm the document is genuine; hosts decide whether to work with them.')}
+        set(v.el, html`${pageHd('People', 'Agents', 'Agents operate only once their identity is verified: one check, recognised across Cabana. You confirm uploaded documents are genuine; hosts decide whether to work with them.')}
           ${tabBar(v, [['submitted', 'Awaiting review', st === 'submitted' ? list.length : CX.counts.kyc, true], ['unverified', 'Not yet submitted'], ['rejected', 'Rejected'], ['verified', 'Verified']], st)}
           <div class="card flush">${list.length ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Agent</th><th class="hide-s">Contact</th><th>Clock</th><th>Status</th><th></th></tr></thead><tbody>${list.map(function (a) {
             var days = Math.ceil((new Date(a.kyc_deadline) - Date.now()) / 864e5), overdue = days < 0 && a.kyc_status !== 'verified';
