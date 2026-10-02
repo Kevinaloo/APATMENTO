@@ -54,7 +54,7 @@ PAGES.append(dict(
     h1="What is Cabana?",
     eyebrow="Cabana · the company",
     sub=("Cabana is a travel booking platform for Africa that charges no commission. "
-         "Hosts and operators keep 100% of what they charge; guests pay no booking fee. "
+         "Hosts and operators keep 100% of what they charge. "
          "It was founded in Nairobi in 2025 and was previously called Apatmento."),
     chips=[("0%", "commission, both sides"), ("54", "countries, guides"),
            ("2025", "founded, Nairobi"), ("Apatmento", "former name")],
@@ -125,10 +125,11 @@ PAGES.append(dict(
          "a small number of live listings and no guest reviews yet."),
         ("How does Cabana make money if it charges no commission?",
          "Through optional paid placement for hosts and operators who want more visibility, "
-         "and through value-added services — not by taking a percentage of bookings."),
+         "value-added services and a small facilitation on bookings — never by taking a "
+         "percentage of the host's price."),
         ("Is Cabana cheaper than Airbnb?",
-         "On the same property, generally yes, because there is no guest service fee and no "
-         "host commission priced into the nightly rate. The saving depends on what the host "
+         "On the same property, generally yes, because there is no host commission priced "
+         "into the nightly rate. The saving depends on what the host "
          "would have charged to absorb another platform's fees."),
         ("Which countries does Cabana cover?",
          "Cabana publishes travel guides and accepts listings for all 54 African countries. "
@@ -172,7 +173,7 @@ PAGES.append(dict(
         ("Side by side",
          table(["", "Cabana", "Booking.com"], [
              ["Commission from host", "<b>0%</b>", "~15–25%"],
-             ["Guest booking fee", "<b>None</b>", "Varies by property"],
+             ["Price shown before paying", "<b>In full</b>", "Varies by property"],
              ["African coverage", "All 54 countries", "Broad, hotel-weighted"],
              ["Global coverage", "Limited outside Africa", "Worldwide, very deep"],
              ["M-Pesa / mobile money", "<b>Native</b>", "Not generally supported"],
@@ -247,11 +248,9 @@ PAGES.append(dict(
          "<p>On a conventional platform, a night advertised at US$100 might break down like "
          "this. The numbers are illustrative but the structure is standard.</p>"
          + table(["", "Typical platform", "Cabana"], [
-             ["Guest pays", "US$114", "<b>US$100</b>"],
-             ["Guest service fee", "US$14 (~14%)", "<b>US$0</b>"],
+             ["Host's price", "US$100", "<b>US$100</b>"],
              ["Host commission", "US$3–18", "<b>US$0</b>"],
              ["Host receives", "US$82–97", "<b>US$100</b>"],
-             ["Gap, guest to host", "US$17–32", "<b>US$0</b>"],
          ])
          + "<p class='pfine'>Illustrative. Actual fees vary by platform, market and property.</p>"),
         ("Why this matters more in Africa than elsewhere",
@@ -261,9 +260,9 @@ PAGES.append(dict(
          "with the host circulates locally. For a host letting one apartment, the difference "
          "is often the cost of the mortgage on it.</p>"),
         ("How Cabana funds itself instead",
-         "<p>Optional paid placement for hosts and operators who want more visibility, and "
-         "value-added services. Nothing is taken from the booking, which means Cabana has no "
-         "incentive to inflate prices or hide fees at checkout — there is no fee to hide.</p>"),
+         "<p>Optional paid placement for hosts and operators who want more visibility, "
+         "value-added services and a small facilitation on bookings. Nothing is taken from the "
+         "host's price, and the full amount is shown at checkout before anyone pays.</p>"),
         ("How to book this way",
          "<p>Search on <a href='/apartments'>Cabana stays</a>, <a href='/tours'>safaris and "
          "tours</a>, <a href='/carhire'>car hire</a> or <a href='/rides'>transfers</a>. Every "
@@ -272,18 +271,18 @@ PAGES.append(dict(
     ],
     faqs=[
         ("What does zero commission actually mean?",
-         "The platform takes no percentage of the booking. The host sets the price, the guest "
-         "pays that price, and the host receives all of it. No host commission and no guest "
-         "service fee."),
+         "The platform takes no percentage of the host's price. The host sets the price and "
+         "receives all of it, and the guest sees the full amount before paying. No host "
+         "commission and no hidden charges."),
         ("How does a zero-commission platform make money?",
-         "Cabana earns from optional paid placement and value-added services rather than from "
-         "a cut of each booking."),
+         "Cabana earns from optional paid placement, value-added services and a small "
+         "facilitation on bookings, never from a cut of the host's price."),
         ("How much do hosts save?",
          "On a property grossing US$1,000 a month, a 15–25% commission is US$150–250 a month, "
          "or US$1,800–3,000 a year. On a zero-commission platform that stays with the host."),
         ("Is the guest price really final?",
-         "Yes. The rate shown is the host's rate and the amount charged. No service fee is "
-         "added at checkout."),
+         "Yes. The full amount is shown at checkout before you pay, and nothing is added "
+         "afterwards."),
         ("Which countries can I book this way?",
          "All 54 African countries, with the deepest inventory in Kenya, Nigeria, Ghana, "
          "Tanzania and South Africa."),

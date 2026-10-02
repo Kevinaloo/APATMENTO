@@ -1378,6 +1378,41 @@
     if (doc.hidden) ms *= 3;
     S.pollT = setTimeout(track, ms);
   }
+  /* ── trip safety sync ─────────────────────────────────────────────
+     While a driver is assigned, and for a few hours after a trip that
+     was cancelled once a driver had it, the rider's phone shares its
+     position with Cabana (never with the driver). It is how a trip that
+     was "cancelled" but driven anyway is told apart from one that was
+     really called off, and it is the record the SOS desk works from.
+     The server decides whether it still wants points and says false
+     when it does not, which ends the watch. */
+  var GEO = { watch: null, last: 0, told: false, ref: null };
+  function geoStop() {
+    if (GEO.watch != null) { try { navigator.geolocation.clearWatch(GEO.watch); } catch (e) {} }
+    GEO.watch = null; GEO.ref = null;
+  }
+  function geoSend(pos) {
+    if (!GEO.ref || !pos || !pos.coords) return;
+    var now = Date.now();
+    if (now - GEO.last < 25000) return;
+    GEO.last = now;
+    rpc('ride_rider_ping', { p_ref: GEO.ref, p_token: S.token, p_lat: pos.coords.latitude, p_lng: pos.coords.longitude })
+      .then(function (ok) { if (ok === false) geoStop(); }, function () {});
+  }
+  function geoSync(t) {
+    if (S.shareMode || !S.token || !t || !global.navigator || !navigator.geolocation) return;
+    var live = t.status === 'assigned' || t.status === 'arriving' || t.status === 'in_progress';
+    var after = t.status === 'cancelled' && t.driver;
+    if (!(live || after)) { geoStop(); return; }
+    if (GEO.watch != null && GEO.ref === S.ref) return;
+    geoStop();
+    GEO.ref = S.ref;
+    try {
+      GEO.watch = navigator.geolocation.watchPosition(geoSend, function () {}, { enableHighAccuracy: true, maximumAge: 20000, timeout: 30000 });
+      if (live && !GEO.told) { GEO.told = true; toast('For your safety, your trip location is shared with Cabana until you arrive.'); }
+    } catch (e) { geoStop(); }
+  }
+
   function track() {
     if (!S.ref) return;
     var p = S.shareMode ? rpc('ride_share_view', { p_ref: S.ref, p_share: S.share }) : rpc('ride_track', { p_ref: S.ref, p_token: S.token });
@@ -1387,6 +1422,7 @@
       S.trip = t;
       if (prev !== t.status) onStatusChange(prev, t.status);
       renderLive();
+      geoSync(t);
       schedulePoll();
     }, function (e) {
       if (e && (e.code === 'ride_not_found' || e.code === 'share_expired')) {

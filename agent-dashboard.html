@@ -412,27 +412,23 @@ function clock() {
     return;
   }
 
-  if (a.kyc_status === 'submitted') {
+  /* Verified first, then operate: one identity check opens the desk and
+     counts for every other Cabana role. There is no grace period. */
+  if (a.state === 'active') { el.className = 'clock verified'; return; }
+
+  if (a.state === 'review') {
     el.className = 'clock calm';
     el.innerHTML = '<div class="clock-i">🔍</div><div>' +
-      '<div class="clock-t">We\'re checking your document</div>' +
-      '<div class="clock-d">Usually within a day. Nothing is paused. Keep working while we look.</div>' +
+      '<div class="clock-t">We\'re checking your identity</div>' +
+      '<div class="clock-d">Usually within a day. Your desk opens the moment it clears: links start earning and you can request listings. We will email you.</div>' +
       '</div>';
     return;
   }
 
-  const c = ApaAgent.clockTone(a.days_left);
-  if (c.tone === 'verified') { el.className = 'clock verified'; return; }
-
   const rejected = a.kyc_status === 'rejected';
-  el.className = 'clock ' + c.tone;
-
-  const copy = {
-    calm:    ['⏳', c.label, 'Everything works right now. Upload a national ID or passport before the clock runs out and it keeps working.'],
-    warn:    ['⏳', c.label, 'Upload your ID soon. When the clock runs out your links stop earning. Nothing is lost, just paused until you verify.'],
-    urgent:  ['⚠️', c.label, 'Verify today. Tomorrow your referral links stop attributing bookings, and you cannot request new listings.'],
-    expired: ['🔒', 'Verification overdue', 'Your links have stopped earning and you cannot request new partnerships. Existing listings are untouched. Upload your ID and everything resumes immediately.'],
-  }[c.tone];
+  el.className = 'clock urgent';
+  const copy = ['🔒', rejected ? 'Verify again to open your desk' : 'Verify to open your desk',
+    'Hosts hand their listings to agents Cabana has confirmed. Until you verify, your links do not earn and you cannot request listings. It takes two minutes.'];
 
   el.innerHTML =
     '<div class="clock-i">' + copy[0] + '</div><div style="flex:1;">' +

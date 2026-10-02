@@ -562,6 +562,13 @@ const CabanaChat = window.CabanaChat = (() => {
       if (opts.draft && seq === S.openSeq) { const ta = $('#cbx-ta'); if (ta && !ta.value) { ta.value = String(opts.draft).slice(0, 600); ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); } }
     } catch (e) {
       if (seq !== S.openSeq) return;
+      /* Room hosts are reached with a Cabana Rooms Pass. Offer it rather
+         than leave a refusal in an empty thread. */
+      if (/Unlock Cabana Rooms/i.test(String(e && e.message))) {
+        if (window.CabanaRoomsPass) { try { close(); } catch (_) {} window.CabanaRoomsPass.open({ title: opts.listingTitle }); return; }
+        threadError('Unlock Cabana Rooms to message room hosts. It opens every room for a month.');
+        return;
+      }
       threadError(friendly(e));
     }
   }
@@ -1069,6 +1076,11 @@ const CabanaChat = window.CabanaChat = (() => {
       if (S.active !== a) return;
       const m = a.msgs.get(temp.id); if (m) m._state = 'failed';
       renderMessages(true);
+      if (/Unlock Cabana Rooms/i.test(String(e && e.message))) {
+        if (window.CabanaRoomsPass) window.CabanaRoomsPass.open({ title: a.meta && a.meta.listing_title });
+        else toast('Unlock Cabana Rooms to keep messaging room hosts.');
+        return;
+      }
       toast(friendly(e));
     }
   }
@@ -1335,9 +1347,9 @@ const CabanaChat = window.CabanaChat = (() => {
     g('to-go').disabled = !!err || !d || !p;
     g('to-sum').innerHTML = d && p ? `
       <div class="kv"><span>${perGroup ? money(p) + ' for the group' : money(p) + ' × ' + n}</span><span>${money(total)}</span></div>
-      ${dep < total ? `<div class="kv"><span>Traveller pays now</span><span>${money(dep)}</span></div><div class="kv"><span>You collect on the day</span><span>${money(total - dep)}</span></div>` : ''}
+      ${dep < total ? `<div class="kv"><span>Your share collected online</span><span>${money(dep)}</span></div><div class="kv"><span>You collect on the day</span><span>${money(total - dep)}</span></div>` : ''}
       <div class="kv" style="color:var(--mint);font-weight:700"><span>Traveller saves</span><span>${money(list - total)}</span></div>
-      <div class="kv"><span>Cabana commission</span><span>KES 0</span></div>` : '<div class="kv"><span>Choose a date and a price to see the totals. The server checks the tour runs that day.</span></div>';
+      <div class="kv"><span>You receive</span><span>${money(total)}</span></div>` : '<div class="kv"><span>Choose a date and a price to see the totals. The server checks the tour runs that day.</span></div>';
   }
   async function sendTourOffer() {
     const g = id => S.root.querySelector('#' + id), btn = g('to-go');

@@ -710,3 +710,27 @@ select.dv-input { -webkit-appearance: none; appearance: none; background-image: 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }
+
+/* ── secure your car (Cabana facilitation) ───────────────────────────── */
+.dv-q-secure { margin-top: 8px; padding: 12px 14px !important; border-radius: 16px; background: linear-gradient(135deg, rgba(46, 242, 208, .12), rgba(61, 123, 255, .1)); border: 1px solid rgba(18, 198, 232, .25); }
+.dv-q-secure b { font-family: var(--display); }
+.dv-secure { position: relative; overflow: hidden; isolation: isolate; margin-top: 12px; padding: 18px; border-radius: 24px; color: #fff;
+  background: radial-gradient(120% 140% at 100% 0%, #2ef2d0 0%, #12c6e8 30%, #14346b 75%, #062a33 100%); box-shadow: var(--shadow); animation: dvSecureIn .7s var(--ease) both; }
+.dv-secure.is-wait { background: var(--grad-deep); opacity: .92; }
+.dv-secure-glow { position: absolute; inset: -40% -20% auto auto; width: 260px; height: 260px; z-index: -1; border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, .0), rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 40%); filter: blur(18px); animation: dvSpin 7s linear infinite; }
+.dv-secure .dv-eyebrow { color: rgba(255, 255, 255, .78); }
+.dv-secure h3 { font-family: var(--display); font-weight: 760; font-size: 26px; letter-spacing: -.02em; margin: 6px 0 6px; font-stretch: 112%; }
+.dv-secure p { margin: 0; font-size: 13.5px; line-height: 1.55; color: rgba(255, 255, 255, .86); max-width: 40ch; }
+.dv-secure-pay { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+@media (min-width: 520px) { .dv-secure-pay { grid-template-columns: 1fr auto; } }
+.dv-secure-ph { display: flex; align-items: stretch; border-radius: 16px; overflow: hidden; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .28); }
+.dv-secure-ph span { display: grid; place-items: center; padding: 0 12px; font: 650 13px var(--ui); background: rgba(0, 0, 0, .16); }
+.dv-secure-ph input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #fff; padding: 14px 12px; font: 600 16px var(--ui); letter-spacing: .04em; }
+.dv-secure-ph input::placeholder { color: rgba(255, 255, 255, .55); }
+.dv-secure .dv-btn { background: #fff; color: var(--ink); box-shadow: 0 14px 30px -12px rgba(0, 0, 0, .5); }
+.dv-secure-err { min-height: 0; margin-top: 8px; font-size: 12.5px; font-weight: 600; color: #ffe1e6; }
+.dv-secure-err:empty { display: none; }
+@keyframes dvSecureIn { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+@keyframes dvSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .dv-secure, .dv-secure-glow { animation: none; } }

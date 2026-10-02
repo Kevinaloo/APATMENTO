@@ -53,6 +53,43 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;font-weight:620;l
 /* view shell */
 .view{display:none;padding-top:22px;}
 .view.on{display:block;}
+.clr{position:relative;overflow:hidden;isolation:isolate;border-radius:22px;padding:22px;margin-bottom:14px;
+  background:radial-gradient(120% 120% at 100% 0%,rgba(255,107,44,.28),transparent 55%),linear-gradient(160deg,#171B2C,#0F1220);border:1px solid rgba(255,107,44,.22);}
+.clr::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;z-index:-1;
+  background:repeating-conic-gradient(from 0deg,rgba(245,194,76,.18) 0 8deg,transparent 8deg 22.5deg);animation:clrSpin 40s linear infinite;}
+@keyframes clrSpin{to{transform:rotate(360deg)}}
+.clr h2{font-size:22px;letter-spacing:-.02em;margin:8px 0 6px;}
+.clr p{font-size:13.5px;color:var(--paper-2);line-height:1.6;margin-bottom:16px;}
+.steps{display:grid;gap:10px;}
+.stp{display:flex;align-items:center;gap:13px;padding:14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);}
+.stp .dot{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;background:var(--asphalt-3);color:var(--paper-2);}
+.stp[data-s="done"] .dot{background:var(--signal);color:#04241a;}
+.stp[data-s="review"] .dot,.stp[data-s="in_progress"] .dot{background:var(--kerb);color:#2a1d00;animation:clrPulse 1.6s ease-in-out infinite;}
+.stp[data-s="declined"] .dot,.stp[data-s="expired"] .dot{background:var(--alert);color:#fff;}
+@keyframes clrPulse{50%{box-shadow:0 0 0 7px rgba(245,194,76,.15)}}
+.stp .t{flex:1;min-width:0;}.stp .t b{display:block;font-size:14.5px;}.stp .t small{display:block;font-size:12px;color:var(--paper-3);margin-top:2px;line-height:1.4;}
+.stp .go{flex:none;padding:10px 13px;border-radius:12px;border:0;background:var(--ember);color:#fff;font:700 12.5px inherit;font-family:inherit;cursor:pointer;}
+.lic{margin-top:12px;padding:14px;border-radius:16px;background:rgba(0,0,0,.25);border:1px dashed rgba(255,255,255,.14);display:none;}
+.lic.on{display:block;animation:clrIn .35s ease;}
+@keyframes clrIn{from{opacity:0;transform:translateY(-4px)}}
+.lic .drop{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border-radius:12px;border:1.5px dashed rgba(255,255,255,.2);color:var(--paper-2);font-size:13.5px;cursor:pointer;text-align:center;}
+.lic .drop.has{border-color:var(--signal);color:var(--paper);}
+.lic .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.rm{border-radius:22px;padding:20px;margin-bottom:14px;background:linear-gradient(150deg,#13261E,#0E1A17);border:1px solid rgba(0,214,143,.22);}
+.rm.over{background:linear-gradient(150deg,#2C1414,#190D0F);border-color:rgba(255,90,90,.35);}
+.rm .amt{font-size:34px;font-weight:800;letter-spacing:-.03em;margin:6px 0 2px;font-variant-numeric:tabular-nums;}
+.rm .sub{font-size:13px;color:var(--paper-2);line-height:1.55;}
+.rm .clock{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.06);font-size:12px;font-weight:700;}
+.rm .clock i{width:7px;height:7px;border-radius:50%;background:var(--signal);}
+.rm.over .clock i{background:var(--alert);animation:clrPulse 1.2s infinite;}
+.rm .items{margin:14px 0;max-height:150px;overflow:auto;}
+.rm .it{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--paper-2);}
+.rm .it b{color:var(--paper);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.ph{display:flex;border-radius:12px;overflow:hidden;border:1.5px solid var(--line);margin-bottom:10px;}
+.ph span{display:grid;place-items:center;padding:0 12px;background:var(--asphalt-3);font-weight:700;font-size:13px;color:var(--paper-2);}
+.ph input{flex:1;min-width:0;padding:14px;border:0;outline:0;background:transparent;color:var(--paper);font:600 16px inherit;font-family:inherit;}
+.toggle.locked{opacity:.4;}
+@media(prefers-reduced-motion:reduce){.clr::after,.stp .dot,.rm .clock i{animation:none}}
 .card{background:var(--asphalt-2);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:14px;}
 .card h2{font-size:19px;margin-bottom:10px;}
 .card p{font-size:14px;color:var(--paper-2);line-height:1.65;}
@@ -276,6 +313,8 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;font-weight:620;l
       <div class="stat"><div class="v num" id="s-rating">5.0</div><div class="l">Rating</div></div>
     </div>
 
+    <div id="clearance"></div>
+    <div id="remit"></div>
     <div id="offers"></div>
     <div id="active"></div>
 
@@ -341,7 +380,12 @@ function loadDriver(){
     D.driver = res.data;
     $('tb-sub').textContent = String(res.data.full_name||'').split(' ')[0] + ' · ' +
       (res.data.city || 'Nairobi');
-    if(res.data.status === 'approved'){ openConsole(); }
+    /* The console opens for applicants too: they see their clearance
+       and can finish it here. Trips only reach a cleared driver, which
+       the database enforces (ride_driver_offer, cab_ping). */
+    var st = res.data.status;
+    if(st === 'approved' || st === 'applied' || st === 'under_review' ||
+       (st === 'suspended' && res.data.status_note === 'commission_overdue')){ openConsole(); }
     else { showPending(res.data); }
   }).catch(function(){ view('v-none'); });
 }
@@ -392,7 +436,18 @@ $('toggle').addEventListener('click', function(){
   if(D.online) goOffline(); else goOnline();
 });
 
+function cleared(){ var c = D.board && D.board.clearance; return !c || c.cleared === true; }
 function goOnline(){
+  if(!cleared()){
+    toast('Finish your clearance to go online. It is the card at the top.');
+    var el = $('clearance'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    return;
+  }
+  if(D.board && D.board.remit && D.board.remit.overdue){
+    toast('Clear your Cabana balance first, then trips reach you again.');
+    var rm = $('remit'); if(rm) rm.scrollIntoView({behavior:'smooth', block:'start'});
+    return;
+  }
   if(!navigator.geolocation){ toast('This phone cannot share a location, so trips cannot reach you.'); return; }
   $('st-s').textContent = 'Getting your position.';
   function onlineWith(fix){
@@ -480,6 +535,9 @@ function step(minor, cur){
 }
 var ERR = {
   driver_not_approved:'Your account is not approved for trips yet.',
+  driver_not_cleared:'Finish your clearance first: verify your identity and get your licence approved.',
+  commission_overdue:'Clear your Cabana balance to receive trips again.',
+  not_a_driver:'Apply as a driver first.',
   ride_not_open:'That ride has been taken or cancelled.',
   ride_not_for_you:'That ride needs a different vehicle class.',
   offer_closed:'Your offer on that ride has closed.',
@@ -515,6 +573,8 @@ function loadOpenWork(){
     loading = false;
     D.board = b || {};
     D.active = b && b.active || null;
+    paintClearance();
+    paintRemit();
     paintStatus();
     paintOffers((b && b.invitations) || []);
     paintActive();
@@ -634,7 +694,7 @@ function paintActive(){
   }
   el.innerHTML = '<div class="card trip">'+
     '<div class="trip-hero"><span class="lab">'+esc(r.ref)+' · '+head+'</span><div class="v num">'+esc(money(r.agreed,cur))+'</div>'+
-      '<div class="s">Agreed fare · '+esc(r.pay_method||'cash')+' to you · Cabana takes 0%</div></div>'+
+      '<div class="s">Agreed fare · '+esc(r.pay_method||'cash')+' to you · Cabana’s share is settled from your balance</div></div>'+
     '<div class="rider"><div class="av">'+esc(first.charAt(0))+'</div><div style="flex:1;min-width:0"><div class="n">'+esc(first)+'</div>'+
       '<div class="p">'+(r.passengers||1)+' pax'+(r.flight_no?' · flight '+esc(r.flight_no):'')+(r.needs&&r.needs.length?' · '+esc(r.needs.join(', ').replace(/_/g,' ')):'')+'</div></div>'+
       (r.rider_phone?'<a class="call" href="tel:'+esc(r.rider_phone)+'" aria-label="Call rider"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></a>':'')+
@@ -659,6 +719,122 @@ $('active').addEventListener('click', function(e){
   }, function(err){ t.disabled = false; toast(friendly(err)); loadOpenWork(); });
 });
 function showPinErr(m){ var e = $('pin-err'); if(e){ e.textContent = m; e.style.display='block'; } }
+
+/* ── clearance: identity once, licence reviewed ───────────────────── */
+var LIC = { file:null, open:false };
+function paintClearance(){
+  var el = $('clearance'), c = D.board && D.board.clearance;
+  var tg = $('toggle'); if(tg) tg.classList.toggle('locked', !!(c && !c.cleared));
+  if(!c || c.cleared){ el.innerHTML = ''; return; }
+  var steps = (c.steps||[]).filter(function(x){ return x.key !== 'organisation' || x.state !== 'done'; });
+  var word = { done:'Done', review:'In review', in_progress:'In progress', declined:'Declined, try again', todo:'To do', expired:'Expired, renew it' };
+  var sig = JSON.stringify(steps.map(function(x){ return x.key+x.state; })) + LIC.open;
+  if(el.getAttribute('data-sig') === sig) return;
+  el.setAttribute('data-sig', sig);
+  el.innerHTML = '<div class="clr"><span class="lab">Before your first trip</span><h2>Get cleared to drive</h2>'+
+    '<p>Riders step into your car, so Cabana confirms who you are and checks your licence. Do it once. Your identity check also counts for every other Cabana service.</p>'+
+    '<div class="steps">'+steps.map(function(x,i){
+      var act = '';
+      if(x.key==='identity' && (x.state==='todo' || x.state==='declined' || x.state==='expired')) act = '<button class="go" data-clr="identity">Verify</button>';
+      if(x.key==='licence' && x.state!=='done' && x.state!=='review') act = '<button class="go" data-clr="licence">'+(x.state==='todo'?'Upload':'Re-upload')+'</button>';
+      return '<div class="stp" data-s="'+esc(x.state)+'"><span class="dot">'+(x.state==='done'?'✓':(i+1))+'</span><div class="t"><b>'+esc(x.label||x.key)+'</b><small>'+esc(word[x.state]||x.state)+(x.note?' · '+esc(x.note):'')+'</small></div>'+act+'</div>';
+    }).join('')+'</div>'+
+    '<div class="lic'+(LIC.open?' on':'')+'" id="lic">'+
+      '<label class="drop" id="lic-drop" for="lic-file">Tap to add a clear photo or PDF of your driving licence</label>'+
+      '<input type="file" id="lic-file" accept="image/*,application/pdf" hidden>'+
+      '<div class="row2"><div class="field" style="margin:0"><label for="lic-no">Licence number</label><input id="lic-no" autocomplete="off" placeholder="DL-1234567"></div>'+
+      '<div class="field" style="margin:0"><label for="lic-exp">Expires</label><input id="lic-exp" type="date"></div></div>'+
+      '<div class="err" id="lic-err"></div>'+
+      '<button class="btn btn-primary" id="lic-send" style="margin-top:12px">Send for review</button></div>'+
+    '<p style="margin:14px 0 0;font-size:12px">You can explore the console meanwhile. Trips start reaching you the moment both are approved.</p></div>';
+}
+$('clearance').addEventListener('click', function(e){
+  var b = e.target.closest('[data-clr]');
+  if(b && b.dataset.clr==='identity'){
+    if(!window.CabanaIdentity){ toast('Verification is loading. Try again in a second.'); return; }
+    b.disabled = true;
+    CabanaIdentity.start('driver', '/driver').then(function(r){
+      b.disabled = false;
+      if(r==='approved'){ toast('Identity verified.'); loadOpenWork(); }
+      else if(r==='review'){ toast('Your check is with our team.'); loadOpenWork(); }
+    }, function(err){ b.disabled = false; toast(err && err.message || 'Could not open verification.'); });
+    return;
+  }
+  if(b && b.dataset.clr==='licence'){ LIC.open = true; $('clearance').removeAttribute('data-sig'); paintClearance(); return; }
+  if(e.target.id==='lic-send') sendLicence(e.target);
+});
+$('clearance').addEventListener('change', function(e){
+  if(e.target.id!=='lic-file') return;
+  var f = e.target.files && e.target.files[0]; LIC.file = f || null;
+  var d = $('lic-drop'); if(d){ d.classList.toggle('has', !!f); d.textContent = f ? f.name : 'Tap to add a clear photo or PDF of your driving licence'; }
+});
+function sendLicence(btn){
+  var err = $('lic-err'), say = function(m){ err.textContent = m; err.style.display='block'; };
+  var f = LIC.file, no = ($('lic-no').value||'').trim(), exp = $('lic-exp').value || null;
+  if(!f) return say('Add a photo or PDF of your licence.');
+  if(f.size > 10*1024*1024) return say('That file is over 10 MB. Take a smaller photo.');
+  if(!/^(image\/|application\/pdf)/.test(f.type)) return say('Use a photo or a PDF.');
+  if(no.length < 4) return say('Type the licence number as printed.');
+  if(exp && exp < new Date().toISOString().slice(0,10)) return say('That licence has expired. Upload a valid one.');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  sb.auth.getUser().then(function(u){
+    var uid = u && u.data && u.data.user && u.data.user.id;
+    if(!uid) throw new Error('Please sign in again.');
+    var ext = (f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5) || 'jpg';
+    var path = uid + '/driving-licence-' + Date.now() + '.' + ext;
+    return sb.storage.from('kyc-documents').upload(path, f, { contentType: f.type, upsert:false }).then(function(up){
+      if(up.error) throw up.error;
+      return rpc('driver_document_submit', { p_kind:'driving_licence', p_path:path, p_number:no, p_expires:exp });
+    });
+  }).then(function(){
+    LIC = { file:null, open:false }; toast('Licence sent. Our team reviews it, usually the same day.');
+    $('clearance').removeAttribute('data-sig'); loadOpenWork();
+  }, function(e2){ btn.disabled = false; btn.textContent = 'Send for review'; say(e2 && e2.message || 'Upload failed. Try again.'); });
+}
+
+/* ── Cabana's share: remitted within the window, or trips pause ───── */
+function paintRemit(){
+  var el = $('remit'), r = D.board && D.board.remit;
+  if(!r || !(Number(r.due_minor) > 0)){ el.innerHTML = ''; return; }
+  var cur = r.currency || 'KES', over = !!r.overdue;
+  var left = r.next_due_at ? new Date(r.next_due_at).getTime() - Date.now() : 0;
+  var hrs = Math.max(0, Math.floor(left/3600e3)), mins = Math.max(0, Math.floor((left%3600e3)/60000));
+  var sig = [r.due_minor, over, hrs, mins].join('|');
+  if(el.getAttribute('data-sig') === sig) return;
+  el.setAttribute('data-sig', sig);
+  var saved = ''; try{ saved = localStorage.getItem('drv:remit-phone') || ''; }catch(e){}
+  el.innerHTML = '<div class="rm'+(over?' over':'')+'"><span class="lab">'+(over?'Overdue · trips paused':'Cabana’s share')+'</span>'+
+    '<div class="amt">'+esc(money(r.due_minor, cur))+'</div>'+
+    '<div class="sub">'+(over ? 'Your account is paused until this is cleared. It comes back the moment M-Pesa confirms.'
+      : 'Cabana’s share of your completed trips. Remit within '+esc(String(r.window_hours||24))+' hours of each trip to keep receiving rides.')+'</div>'+
+    (!over && left>0 ? '<div class="clock"><i></i>Next due in '+(hrs?hrs+'h ':'')+mins+'m</div>' : '')+
+    '<div class="items">'+(r.items||[]).map(function(x){
+      return '<div class="it"><span>'+esc(x.ref)+' · '+esc(String(x.route||'').split(' → ').map(function(p){ return p.split(',')[0]; }).join(' → '))+(x.source && x.source!=='completed'?' · flagged':'')+'</span><b>'+esc(money(x.amount, x.currency||cur))+'</b></div>';
+    }).join('')+'</div>'+
+    '<div class="ph"><span>+254</span><input id="rm-phone" type="tel" inputmode="numeric" placeholder="7XX XXX XXX" value="'+esc(saved)+'"></div>'+
+    '<div class="err" id="rm-err"></div>'+
+    '<button class="btn '+(over?'btn-primary':'btn-go')+'" id="rm-go">Remit '+esc(money(r.due_minor, cur))+' by M-Pesa</button>'+
+    '<p style="margin-top:10px;font-size:12px;color:var(--paper-3)">Think a trip here never happened? <button type="button" id="rm-help" style="background:none;border:0;color:var(--kerb);font:inherit;cursor:pointer;padding:0">Tell the driver team</button>.</p></div>';
+}
+$('remit').addEventListener('click', function(e){
+  if(e.target.id==='rm-help'){ if(window.CabanaSupport && CabanaSupport.open) CabanaSupport.open('I want to dispute a ride on my Cabana balance: '); return; }
+  if(e.target.id!=='rm-go') return;
+  var btn = e.target, err = $('rm-err'), raw = ($('rm-phone').value||'').trim();
+  var d = raw.replace(/\D/g,'').replace(/^254/,'').replace(/^0/,'');
+  if(!/^[17]\d{8}$/.test(d)){ err.textContent = 'Enter the Safaricom number that will pay.'; err.style.display='block'; return; }
+  if(!window.ApatmentoPay || !ApatmentoPay.start){ err.textContent = 'Payments are loading. Try again in a moment.'; err.style.display='block'; return; }
+  btn.disabled = true;
+  rpc('ride_remit_start').then(function(x){
+    btn.disabled = false;
+    try{ localStorage.setItem('drv:remit-phone', raw); }catch(_){}
+    ApatmentoPay.start({ amount:Number(x.amount), phone:'254'+d, reference:x.reference, service:'remit',
+      description:'Cabana trips · '+(x.covers||'')+' trip'+(x.covers===1?'':'s'),
+      trip:{ property:'Cabana trip balance', whenText:(x.covers||'')+' completed trip'+(x.covers===1?'':'s') },
+      onSuccess:function(){ $('remit').removeAttribute('data-sig'); setTimeout(loadDriverAgain, 1200); },
+      onFailure:function(){} });
+  }, function(e2){ btn.disabled = false; err.textContent = (e2 && e2.message) || 'Could not start. Try again.'; err.style.display='block'; });
+});
+function loadDriverAgain(){ loadOpenWork(); sb.from('drivers').select('*').limit(1).single().then(function(r){ if(r && r.data) D.driver = r.data; }, function(){}); }
 
 /* ── today ────────────────────────────────────────────────────────── */
 function paintToday(){
@@ -685,5 +861,7 @@ window.addEventListener('beforeunload', function(){ if(D.online) goOffline(); })
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-identity.js" defer></script>
+<script src="/cabana-pay.js" defer></script>
 </body>
 </html>

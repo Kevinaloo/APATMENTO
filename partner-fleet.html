@@ -146,6 +146,10 @@ textarea.in { min-height: 84px; resize: vertical; }
 .toast { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); z-index: 90; transform: translate(-50%, 20px); opacity: 0; background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; transition: all .35s var(--ease); pointer-events: none; max-width: 90vw; text-align: center; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 .toast.bad { background: #b3262b; }
+.unsecured { margin: 10px 0 0; padding: 12px 14px; border-radius: 16px; background: #fff7e6; border: 1px solid rgba(255, 176, 32, .35); color: #7a4a00; font-size: 13px; line-height: 1.5; }
+.unsecured b { display: block; font: 800 14px/1.3 var(--display); font-stretch: 110%; color: #5c3600; }
+.secured { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 6px 11px; border-radius: 99px; background: rgba(22, 192, 138, .12); color: #0d7a57; font-size: 12px; font-weight: 750; }
+.secured::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #16c08a; }
 .skel { height: 120px; border-radius: 24px; background: linear-gradient(90deg, #e7f3f2 25%, #f5fbfb 45%, #e7f3f2 65%); background-size: 300% 100%; animation: sh 1.3s linear infinite; margin-top: 12px; }
 @keyframes sh { from { background-position: 100% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
@@ -261,7 +265,7 @@ textarea.in { min-height: 84px; resize: vertical; }
   function toast(msg, bad) { var t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(function () { t.className = 'toast'; }, 3400); }
   function buzz() { try { navigator.vibrate && navigator.vibrate(18); } catch (e) {} }
 
-  var ERR = {
+  var ERR = { reservation_unpaid: 'The renter has not secured this hire yet. Keep the keys until it shows as secured.',
     not_an_operator: 'This account has no fleet on Cabana yet.',
     booking_not_found: 'That booking is no longer yours.',
     already_answered: 'That booking has already been answered.',
@@ -368,6 +372,9 @@ textarea.in { min-height: 84px; resize: vertical; }
     h += soon.length ? '<div class="grid two">' + soon.map(function (b) {
       var late = new Date(b.pickup_at).getTime() < Date.now() - 2 * 3600e3;
       return '<div class="card" data-ref="' + esc(b.ref) + '">' + head(b, 'collects in ' + esc(ago(b.pickup_at))) + facts(b) +
+        (b.facilitation && b.facilitation.due
+          ? '<div class="unsecured"><b>Waiting for the renter to secure it</b>Their code and contacts unlock once they pay Cabana. If they don’t by ' + esc(dt(b.facilitation.due_at)) + ', the car is released back to you automatically.</div>'
+          : '<div class="secured">Secured by the renter</div>') +
         '<div class="field"><span>Renter’s handover code</span><div class="code"><input inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" data-code="' + b.id + '"></div><div class="err" data-code-err="' + b.id + '" hidden></div></div>' +
         '<div class="acts"><button class="btn dark" data-collect="' + b.id + '">Keys handed over</button></div>' +
         '<div class="acts">' + contact(b) + (b.paid_at ? '' : '<button class="btn ghost sm" data-paid="' + b.id + '">Mark paid</button>') +
@@ -468,7 +475,7 @@ textarea.in { min-height: 84px; resize: vertical; }
     var d = t.dataset;
     if (d.close != null) { closeSheet(); return; }
     if (d.tab) { tab = d.tab; select(); return; }
-    if (d.accept) { act(t, rpc('car_operator_respond', { p_booking: d.accept, p_accept: true, p_reason: null }), 'Confirmed. The renter has your details and their handover code.'); return; }
+    if (d.accept) { act(t, rpc('car_operator_respond', { p_booking: d.accept, p_accept: true, p_reason: null }), 'Confirmed. The renter now secures it with Cabana; you will see it change to secured.'); return; }
     if (d.decline) { var why = prompt('Why decline? The renter sees this.', 'The car is not available for those dates.'); if (why == null) return; act(t, rpc('car_operator_respond', { p_booking: d.decline, p_accept: false, p_reason: why }), 'Declined. The renter can pick another car.').catch(function () {}); return; }
     if (d.collect) {
       var inp = document.querySelector('[data-code="' + d.collect + '"]'), er = document.querySelector('[data-code-err="' + d.collect + '"]');

@@ -199,8 +199,8 @@ def country_page(c):
          f"simple self-catering apartments at the lower end to lodges and beachfront villas "
          f"at the top. Those are guide figures for the country, not Cabana quotes.</p>"
          + (f"<p>Cabana currently has <b>{n_live} live {'listing' if n_live == 1 else 'listings'}</b> "
-            f"in {name}, priced by the host. Cabana takes no commission from the host and adds "
-            f"no booking fee to the guest, so the number shown is the number paid — typically "
+            f"in {name}, priced by the host. Cabana takes no commission from the host, so the "
+            f"rate is the host's own, and the full price is shown before you pay — typically "
             f"15–25% below the same property on a commission platform.</p>"
             if live else
             f"<p>Cabana does not yet have live listings in {name}. The platform is open to "
@@ -226,8 +226,8 @@ def country_page(c):
     faqs = [
         (f"How much does a night in {name} cost?",
          f"Market rates in {name} run roughly US${lo}–US${hi} per night. Where Cabana has a "
-         f"listing, that price is the host's own rate: Cabana charges no commission and adds "
-         f"no booking fee, so it is also the final amount you pay."),
+         f"listing, that price is the host's own rate: Cabana charges the host no commission, "
+         f"and the full price is shown before you pay."),
         (f"When is the best time to visit {name}?",
          f"{c['season']}. Outside that window you will find lower rates and fewer people, "
          f"which suits some trips better than others."),
@@ -241,8 +241,8 @@ def country_page(c):
           f"Not yet. Cabana is open to hosts and operators in {name}, and listing is free "
           f"with zero commission. Demand centres are {', '.join(cities)}.")),
         (f"Is Cabana cheaper than Airbnb or Booking.com in {name}?",
-         f"On the same property, usually yes. Cabana takes 0% from the host and charges "
-         f"the guest no service fee. Airbnb and Booking.com take a cut from one or both "
+         f"On the same property, usually yes. Cabana takes 0% from the host, so nothing is "
+         f"priced in for the platform. Airbnb and Booking.com take a cut from one or both "
          f"sides, which is priced into what you see."),
     ]
 

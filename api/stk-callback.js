@@ -11,6 +11,7 @@
 import { deriveStatus, depositRequired } from './lib/_payment-rules.js';
 import { constantTimeEqual, setCors } from './lib/_security.js';
 import { sendBookingReceipt, sendTemplate } from './lib/_mail.js';
+import { SELF_SETTLING, settleByRpc } from './lib/_settle.js';
 
 function siteOrigin(req) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -389,15 +390,29 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
   const booking = br.ok ? (await br.json())[0] : null;
   if (!booking) return { success: true, amountPaid, bookingMissing: true };
 
-  /* A Spotlight settles itself from the ledger row (a database trigger)
-     and tells its buyer; it has no stay columns, receipt or rewards. */
-  if (ledger.booking_table === 'tour_spotlights') {
-    return { success: true, amountPaid, spotlight: true };
+  /* A Spotlight, a car hire facilitation, a Rooms pass and a driver's
+     remittance settle themselves from the ledger row (a database
+     trigger) and tell their buyer; they have no stay columns, receipt
+     or rewards. */
+  if (SELF_SETTLING.has(ledger.booking_table)) {
+    return { success: true, amountPaid, selfSettled: ledger.booking_table };
   }
 
   const total    = Number(booking.grand_total || 0);
   const deposit  = Math.round(total * 0.25);
   const wasFull  = Number(booking.amount_paid || 0) >= total;
+
+  /* The database decides what the money bought: it claims the dates,
+     rooms or seats under a lock, and may answer that they are gone. */
+  const verdict = await settleByRpc(supabaseUrl, H, ledger.booking_table, ledger.booking_ref);
+  if (verdict) {
+    const nowFull = verdict.fully_paid === true;
+    const status = verdict.status;
+    await afterSettled({ supabaseUrl, serviceKey, ledger, booking, amountPaid: Number(verdict.amount_paid || amountPaid),
+                         total, deposit, wasFull, nowFull, status, origin, lost: verdict.dates_lost || verdict.seats_lost });
+    return { success: true, amountPaid, status, confirmed: verdict.confirmed === true, fullyPaid: nowFull };
+  }
+
   const nowFull  = amountPaid >= total && total > 0;
   const status   = amountPaid <= 0        ? 'pending_payment'
                  : nowFull                ? 'paid_pending_checkin'
@@ -425,11 +440,19 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
         : { status }),
     });
 
+  await afterSettled({ supabaseUrl, serviceKey, ledger, booking, amountPaid, total, deposit, wasFull, nowFull, status, origin, lost: false });
+  return { success: true, amountPaid, status, confirmed: amountPaid >= deposit, fullyPaid: nowFull };
+}
+
+/* Everything that follows a settled instalment: the host, the guest's
+   notification, the receipt, rewards and attribution. Shared by the
+   database-settled path and the fallback. */
+async function afterSettled({ supabaseUrl, serviceKey, ledger, booking, amountPaid, total, deposit, wasFull, nowFull, status, origin, lost }) {
   /* 3b. The host hears about it the moment the dates are theirs to keep:
      when this instalment carried the booking across the deposit. The
      dedupe key makes a retried callback a no-op. */
   const wasConfirmed = Number(booking.amount_paid || 0) >= deposit;
-  if (ledger.booking_table === 'apartment_bookings' && amountPaid >= deposit && !wasConfirmed) {
+  if (ledger.booking_table === 'apartment_bookings' && !lost && amountPaid >= deposit && !wasConfirmed) {
     notifyHostOfBooking({ supabaseUrl, serviceKey, booking, amountPaid, origin })
       .catch(e => console.warn('[host-mail] non-fatal:', e.message));
   }
@@ -437,7 +460,10 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
   // 4. Tell the guest exactly where they stand.
   if (booking.guest_id) {
     const shortfall = Math.max(0, deposit - amountPaid);
-    const notif = nowFull
+    const notif = lost
+      ? { title: 'Those dates were taken',
+          body: `Someone secured them first. Your KES ${Math.round(amountPaid).toLocaleString()} is now Cabana credit and never expires.` }
+      : nowFull
       ? { title: 'Paid in full ✅',
           body: 'Your booking is complete. Your check-in code is now available.' }
       : status === 'confirmed_balance_due'
@@ -495,7 +521,6 @@ async function creditInstalment({ supabaseUrl, serviceKey, reference, isSuccess,
     }).catch(e => console.warn('[attribute] non-fatal:', e.message));
   }
 
-  return { success: true, amountPaid, status, confirmed: amountPaid >= deposit, fullyPaid: nowFull };
 }
 
 /* ══════════════════════════════════════════════════════════════

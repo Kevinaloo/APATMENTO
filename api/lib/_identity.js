@@ -160,13 +160,28 @@ export async function assess({ db, rpc, userId, sessionRowId, decision, key }) {
   return { action, hint, critical, prints: prints.length, links };
 }
 
-/* ── contexts: what each part of Cabana needs from you ─────────────── */
+/* ── contexts: what each part of Cabana needs from you ───────────────
+   Mirrors public.cabana_kyc_rules. One identity check satisfies every
+   context; `required` marks the ones that hold an account back until it
+   clears. Personal sellers (rooms, food, events, shopping) never need
+   business documents; an organisation account adds its registration. */
 export const CONTEXTS = {
-  roommate: { need: 'identity', required: true, label: 'Room bookings', why: 'Room hosts share their home, so both sides verify before a key changes hands.' },
-  agent: { need: 'identity', required: true, label: 'Agent network', why: 'Hosts trust agents whose identity Cabana has confirmed.' },
-  driver: { need: 'identity', required: false, label: 'Cabana Move drivers', why: 'A verified identity speeds up your driver review.' },
-  host: { need: 'identity', required: false, label: 'Hosting', why: 'Guests see a purple tick on your listings and book with more confidence.' },
+  ambassador: { need: 'identity', required: true, label: 'Ambassador desk', why: 'Ambassadors bring hosts and money onto Cabana in our name, so we confirm who they are before the desk opens.' },
+  agent: { need: 'identity', required: true, label: 'Agent network', why: 'Hosts trust agents whose identity Cabana has confirmed. Your desk opens once you are verified.' },
+  influencer: { need: 'identity', required: true, label: 'Creator links', why: 'Creator links pay out real money, so the person behind them is verified once.' },
+  driver: { need: 'identity+licence', required: true, label: 'Cabana Move drivers', why: 'Riders step into your car. Verify your identity and upload your driving licence before your first trip.' },
+  tour_operator: { need: 'identity', required: true, label: 'Tour operators', why: 'Travellers pay deposits for a day in your hands. Your tours go live once you are verified.' },
+  tour_guide: { need: 'identity', required: true, label: 'Tour guides', why: 'Travellers pay deposits for a day in your hands. Your tours go live once you are verified.' },
+  event_organiser: { need: 'identity', required: true, label: 'Event organisers', why: 'Ticket money is paid before the night. Your event goes on sale once you are verified.' },
+  roommates_host: { need: 'identity', required: true, label: 'Room hosts', why: 'Someone will live in your home. Your room goes live once you are verified.' },
+  food_vendor: { need: 'identity', required: true, label: 'Kitchens', why: 'Diners pay and wait at their door. Your kitchen opens once you are verified.' },
+  shopping_seller: { need: 'identity', required: true, label: 'Sellers', why: 'Buyers pay before delivery. Your shop opens once you are verified.' },
+  roommate: { need: 'identity', required: true, label: 'Room viewings', why: 'Room hosts share their home, so both sides verify before a key changes hands.' },
+  organisation: { need: 'identity+registration', required: true, label: 'Organisations', why: 'Companies and organisations are verified through the person behind them and their registration certificate.' },
+  host: { need: 'identity', required: false, label: 'Hosting', why: 'Optional for stays. Guests see a purple tick on your listings and book with more confidence.' },
+  stays_host: { need: 'identity', required: false, label: 'Hosting', why: 'Optional for stays. Guests see a purple tick on your listings and book with more confidence.' },
+  car_hire: { need: 'identity', required: false, label: 'Car hire', why: 'Optional at the start. Renters see who owns the fleet they are booking.' },
+  fleet: { need: 'identity', required: false, label: 'Car hire', why: 'Optional at the start. Renters see who owns the fleet they are booking.' },
   payout: { need: 'identity', required: false, label: 'Payouts', why: 'Verified accounts are paid out without extra checks.' },
-  fleet: { need: 'identity', required: false, label: 'Car hire', why: 'Renters see who owns the fleet they are booking.' },
   photo: { need: 'identity', required: true, label: 'Profile photos', why: 'Only verified people can upload their own photo.' },
 };

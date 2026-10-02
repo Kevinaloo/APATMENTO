@@ -245,7 +245,6 @@
       total += amount;
     }
     lines.push({ key:'insurance', label:insurance.label, detail:insurance.blurb, amount:0, included:true });
-    lines.push({ key:'commission', label:'Cabana commission', detail:'The operator keeps the full hire rate', amount:0, good:true });
     return { lines, total:Math.round(total), deposit:Number(v.deposit || 0), days, route, currency, insurance, payAtCounter:0, fuelPolicy:v.fuel_policy || 'full_to_full', perDayEffective:Math.round(total / days) };
   }
 

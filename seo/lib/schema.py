@@ -62,7 +62,7 @@ def org():
         "description": ("Cabana is Africa's zero-commission travel platform. Book short-stay "
                         "apartments, safaris, flights, events, car hire and rides across all 54 "
                         "African countries, direct from the host or operator. Hosts keep 100% of "
-                        "what they charge and guests pay no booking fee."),
+                        "what they charge."),
         "slogan": "Zero commission. Africa's own travel platform.",
         "foundingDate": "2025",
         "foundingLocation": {"@type": "Place", "name": "Nairobi, Kenya"},

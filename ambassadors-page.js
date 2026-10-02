@@ -143,6 +143,33 @@ function stateSuspended(v) {
   );
 }
 
+/* On the roster, not yet verified. Ambassadors bring hosts and money
+   onto Cabana in our name, so the desk opens only after one identity
+   check, which also counts for every other Cabana role. */
+function stateIdentity(v) {
+  var c = v.clearance || {};
+  var review = (c.steps || []).some(function (x) { return x.key === 'identity' && (x.state === 'review' || x.state === 'in_progress'); });
+  render(
+    icon('lock', I_LOCK) +
+    '<span class="badge b-ok">You are on the roster</span>' +
+    '<h2 class="h2" style="margin:12px 0 6px">' + (review ? 'We are checking your identity.' : 'One step: verify who you are.') + '</h2>' +
+    whoBlock(v.email) +
+    '<p class="body" style="margin-bottom:18px">' + (review
+      ? 'Usually within a day. Your ambassador desk opens the moment it clears, and we will email you.'
+      : 'Two minutes with your ID and a live selfie. Cabana keeps only the result, and it counts for every Cabana role you ever take on.') + '</p>' +
+    (review ? '' : '<button class="btn btn-primary btn-block" type="button" id="g-verify">Verify my identity</button>')
+  );
+  var b = document.getElementById('g-verify');
+  if (b) b.addEventListener('click', function () {
+    if (!window.CabanaIdentity) { UI.toast('Verification is loading. Try again in a second.', 'err'); return; }
+    UI.busy(b, true);
+    window.CabanaIdentity.start('ambassador', '/ambassadors.html').then(function (r) {
+      UI.busy(b, false);
+      if (r === 'approved' || r === 'review') location.reload();
+    }, function (e) { UI.busy(b, false); UI.toast((e && e.message) || 'Could not open verification.', 'err'); });
+  });
+}
+
 /* Through the gate, first time. Ask only for what the dashboard genuinely
    needs; anything else can be filled in later from settings. */
 function stateEnrol(v) {
@@ -226,6 +253,7 @@ A.session().then(function (s) {
     if (v.ok)                          stateEnrol(v);
     else if (v.reason === 'email_unconfirmed') stateUnconfirmed(v);
     else if (v.reason === 'suspended')         stateSuspended(v);
+    else if (v.reason === 'identity_required') stateIdentity(v);
     else if (v.reason === 'not_signed_in')     stateSignedOut();
     else                                       stateNotAuthorised(v);
 

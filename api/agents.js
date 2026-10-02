@@ -389,20 +389,26 @@ async function handleMe(req, res) {
   const [agent] = await db(`agents?id=eq.${s.user.id}&select=*`);
   if (!agent) return res.status(404).json({ error: 'No agent account.', code: 'NOT_AGENT' });
 
-  const [portfolio, referrals, docs, storedTotals] = await Promise.all([
+  const [portfolio, referrals, docs, storedTotals, clearance] = await Promise.all([
     db(`v_agent_portfolio?agent_id=eq.${s.user.id}&select=*&order=responded_at.desc.nullslast`),
     db(`agent_referrals?agent_id=eq.${s.user.id}&select=*&order=clicked_at.desc&limit=60`),
     db(`agent_documents?agent_id=eq.${s.user.id}&select=id,doc_type,uploaded_at`),
     db('rpc/cabana_agent_totals', {method:'POST', body:{p_agent:s.user.id}}).catch(() => null),
+    db('rpc/cabana_clearance', {method:'POST', body:{p_user:s.user.id, p_role:'agent'}}).catch(() => null),
   ]);
 
   const deadline = new Date(agent.kyc_deadline);
   const daysLeft = Math.ceil((deadline - Date.now()) / 864e5);
+  /* Verified first, then operate. The old grace period let an unverified
+     agent work for weeks; agent_status() in the database now refuses
+     that, and this view says the same thing rather than a kinder one.
+     One identity check covers every Cabana role. */
+  const cleared = clearance ? clearance.cleared === true : agent.kyc_status === 'verified';
   const state =
-    agent.suspended                              ? 'suspended' :
-    agent.kyc_status === 'verified'              ? 'active'    :
-    agent.kyc_status === 'submitted'             ? 'active'    :
-    Date.now() <= deadline.getTime()             ? 'active'    : 'restricted';
+    agent.suspended ? 'suspended' :
+    cleared         ? 'active'    :
+    agent.kyc_status === 'submitted' || (clearance && (clearance.steps || []).some((x) => x.state === 'review' || x.state === 'in_progress'))
+                    ? 'review'    : 'restricted';
 
   // During a staggered deploy the additive totals function may arrive after
   // the API. Keep the dashboard usable with its bounded feed until then.
@@ -416,7 +422,8 @@ async function handleMe(req, res) {
 
   return res.status(200).json({
     ok: true,
-    agent: { ...agent, state, days_left: agent.kyc_status === 'verified' ? null : daysLeft },
+    agent: { ...agent, state, days_left: cleared ? null : daysLeft },
+    clearance,
     documents: docs,
     portfolio,
     referrals,

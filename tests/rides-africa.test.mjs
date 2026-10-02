@@ -116,7 +116,10 @@ test('the driver console speaks the marketplace, not the old metered engine', ()
   const driver = read('driver.html');
   for (const rpc of ['ride_driver_board', 'ride_driver_offer', 'ride_driver_pass', 'ride_driver_progress', 'cab_ping']) assert.match(driver, new RegExp(`'${rpc}'`));
   assert.doesNotMatch(driver, /cab_accept|cab_set_status|cabana-fare\.js|platformFeePct/);
-  assert.match(driver, /Cabana takes 0%/);
+  // Cabana's share is remitted, and a driver clears once before trips reach them.
+  assert.doesNotMatch(driver, /Cabana takes 0%/);
+  for (const rpc of ['ride_remit_start', 'driver_document_submit']) assert.match(driver, new RegExp(`'${rpc}'`));
+  assert.match(driver, /kyc-documents/);
 });
 
 test('car hire: money is minor units, the fee line is always zero, and handover needs the code', () => {

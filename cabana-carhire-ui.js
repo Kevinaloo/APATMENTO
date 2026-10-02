@@ -55,6 +55,8 @@
     extra_unknown: 'One of the extras is no longer offered.',
     cross_border_unavailable: 'This car cannot cross borders.',
     booking_not_found: 'We could not find that hire on this device.',
+    sign_in_required: 'Sign in to secure this hire, so it stays in your account.',
+    reservation_unpaid: 'The renter has not secured this hire yet. Hand over the keys only once it shows as secured.',
     too_late_to_cancel: 'This hire can no longer be cancelled here. Call the operator.',
     rate_after_hire: 'You can rate once the car is back.',
     already_rated: 'You already rated this hire. Thank you.',
@@ -976,8 +978,10 @@
     }).join('');
     var warn = q.available === false ? '<div class="dv-fit is-blocked" style="margin:0 0 8px">' + icon('warn') + '<div><b>Booked for part of these dates</b>Try other dates, or request a similar car.</div></div>' : '';
     var err = S.quoteErr ? '<div class="dv-fit is-caution" style="margin:0 0 8px">' + icon('warn') + '<div><b>' + esc(S.quoteErr) + '</b></div></div>' : '';
+    var fac = Number(q.facilitation) || 0;
     return warn + err + lines +
-      '<div class="dv-q-total"><span>' + q.days + (q.days === 1 ? ' day' : ' days') + ' total</span><b>' + moneyHTML(q.total, cur) + '</b></div>' +
+      '<div class="dv-q-total"><span>' + q.days + (q.days === 1 ? ' day' : ' days') + ' hire, paid to the operator</span><b>' + moneyHTML(q.total, cur) + '</b></div>' +
+      (fac > 0 ? '<div class="dv-q-line dv-q-secure"><span>Secure it with Cabana<small>Paid by M-Pesa once the operator confirms. It locks the car and unlocks your handover code.</small></span><b>' + esc(money(fac, 'KES')) + '</b></div>' : '') +
       '<div class="dv-q-note">+ refundable deposit ' + esc(money(q.deposit || 0, cur)) + ', held by the operator' + (q.local ? '. Estimate; the operator’s system confirms the exact figure when you book.' : '.') + '</div>';
   }
   function paintQuote() {
@@ -1136,6 +1140,7 @@
       var st = t.status, ms = 0;
       if (S.trackKind === 'booking') ms = st === 'requested' ? 9000 : st === 'confirmed' || st === 'active' ? 30000 : 0;
       else ms = st === 'open' ? 10000 : 0;
+      if (t.facilitation && t.facilitation.due && st === 'confirmed') ms = 12000;
       if (ms) S.pollT = setTimeout(pollTrack, doc.hidden ? ms * 3 : ms);
     }, function (e) {
       var body = $('dv-track').querySelector('.dv-panel-body');
@@ -1159,7 +1164,7 @@
   function renderTrack() {
     var t = S.track;
     if (!t) return;
-    var sig = JSON.stringify([S.trackKind, t.status, (t.offers || []).map(function (o) { return o.id + o.total; }), t.rating, t.paid_at, t.desk]);
+    var sig = JSON.stringify([S.trackKind, t.status, (t.offers || []).map(function (o) { return o.id + o.total; }), t.rating, t.paid_at, t.desk, t.facilitation && t.facilitation.paid, t.handover_code]);
     if (sig === S.trackSig) return;
     S.trackSig = sig;
     var body = $('dv-track').querySelector('.dv-panel-body');
@@ -1167,19 +1172,43 @@
     body.innerHTML = S.trackKind === 'booking' ? bookingHTML(t) : requestHTML(t);
     if (M) M.press(body);
   }
+  /* The facilitation secures the hire. Until it is paid the database
+     withholds the handover code and the operator's contacts, and the
+     operator cannot hand over the keys; this card is how it gets paid. */
+  function secureHTML(t) {
+    var f = t.facilitation || {};
+    if (!f.due || !(t.status === 'confirmed' || t.status === 'requested')) return '';
+    var amt = Number(f.amount) || 0, waiting = t.status === 'requested';
+    var due = f.due_at ? new Date(f.due_at) : null;
+    var left = due ? Math.max(0, due.getTime() - Date.now()) : 0;
+    var hrs = Math.floor(left / 3600e3), mins = Math.floor((left % 3600e3) / 60000);
+    var saved = store(CONTACT_KEY) || {};
+    return '<div class="dv-secure' + (waiting ? ' is-wait' : '') + '">' +
+      '<div class="dv-secure-glow" aria-hidden="true"></div>' +
+      '<div class="dv-eyebrow">' + (waiting ? 'Next, once confirmed' : 'One step left') + '</div>' +
+      '<h3>' + (waiting ? 'Then secure your car' : 'Secure your car') + '</h3>' +
+      '<p>' + (waiting ? 'When ' + esc((t.operator && t.operator.name) || 'the operator') + ' confirms, pay ' + esc(money(amt * 100, 'KES')) + ' by M-Pesa to lock it in.'
+        : 'Pay ' + esc(money(amt * 100, 'KES')) + ' by M-Pesa to lock the car' + (due ? '. Released ' + (hrs ? hrs + 'h ' : '') + mins + 'm from now if not secured' : '') + '. Your handover code and the operator’s number appear the moment it lands.') + '</p>' +
+      (waiting ? '' : '<div class="dv-secure-pay"><label class="dv-secure-ph"><span>+254</span><input id="dv-secure-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="7XX XXX XXX" value="' + esc(String(saved.phone || '').replace(/^\+?254|^0/, '')) + '"/></label>' +
+        '<button class="dv-btn" type="button" data-act="secure" data-press>Secure for ' + esc(money(amt * 100, 'KES')) + '</button></div>' +
+        '<div class="dv-secure-err" id="dv-secure-err" role="alert"></div>') +
+      '</div>';
+  }
   function bookingHTML(t) {
     var cur = t.currency || 'KES', copy = statusCopy(t), op = t.operator || {}, v = t.vehicle || {};
+    var unsecured = t.facilitation && t.facilitation.due;
+    if (unsecured && t.status === 'confirmed') copy = ['Confirmed. Secure it to keep it.', 'The operator said yes. Pay the Cabana facilitation to lock the car for ' + fmtDate(new Date(t.pickup_at), true) + '.'];
     var steps = ['requested', 'confirmed', 'active', 'completed'], i = steps.indexOf(t.status);
     var tl = i > -1 ? '<div class="dv-timeline">' + steps.map(function (s, n) { return '<i class="' + (n < i || t.status === 'completed' ? 'is-done' : n === i ? 'is-now' : '') + '"></i>'; }).join('') + '</div>' +
       '<div class="dv-tl-labels"><span>Sent</span><span>Confirmed</span><span>On the road</span><span>Returned</span></div>' : '';
-    var html = '<div class="dv-status"><div class="dv-eyebrow">Hire ' + esc(t.ref) + '</div><h3>' + esc(copy[0]) + '</h3><p>' + esc(copy[1]) + '</p>' + tl + '</div>';
+    var html = '<div class="dv-status"><div class="dv-eyebrow">Hire ' + esc(t.ref) + '</div><h3>' + esc(copy[0]) + '</h3><p>' + esc(copy[1]) + '</p>' + tl + '</div>' + secureHTML(t);
     html += '<div class="dv-opcard"><div style="width:110px;flex:none">' + carArt({ make: v.make, model: v.model, 'class': v['class'], body: v.body, colour: v.colour }) + '</div><div><b>' + esc([v.make, v.model].filter(Boolean).join(' ') || 'Your car') + '</b>' +
       '<small>' + esc(fmtDate(new Date(t.pickup_at), true)) + ' → ' + esc(fmtDate(new Date(t.return_at), true)) + '</small><small>' + esc(op.name || '') + (t.with_chauffeur ? ' · with driver' : '') + '</small></div></div>';
     if ((t.status === 'confirmed' || t.status === 'active') && t.handover_code) {
       html += '<div class="dv-code"><div><b>' + (t.status === 'active' ? 'Handover done' : 'Your handover code') + '</b><small>' + (t.status === 'active' ? 'The hire is running.' : 'Give it to the operator only when you take the keys.') + '</small></div>' +
         '<div class="dv-digits" aria-label="Handover code ' + esc(String(t.handover_code).split('').join(' ')) + '">' + String(t.handover_code).split('').map(function (d) { return '<i>' + esc(d) + '</i>'; }).join('') + '</div></div>';
     }
-    if (t.status === 'confirmed' || t.status === 'active' || t.status === 'completed') {
+    if ((t.status === 'confirmed' && !unsecured) || t.status === 'active' || t.status === 'completed') {
       var phone = digits(op.phone || op.whatsapp || '');
       var nav = op.lat != null ? 'https://www.google.com/maps/dir/?api=1&destination=' + op.lat + ',' + op.lng : op.pickup_address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(op.pickup_address) : '';
       if (t.delivery && t.delivery_label) nav = '';
@@ -1209,8 +1238,40 @@
     if (t.status === 'requested' || t.status === 'confirmed') acts += '<button class="dv-btn is-danger is-sm" type="button" data-act="cancel-hire">Cancel hire</button>';
     if (t.status === 'declined' || t.status === 'expired' || t.status === 'cancelled') acts += '<button class="dv-btn is-sm" type="button" data-act="browse">Find another car</button><button class="dv-btn is-ink is-sm" type="button" data-act="request">Request a car</button>';
     if (acts) html += '<div class="dv-row" style="margin-top:14px">' + acts + '</div>';
-    html += '<p class="dv-help" style="text-align:center;margin-top:14px">Cabana takes 0%. <button class="dv-link" type="button" data-act="help">Need help with this hire?</button></p>';
+    html += '<p class="dv-help" style="text-align:center;margin-top:14px"><button class="dv-link" type="button" data-act="help">Need help with this hire?</button></p>';
     return html;
+  }
+  function secureHire(btn) {
+    var t = S.track, f = (t && t.facilitation) || {}, err = $('dv-secure-err');
+    var say = function (m) { if (err) err.textContent = m; haptic('warn'); };
+    var raw = ($('dv-secure-phone') || {}).value || '';
+    var d = digits(raw).replace(/^254/, '').replace(/^0/, '');
+    if (!/^[17]\d{8}$/.test(d)) return say('Enter the Safaricom number that will pay.');
+    if (!f.reference || !(Number(f.amount) > 0)) return say('This hire cannot take payment right now. Refresh and try again.');
+    if (!global.ApatmentoPay || !global.ApatmentoPay.start) return say('Payments are loading. Try again in a moment.');
+    var c = client();
+    btn.classList.add('is-busy');
+    (c ? c.auth.getSession() : Promise.resolve({ data: {} })).then(function (r) {
+      if (!(r && r.data && r.data.session)) {
+        btn.classList.remove('is-busy');
+        try { global.sessionStorage.setItem('auth_next', global.location.href); } catch (x) {}
+        global.location.href = '/auth.html?next=' + encodeURIComponent(global.location.pathname + global.location.search);
+        return;
+      }
+      /* Bind the hire to this account first: payment needs a signed-in
+         owner, and a hire booked signed-out belongs to its token. */
+      return rpc('car_booking_claim', { p_ref: S.trackRef, p_token: S.trackToken }).then(function () {
+        btn.classList.remove('is-busy');
+        var v = t.vehicle || {};
+        global.ApatmentoPay.start({
+          amount: Number(f.amount), phone: '254' + d, reference: f.reference, service: 'carhire',
+          description: 'Cabana Drive · ' + ([v.make, v.model].filter(Boolean).join(' ') || 'car hire'),
+          trip: { property: [v.make, v.model].filter(Boolean).join(' ') || 'Your car', whenText: fmtDate(new Date(t.pickup_at), true) + ' → ' + fmtDate(new Date(t.return_at), true) },
+          onSuccess: function () { S.trackSig = ''; pollTrack(); },
+          onFailure: function () { S.trackSig = ''; pollTrack(); }
+        });
+      });
+    }).catch(function (e) { btn.classList.remove('is-busy'); say(friendly(e)); });
   }
   function requestHTML(t) {
     var cur = t.currency || 'KES';
@@ -1338,6 +1399,7 @@
         if (a === 'rq-where') { openPlace('Where do you want the car?', function (p) { S.place = p; paintSearch(); var el = $('dv-rq-where'); if (el) el.textContent = p.title || p.short || p.label; }); return; }
         if (a === 'rq-dates') { openDates(function () { var el = $('dv-rq-dates'); if (el) el.textContent = fmtDate(S.start, true) + ' → ' + fmtDate(S.end, true); loadFleet(); }); return; }
         if (a === 'browse') { closeSheet('dv-track'); scrollToResults(); return; }
+        if (a === 'secure') { secureHire(act); return; }
         if (a === 'help') { if (global.CabanaSupport && global.CabanaSupport.open) global.CabanaSupport.open('I need help with Cabana Drive ' + (S.trackRef || '') + '. '); else global.location.href = '/help'; return; }
         if (a === 'cancel-hire') {
           confirmModal('Cancel this hire?', 'The operator is told straight away and the car is freed for those dates.', 'Cancel hire', function (done, fail) {
