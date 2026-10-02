@@ -11,8 +11,8 @@
 
             Commission is a share of CABANA'S FEE, not of the
             booking, and that fee is a FIXED amount banded by
-            booking value (KES 300 / KES 800 on a stay, KES 0 on a
-            tour or an event), never a percentage. Every number
+            booking value (the schedule is internal: see
+            cabana_private.fee_bands), never a percentage. Every number
             shown to a user below is labelled that way on purpose.
             10 pts per KES 1,000 spent · 1 pt = KES 1
             Min withdrawal: KES 50 · Flights excluded
@@ -247,10 +247,9 @@ function buildPopup(myCode, myStats, isGuest) {
        not scale with the price of the stay, and nobody should read "10%" and
        think it does. -->
   <div class="ref-basis">
-    <strong>What the percentage is of.</strong> Cabana's service fee is a small
-    fixed amount per booking, not a percentage of it &mdash; KES 300 on a stay
-    under KES 5,000, KES 800 above that, and nothing at all on tours and events.
-    Your commission is a share of that fee.
+    <strong>What the percentage is of.</strong> Your commission is a share of
+    Cabana's facilitation on each booking, not of the booking itself. The exact
+    amount you earn on each booking appears in your history.
   </div>
 
   <div class="ref-share">

@@ -5,10 +5,13 @@
    Cabana's fee is a FIXED AMOUNT, chosen by a band of the booking value.
    It is not a percentage and it never has been on the money path.
 
-     stays        KES 300  below KES 5,000 · KES 800 at KES 5,000 and above
-     tours        KES 0    the operator's own fare, nothing added
-     events       KES 0    face value means face value
-     everything else, until it has a published band:  KES 0
+     stays, hotels, day passes, tours, events, car hire
+                  the facilitation ladder below (cabana_private.fee_bands)
+     food, shopping, rides, flights, roommates   KES 0 to the guest
+
+   INTERNAL. This schedule is never printed on a public page or recited
+   by the assistant; a guest sees only the fee on their own booking, at
+   checkout, before they pay.
 
    WHY THIS FILE EXISTS
    ────────────────────
@@ -21,9 +24,9 @@
    fee we actually collected.
 
    THE AUTHORITY IS POSTGRES.
-   supabase/migrations/20260818170000_secure_stay_booking_integrity.sql
-   stamps `service_fee` onto the booking row before it is ever written, and
-   the browser cannot influence it. So the order of preference is always:
+   cabana_private.facilitation_fee() (20261002100000_facilitation_fees.sql)
+   stamps `service_fee` onto every booking row before it is ever written,
+   and the browser cannot influence it. So the order of preference is always:
 
      1. the `service_fee` stamped on the booking          ← use this
      2. this schedule, from the service and the subtotal  ← only if 1 is absent
@@ -41,14 +44,16 @@
    third band is a data change rather than a rewritten conditional. */
 export const FEE_SCHEDULE = {
   stays:      [{ under: 5000, fee: 300 }, { under: null, fee: 800 }],
-  roommates:  [{ under: 5000, fee: 300 }, { under: null, fee: 800 }],
-  tours:      [{ under: null, fee: 0 }],
-  events:     [{ under: null, fee: 0 }],
-  carhire:    [{ under: null, fee: 0 }],
-  rides:      [{ under: null, fee: 0 }],
-  food:       [{ under: null, fee: 0 }],
-  shopping:   [{ under: null, fee: 0 }],
-  flights:    [{ under: null, fee: 0 }],
+  hotel:      [{ under: 5000, fee: 300 }, { under: null, fee: 800 }],
+  day_pass:   [{ under: 5000, fee: 300 }, { under: null, fee: 800 }],
+  tours:      [{ under: 5000, fee: 300 }, { under: null, fee: 800 }],
+  events:     [{ under: 5000, fee: 300 }, { under: null, fee: 800 }],
+  carhire:    [{ under: 5000, fee: 300 }, { under: null, fee: 800 }],
+  roommates:  [{ under: null, fee: 0 }],   // access is a monthly Rooms pass, not a booking fee
+  rides:      [{ under: null, fee: 0 }],   // riders pay nothing; drivers remit a share
+  food:       [{ under: null, fee: 0 }],   // not charged for now
+  shopping:   [{ under: null, fee: 0 }],   // not charged for now
+  flights:    [{ under: null, fee: 0 }],   // set per request by the flight desk
 };
 
 /* An unknown service earns nobody anything rather than quietly earning

@@ -3,7 +3,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const url = Deno.env.get('SUPABASE_URL') || '';
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const callbackToken = Deno.env.get('PAYHERO_CALLBACK_TOKEN') || '';
-const allowedTables = new Set(['apartment_bookings', 'tour_bookings', 'event_tickets', 'tour_spotlights']);
+const allowedTables = new Set(['apartment_bookings', 'tour_bookings', 'event_tickets', 'tour_spotlights',
+  'car_bookings', 'roommate_passes', 'ride_remittances']);
+/* Settled entirely by the trigger on their ledger row. */
+const selfSettling = new Set(['tour_spotlights', 'car_bookings', 'roommate_passes', 'ride_remittances']);
+/* Settled by an idempotent database function that claims dates or seats. */
+const settleRpc: Record<string, string> = {
+  apartment_bookings: 'cabana_settle_booking',
+  tour_bookings: 'cabana_settle_tour',
+  event_tickets: 'cabana_settle_event',
+};
 
 const sb = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -73,7 +82,7 @@ Deno.serve(async (req) => {
   const reference = String(
     payload.external_reference || payload.response?.external_reference || ''
   ).trim();
-  if (!/^(APT|TOUR|EVENT|SPOT)-[A-Za-z0-9_-]+-P\d+$/.test(reference)) {
+  if (!/^(APT|TOUR|EVENT|SPOT|CARFEE|RPASS|REMIT)-[A-Za-z0-9_-]+-P\d+$/.test(reference)) {
     console.warn('[payhero-callback] ignored unsupported reference');
     return json(200, { received: true, ignored: true });
   }
@@ -141,12 +150,20 @@ Deno.serve(async (req) => {
     return json(500, { error: 'invalid_booking_table' });
   }
 
-  /* A Spotlight settles itself: the trigger on booking_payments moved it
-     into review (and told its buyer) the moment the row above turned
-     paid. It has no booking-shaped status to write. */
-  if (table === 'tour_spotlights') {
-    console.log('[payhero-callback] spotlight paid', reference);
-    return json(200, { received: true, status: 'in_review', spotlight: true });
+  /* A Spotlight, car hire facilitation, Rooms pass or driver remittance
+     settled itself the moment the ledger row above turned paid. */
+  if (selfSettling.has(table)) {
+    console.log('[payhero-callback] self-settled', table, reference);
+    return json(200, { received: true, status: 'settled', table });
+  }
+
+  /* Stays, tours and events: the database claims the dates or seats and
+     decides the status. Only if that function is unreachable do we fall
+     back to deriving a status from money alone. */
+  const { data: verdict, error: settleError } = await sb.rpc(settleRpc[table], { p_booking_ref: ledger.booking_ref });
+  if (!settleError && verdict && verdict.ok !== false) {
+    console.log('[payhero-callback] settled by database', reference, verdict.status);
+    return json(200, { received: true, status: verdict.status });
   }
 
   const { data: paidRows, error: paidError } = await sb

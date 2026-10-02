@@ -79,9 +79,10 @@ test('payments: tours and Spotlights have their own references end to end', () =
   assert.match(read('cabana-tours-studio.js'), /tour_spotlight_create/);
   assert.match(read('api/stk-push.js'), /'SPOT-':\s*\{ table: 'tour_spotlights'/);
   const cb = read('supabase/functions/payhero-callback/index.ts');
-  assert.match(cb, /\(APT\|TOUR\|EVENT\|SPOT\)/);
+  assert.match(cb, /\(APT\|TOUR\|EVENT\|SPOT\|CARFEE\|RPASS\|REMIT\)/);
   assert.match(cb, /'tour_spotlights'/);
-  assert.match(read('api/lib/_poll-payment.js'), /tour_spotlights/);
+  assert.match(read('api/lib/_settle.js'), /tour_spotlights/);
+  assert.match(read('api/lib/_poll-payment.js'), /SELF_SETTLING/);
   assert.match(MIGRATIONS, /'SPOT-'/, 'spotlight references are minted in the database');
 });
 

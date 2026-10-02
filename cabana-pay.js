@@ -426,8 +426,8 @@
         </div>
 
         <div class="cbp-panel" id="cbp-success">
-          <div class="cbp-success-title">You're booked.</div>
-          <div class="cbp-success-msg">Pack light. Arrive boldly.<br>Your Cabana awaits.</div>
+          <div class="cbp-success-title">Payment received.</div>
+          <div class="cbp-success-msg">One moment while we confirm what it secured.</div>
           <div class="cbp-act-row">
             <button class="cbp-btn cbp-btn-share" id="cbp-share">Share this</button>
             <button class="cbp-btn" id="cbp-done">Continue →</button>
@@ -552,6 +552,7 @@
   }
 
   async function _shareCard(trip) {
+    if (!(_lastTone === 'settled' || _lastTone === 'held')) return;
     const btn = document.getElementById('cbp-share');
     const was = btn ? btn.textContent : '';
     if (btn) { btn.textContent = 'Preparing...'; btn.disabled = true; }
@@ -732,7 +733,15 @@
         let headline, note, tone;
 
         const custom = opts && opts.success;
-        if (custom && custom.title && !lost) {
+        const CO = window.CabanaCheckout && window.CabanaCheckout.outcome;
+        if (CO && !(custom && custom.spotlight)) {
+          /* One wording engine for every service: what the money bought,
+             never a happier sentence than it supports. */
+          const out = CO(r, { service: opts.service || _serviceOf(opts.reference), name: trip.property,
+                              when: trip.whenText || (trip.checkin ? fmtDay(trip.checkin) : ''), balance: opts.balance });
+          headline = out.title; note = out.note;
+          tone = out.tone === 'settled' ? 'settled' : out.tone === 'held' ? 'held' : out.tone === 'lost' ? 'lost' : 'open';
+        } else if (custom && custom.title && !lost) {
           /* A product that is not a stay (a tour, a Spotlight) says what
              it actually bought. It is only ever reached once the server
              reported the money settled, so the words can be confident. */
@@ -769,6 +778,9 @@
           tone = 'open';
         }
 
+        _lastTone = tone;
+        const shareBtn = document.getElementById('cbp-share');
+        if (shareBtn) shareBtn.hidden = !(tone === 'settled' || tone === 'held');
         tEl.textContent = headline.charAt(0).toUpperCase() + headline.slice(1);
         mEl.innerHTML =
             '<span class="cbp-trip-prop">' + _esc(where) + '</span>'
@@ -780,8 +792,9 @@
       _loadVideo(V.suitcase, true); /* loop so it never freezes on last frame */
       veil.classList.remove('cbp-heavy');
       _panel('cbp-success');
-      foot.textContent = (opts && opts.result && opts.result.dates_lost)
+      foot.textContent = (opts && opts.result && (opts.result.dates_lost || opts.result.seats_lost || opts.result.lost))
         ? 'Your credit is in your account \u00b7 pick new dates any time'
+        : _lastTone === 'open' ? 'Not booked yet \u00b7 finish paying from My Bookings'
         : 'Confirmation sent to your phone';
       try { navigator.vibrate && navigator.vibrate([30, 60, 30]); } catch(_){}
     }
@@ -804,6 +817,18 @@
         : 'Payment not completed · tap to retry';
       try { navigator.vibrate && navigator.vibrate([60, 40, 60]); } catch(_){}
     }
+  }
+
+  /* Which service a reference belongs to, for the wording engine. */
+  let _lastTone = 'open';
+  function _serviceOf(ref) {
+    const r = String(ref || '');
+    if (r.startsWith('TOUR-')) return 'tours';
+    if (r.startsWith('EVENT-')) return 'events';
+    if (r.startsWith('CARFEE-')) return 'carhire';
+    if (r.startsWith('RPASS-')) return 'rooms';
+    if (r.startsWith('REMIT-')) return 'remit';
+    return 'stays';
   }
 
   /* ── Polling ────────────────────────────────────────────────────── */
@@ -857,9 +882,13 @@
            and has already been converted to credit. */
         /* A Spotlight answers with its own state: paid means it went
            straight into review ('in_review'), never a booking status. */
-        if (d.status === 'paid' || d.status === 'paid_pending_checkin'
+        /* Money cleared on this instalment. Whatever it bought (a hold,
+           a full payment, credit because the dates went) is a result to
+           show, never a reason to keep polling into a false failure. */
+        if (d.instalment === 'paid' || d.fully_paid === true
+            || d.status === 'paid' || d.status === 'paid_pending_checkin'
             || d.status === 'confirmed_balance_due' || d.status === 'part_paid'
-            || d.status === 'dates_unavailable'
+            || d.status === 'dates_unavailable' || d.status === 'seats_unavailable'
             || (d.spotlight === true && d.fully_paid === true)) {
           clearInterval(_pollTimer);
           opts.result = d;

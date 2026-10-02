@@ -31,7 +31,19 @@ const REF_MAP = {
      full (payment_mode 'full' on the row); a trigger on the ledger row
      settles it, so no callback path needs to know what a Spotlight is. */
   'SPOT-':  { table: 'tour_spotlights',    col: 'payment_reference' },
+  /* Car hire: the guest pays the operator for the car; this is Cabana's
+     facilitation, paid online to secure the hire (handover code and the
+     operator's details unlock when it clears). */
+  'CARFEE-': { table: 'car_bookings',      col: 'payment_reference' },
+  /* Cabana Rooms: 30 days of access to every room listing. */
+  'RPASS-':  { table: 'roommate_passes',   col: 'payment_reference' },
+  /* A driver remitting Cabana's share of completed trips. */
+  'REMIT-':  { table: 'ride_remittances',  col: 'payment_reference' },
 };
+
+/* Bought outright: one payment, the whole amount, no instalments. */
+const FULL_ONLY = new Set(['tour_bookings', 'tour_spotlights', 'event_tickets',
+                           'car_bookings', 'roommate_passes', 'ride_remittances']);
 
 function resolveRef(reference) {
   const key = Object.keys(REF_MAP).find(p => reference.startsWith(p));
@@ -137,6 +149,24 @@ export default async function handler(req, res) {
     if (map.table === 'tour_spotlights' && !['pending_payment', 'draft'].includes(booking.status)) {
       return res.status(409).json({ error: 'This Spotlight is no longer waiting for payment.' });
     }
+    if (map.table === 'roommate_passes' && booking.status !== 'pending_payment') {
+      return res.status(409).json({ error: 'This pass is already active. Nothing more to pay.' });
+    }
+    if (map.table === 'ride_remittances' && booking.status !== 'pending_payment') {
+      return res.status(409).json({ error: 'This remittance is already settled.' });
+    }
+    if (map.table === 'car_bookings') {
+      if (booking.fee_paid_at) return res.status(409).json({ error: 'This hire is already secured.' });
+      if (!['requested', 'confirmed'].includes(booking.status)) {
+        return res.status(409).json({ error: 'This hire is no longer open for payment.' });
+      }
+    }
+    /* A booking that has already lost its dates or seats, or was
+       cancelled, must never take more money. */
+    if (['dates_unavailable', 'seats_unavailable', 'payment_expired', 'cancelled', 'refunded', 'rehomed'].includes(booking.status)
+        || booking.cancelled_at) {
+      return res.status(409).json({ error: 'This booking can no longer take payment. Any money paid is in your Cabana credit.' });
+    }
 
     // ── Authoritative running total, summed from the ledger ─────────
     let amountPaid = 0;
@@ -160,7 +190,7 @@ export default async function handler(req, res) {
       amountPaid,
       /* Tours take their online share (the deposit) in one payment, and a
          Spotlight is bought outright: neither has a part-paid state. */
-      paymentMode: ['tour_bookings', 'tour_spotlights'].includes(map.table) ? 'full' : booking.payment_mode,
+      paymentMode: FULL_ONLY.has(map.table) ? 'full' : booking.payment_mode,
     });
 
     if (!verdict.ok) {

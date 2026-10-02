@@ -139,21 +139,22 @@ test('an escalation directive carries its reason and priority', () => {
 
 /* ── 4 · money ────────────────────────────────────────────────────── */
 
-test('the money block matches the schedule that is actually charged', () => {
+test('the money block keeps the fee schedule internal', () => {
   const facts = S.commerceFacts();
   assert.match(facts, new RegExp(`${Math.round(DEPOSIT_PCT * 100)}%`),
     'the deposit percentage in the grounding does not match _payment-rules.js');
-  assert.match(facts, /KES 300/, 'the low-band stays fee is missing');
-  assert.match(facts, /KES 800/, 'the high-band stays fee is missing');
-  assert.match(facts, /NO platform fee/i, 'the zero-fee services are not stated');
-  /* The worked examples are computed, so they cannot drift from the code. */
-  assert.match(facts, new RegExp(`KES ${serviceFee('stays', 4000).toLocaleString('en-KE')}`));
-  assert.match(facts, new RegExp(`KES ${serviceFee('stays', 12000).toLocaleString('en-KE')}`));
+  assert.doesNotMatch(facts, /KES\s?300|KES\s?800/, 'the assistant was handed fee amounts to recite');
+  assert.match(facts, /NEVER state fee amounts/i, 'the assistant is not told to keep fees internal');
+  assert.match(facts, /shown in full at checkout/i, 'the assistant cannot say where the price is shown');
 });
 
-test('the money block never invents a fee on a zero-fee service', () => {
-  for (const svc of ['tours', 'events', 'carhire', 'rides', 'food', 'shopping', 'flights']) {
-    assert.equal(serviceFee(svc, 50000), 0, `${svc} is charging a fee`);
+test('facilitation applies to stays, tours, events and car hire; never to food, shopping, rides, flights or rooms', () => {
+  for (const svc of ['stays', 'tours', 'events', 'carhire']) {
+    assert.equal(serviceFee(svc, 4000), 300, `${svc} lost its facilitation`);
+    assert.equal(serviceFee(svc, 12000), 800, `${svc} lost its facilitation`);
+  }
+  for (const svc of ['rides', 'food', 'shopping', 'flights', 'roommates']) {
+    assert.equal(serviceFee(svc, 50000), 0, `${svc} is charging a booking fee`);
   }
 });
 

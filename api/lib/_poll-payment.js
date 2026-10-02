@@ -25,6 +25,7 @@
 
 import { deriveStatus, depositRequired, settlementOf } from './_payment-rules.js';
 import { sendBookingReceipt } from './_mail.js';
+import { SELF_SETTLING, settleByRpc, selfSettledView, describeSettlement } from './_settle.js';
 
 const BASE = 'https://backend.payhero.co.ke/api/v2';
 
@@ -282,6 +283,33 @@ export async function settleView(supaUrl, H, ledger, extra = {}) {
   const table = ledger.booking_table || 'apartment_bookings';
   const ref   = encodeURIComponent(ledger.booking_ref);
 
+  /* Car hire facilitation, a Rooms pass, a driver's remittance and a
+     Spotlight are settled by the trigger on their ledger row. There is
+     no booking-shaped status to write and no stay receipt to send. */
+  if (SELF_SETTLING.has(table)) {
+    return selfSettledView(supaUrl, H, table, ledger.booking_ref, extra);
+  }
+
+  /* Stays (including hotel rooms and day passes), tours and events: the
+     database settles, claiming the dates, rooms or seats under a lock,
+     and its answer is the one the guest sees. The generic write below
+     remains only as a fallback if the settle function is unreachable. */
+  const verdict = describeSettlement(await settleByRpc(supaUrl, H, table, ledger.booking_ref));
+  if (verdict) {
+    if (extra.instalment === 'paid') {
+      const br0 = await fetch(`${supaUrl}/rest/v1/${table}?payment_reference=eq.${ref}&select=*&limit=1`, { headers: H() });
+      const row = br0.ok ? (await br0.json())[0] : null;
+      if (row) {
+        sendBookingReceipt({
+          booking: { ...row, amount_paid: verdict.amount_paid, payment_reference: ledger.booking_ref },
+          supabaseUrl: supaUrl,
+          serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        }).catch(e => console.warn('[poll-payment] receipt email error (non-fatal):', e.message));
+      }
+    }
+    return { ...verdict, ...extra };
+  }
+
   const sr = await fetch(
     `${supaUrl}/rest/v1/booking_payments`
       + `?booking_ref=eq.${ref}&status=eq.paid&select=amount`,
@@ -293,26 +321,6 @@ export async function settleView(supaUrl, H, ledger, extra = {}) {
     `${supaUrl}/rest/v1/${table}?payment_reference=eq.${ref}&select=*&limit=1`,
     { headers: H() });
   const booking = br.ok ? (await br.json())[0] : null;
-
-  /* A Spotlight is not a booking. The trigger on its ledger row already
-     settled it (into review) the moment the row turned paid, so there is
-     nothing to write back and no stay receipt to send: report its own
-     state and stop. */
-  if (table === 'tour_spotlights') {
-    const total = Number(booking?.grand_total || 0);
-    return {
-      status:           booking?.status || 'pending_payment',
-      spotlight:        true,
-      amount_paid:      amountPaid,
-      grand_total:      total,
-      outstanding:      Math.max(0, Math.round(total - amountPaid)),
-      deposit_required: total,
-      percent_paid:     total > 0 ? Math.min(100, Math.round((amountPaid / total) * 100)) : 0,
-      confirmed:        total > 0 && amountPaid >= total,
-      fully_paid:       total > 0 && amountPaid >= total,
-      ...extra,
-    };
-  }
 
   const s         = settlementOf({ ...booking, amount_paid: amountPaid });
   const newStatus = deriveStatus(amountPaid, s.total);

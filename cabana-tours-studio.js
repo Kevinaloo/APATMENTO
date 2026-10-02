@@ -361,7 +361,7 @@
       amount: Number(sp.grand_total), phone: phone, reference: sp.payment_reference,
       description: 'Cabana Tours Marquee slot · ' + (sp.days || '') + ' days',
       trip: { property: String(sp.headline || 'Your Marquee slot').replace(/\*/g, ''), location: 'Cabana Tours · the Marquee', whenText: 'From ' + from + ' · ' + sp.days + (sp.days === 1 ? ' day' : ' days') },
-      success: { title: 'Your slot is in review.', note: 'Paid · live after a quick check, usually within a day' },
+      success: { spotlight: true, title: 'Your slot is in review.', note: 'Paid · live after a quick check, usually within a day' },
       onSuccess: function () { loadSpots(); kit.toast('Paid. We will let you know the moment it is live.', 4200); },
       onFailure: function () { loadSpots(); }
     });
