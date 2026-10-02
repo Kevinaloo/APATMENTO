@@ -718,6 +718,7 @@ html.via-dash #intro{display:none!important;}
     </div>
   </div>
 
+  <div id="rp-ribbon"></div>
   <div class="grid" id="grid" aria-busy="true"></div>
 </section>
 
@@ -1719,7 +1720,7 @@ function openRoom(id, push){
        leaves no record to protect a deposit and no booking to protect
        either side. The host's number is released once a viewing is
        confirmed here. */
-    + '<p class="d-cta-note">Messaging is open to everyone. Viewings are arranged with verified guests, so both sides know who is coming. You verify once and it counts for every room.</p>'
+    + '<p class="d-cta-note">Your Rooms Pass opens every host for a month. Viewings are arranged with verified guests, so both sides know who is coming. You verify once and it counts for every room.</p>'
     + '<div class="d-cta">'
     + '<button type="button" class="d-cta-main" data-msg="'+attr(r.id)+'">'+svg('msg',17)+'Message the host</button>'
     + '<button type="button" class="d-cta-view" data-view="'+attr(r.id)+'">'+svg('shield',16)+'Request a viewing</button>'
@@ -1781,15 +1782,17 @@ function shareRoom(id){
 }
 
 /* ── messaging ─────────────────────────────────────────────────────
-   Enquiring is free and open to any signed-in account. Identity is
-   verified later, at the point of booking, where it actually protects
-   money and a front door key. Gating the first message instead only
-   cost us the enquiry.                                             */
+   Browsing is open to everyone. Messaging a host and booking viewings
+   need the Cabana Rooms Pass (one month, every room), enforced again
+   by cabana_chat_start. Identity is checked once, at the viewing,
+   where it protects a front door key.                              */
 function messageHost(id){
   var r = byId(id); if(!r) return;
   if(!ME){ location.href = 'auth.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
   if(r.hostId && ME.id === r.hostId){ toast('This is your own listing.'); return; }
   if(!window.CabanaChat){ toast('Chat is still loading. Try again in a second.'); return; }
+  /* The Rooms Pass opens every host. The database enforces it too. */
+  if(window.CabanaRoomsPass){ CabanaRoomsPass.require(r).then(function(ok){ if(ok) openChat(r); }); return; }
   openChat(r);
 }
 function openChat(r){
@@ -1802,6 +1805,9 @@ function openChat(r){
 async function requestViewing(id){
   var r = ROOMS.filter(function(x){ return String(x.id) === String(id); })[0];
   if(!r) return;
+  if(!ME){ location.href = 'auth.html?next=' + encodeURIComponent(location.pathname + location.search); return; }
+  if(r.hostId && ME.id === r.hostId){ toast('This is your own listing.'); return; }
+  if(window.CabanaRoomsPass && !(await CabanaRoomsPass.require(r))) return;
   if(window.CabanaIdentity){
     var ok = false;
     try{ ok = await CabanaIdentity.ensure('roommate', { title: 'Verify once to book viewings' }); }catch(e){ toast(e.message || 'Please try again.'); return; }
@@ -2073,6 +2079,8 @@ fromUrl();
 render();
 load();
 wireListCta();
+if(window.CabanaRoomsPass) CabanaRoomsPass.ribbon($('rp-ribbon'));
+else window.addEventListener('load', function(){ if(window.CabanaRoomsPass) CabanaRoomsPass.ribbon($('rp-ribbon')); });
 
 if(window.ApaSession && ApaSession.subscribe){
   ApaSession.subscribe(function(st){
@@ -2216,5 +2224,8 @@ window.showToast = toast;
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-identity.js" defer></script>
+<script src="/cabana-pay.js" defer></script>
+<script src="/cabana-rooms-pass.js" defer></script>
 </body>
 </html>

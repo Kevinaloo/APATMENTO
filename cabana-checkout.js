@@ -228,6 +228,7 @@
           (o.sub ? '<p class="cx-sub">' + esc(o.sub) + '</p>' : '') +
         '</div>' +
         '<div class="cx-body" data-cx-body>' + (o.body || '') + '</div>' +
+        (o.payCard !== false ? '<div class="cx-paycard-slot">' + payCardInline() + '</div>' : '') +
       '</div>';
     doc.body.appendChild(scrim);
     doc.body.classList.add('cx-lock');
@@ -290,6 +291,24 @@
 
   /* ── Cabana Pay, coming soon ────────────────────────────────────── */
   var CURRENCIES = ['KES', 'NGN', 'GHS', 'ZAR', 'UGX', 'TZS', 'RWF', 'ETB', 'XOF', 'XAF', 'EGP', 'MAD', 'ZMW', 'BWP', 'MZN', 'NAD', 'MWK', 'CDF'];
+  function payCardInner(track) {
+    return '<div class="cxp-in">' +
+        '<div class="cxp-top" tabindex="0">' +
+          '<span class="cxp-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5.4c0 4.3 2.9 8 7 9.1 4.1-1.1 7-4.8 7-9.1V6Z"/><path d="M9.2 12.2h5.6M12 9.4v5.6" opacity=".9"/></svg></span>' +
+          '<span class="cxp-name">CABANA PAY</span>' +
+          '<span class="cxp-soon">Coming soon</span>' +
+          '<button class="cxp-x" type="button" aria-label="Minimise">' + I.close + '</button>' +
+        '</div>' +
+        '<p class="cxp-tag"><b>Protect your bank cards and payment details.</b> Soon you will pay through Cabana Pay in currencies across Africa, without handing your card to anyone.</p>' +
+        '<div class="cxp-fx" aria-hidden="true"><div class="cxp-fx-track">' + track + '</div></div>' +
+      '</div>';
+  }
+  /* Inside a sheet on a phone the floating card would sit over the
+     form, so the sheet carries its own copy at the foot instead. */
+  function payCardInline() {
+    var track = CURRENCIES.concat(CURRENCIES).map(function (c) { return '<span><i></i>' + c + '</span>'; }).join('');
+    return '<aside class="cxp is-inline is-in" role="note" aria-label="Cabana Pay, coming soon">' + payCardInner(track) + '</aside>';
+  }
   function payCard() {
     ensureCss();
     if (doc.getElementById('cabana-pay-card')) return;
@@ -302,17 +321,7 @@
     el.className = 'cxp' + (min ? ' is-min' : '');
     el.setAttribute('role', 'note');
     el.setAttribute('aria-label', 'Cabana Pay, coming soon');
-    el.innerHTML =
-      '<div class="cxp-in">' +
-        '<div class="cxp-top" tabindex="0">' +
-          '<span class="cxp-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5.4c0 4.3 2.9 8 7 9.1 4.1-1.1 7-4.8 7-9.1V6Z"/><path d="M9.2 12.2h5.6M12 9.4v5.6" opacity=".9"/></svg></span>' +
-          '<span class="cxp-name">CABANA PAY</span>' +
-          '<span class="cxp-soon">Coming soon</span>' +
-          '<button class="cxp-x" type="button" aria-label="Minimise">' + I.close + '</button>' +
-        '</div>' +
-        '<p class="cxp-tag"><b>Protect your bank cards and payment details.</b> Soon you will pay through Cabana Pay in currencies across Africa, without handing your card to anyone.</p>' +
-        '<div class="cxp-fx" aria-hidden="true"><div class="cxp-fx-track">' + track + '</div></div>' +
-      '</div>';
+    el.innerHTML = payCardInner(track);
     doc.body.appendChild(el);
     function set(m) {
       el.classList.toggle('is-min', m);

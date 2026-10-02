@@ -498,3 +498,16 @@ body:has(#cbp-root.cbp-open) .cxp { z-index: 100000; }
   body:has(#cbp-root.cbp-open) .cxp:not(.is-min) .cxp-fx { display: none; }
   body:has(#cbp-root.cbp-open) .cxp { left: auto; right: 12px; top: calc(12px + env(safe-area-inset-top)); bottom: auto; width: auto; }
 }
+
+/* Cabana Pay inside a sheet (phones). The floating card steps aside
+   while a checkout is open on a small screen; the sheet carries a calm
+   inline copy at its foot. On wide screens the floating card stays. */
+.cx-paycard-slot { display: none; padding: 0 22px 26px; }
+.cxp.is-inline { position: relative; left: auto; right: auto; bottom: auto; top: auto; width: 100%; z-index: auto; transform: none; opacity: 1; }
+.cxp.is-inline .cxp-x { display: none; }
+.cxp.is-inline .cxp-top { cursor: default; }
+@media (max-width: 759px) {
+  .cx-paycard-slot { display: block; }
+  body.cx-lock #cabana-pay-card { display: none; }
+}
+body.cx-lock #cbn-apa-welcome { display: none !important; }

@@ -562,6 +562,13 @@ const CabanaChat = window.CabanaChat = (() => {
       if (opts.draft && seq === S.openSeq) { const ta = $('#cbx-ta'); if (ta && !ta.value) { ta.value = String(opts.draft).slice(0, 600); ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); } }
     } catch (e) {
       if (seq !== S.openSeq) return;
+      /* Room hosts are reached with a Cabana Rooms Pass. Offer it rather
+         than leave a refusal in an empty thread. */
+      if (/Unlock Cabana Rooms/i.test(String(e && e.message))) {
+        if (window.CabanaRoomsPass) { try { close(); } catch (_) {} window.CabanaRoomsPass.open({ title: opts.listingTitle }); return; }
+        threadError('Unlock Cabana Rooms to message room hosts. It opens every room for a month.');
+        return;
+      }
       threadError(friendly(e));
     }
   }
