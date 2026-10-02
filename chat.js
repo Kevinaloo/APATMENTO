@@ -1342,9 +1342,9 @@ const CabanaChat = window.CabanaChat = (() => {
     g('to-go').disabled = !!err || !d || !p;
     g('to-sum').innerHTML = d && p ? `
       <div class="kv"><span>${perGroup ? money(p) + ' for the group' : money(p) + ' × ' + n}</span><span>${money(total)}</span></div>
-      ${dep < total ? `<div class="kv"><span>Traveller pays now</span><span>${money(dep)}</span></div><div class="kv"><span>You collect on the day</span><span>${money(total - dep)}</span></div>` : ''}
+      ${dep < total ? `<div class="kv"><span>Your share collected online</span><span>${money(dep)}</span></div><div class="kv"><span>You collect on the day</span><span>${money(total - dep)}</span></div>` : ''}
       <div class="kv" style="color:var(--mint);font-weight:700"><span>Traveller saves</span><span>${money(list - total)}</span></div>
-      <div class="kv"><span>Cabana commission</span><span>KES 0</span></div>` : '<div class="kv"><span>Choose a date and a price to see the totals. The server checks the tour runs that day.</span></div>';
+      <div class="kv"><span>You receive</span><span>${money(total)}</span></div>` : '<div class="kv"><span>Choose a date and a price to see the totals. The server checks the tour runs that day.</span></div>';
   }
   async function sendTourOffer() {
     const g = id => S.root.querySelector('#' + id), btn = g('to-go');

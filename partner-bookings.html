@@ -504,6 +504,17 @@ async function loadBookings() {
     ]);
     if(error) throw error;
     HOST_ALL = data || [];
+    /* Day passes and hotel rooms carry a little more than the summary
+       RPC returns; merge it in when the host can read it. */
+    if (HOST_ALL.length) {
+      try {
+        const { data: extra } = await sb.from('apartment_bookings')
+          .select('id,booking_kind,rooms,arrival_time,special_requests,day_start,day_end')
+          .in('id', HOST_ALL.slice(0, 300).map(x => x.id));
+        const by = {}; (extra || []).forEach(x => { by[x.id] = x; });
+        HOST_ALL.forEach(x => { if (by[x.id]) Object.assign(x, by[x.id]); });
+      } catch (_) { /* the table still renders without them */ }
+    }
 
     const today = todayISO();
     const live = HOST_ALL.filter(x=>stayPhase(x)!=='cancelled'&&stayPhase(x)!=='rehomed');
@@ -536,8 +547,8 @@ async function loadBookings() {
         return `<tr id="bk-${hesc(bk.id)}">
           <td><strong style="font-family:var(--font-data);font-size:12px;">#${ref}</strong></td>
           <td><strong>${hesc(bk.listing_title||'Listing')}</strong><div class="bk-guest">${hesc(bk.guest_name||'Guest')}${bk.guest_phone?' · <a href="tel:'+hesc(String(bk.guest_phone).replace(/[^+\d]/g,''))+'">'+hesc(bk.guest_phone)+'</a>':''}</div></td>
-          <td>${shortDate(bk.checkin_date)}</td>
-          <td>${shortDate(bk.checkout_date)}</td>
+          <td>${shortDate(bk.checkin_date)}${bk.booking_kind==='day_pass'?'<div class="bk-guest">Day pass</div>':bk.booking_kind==='hotel'&&Array.isArray(bk.rooms)?'<div class="bk-guest">'+hesc(bk.rooms.map(r=>(r.qty||1)+'× '+(r.name||'room')).join(', '))+'</div>':''}</td>
+          <td>${bk.booking_kind==='day_pass'?'Same day':shortDate(bk.checkout_date)}${bk.arrival_time?'<div class="bk-guest">arrives '+hesc(bk.arrival_time)+'</div>':''}</td>
           <td>${bk.num_guests||1} guest${(bk.num_guests||1)>1?'s':''}</td>
           <td><strong>KES ${fmt(Math.round(parseFloat(bk.stay_total||0)))}</strong><div class="bk-guest">your payout</div></td>
           <td><span class="badge ${badge}">${label}</span>${code}</td>

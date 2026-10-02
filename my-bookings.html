@@ -663,9 +663,16 @@ const TONE_CLASS = { good:'badge-done', live:'badge-live', warn:'badge-pending',
 
 function whenLine(b) {
   if (b._type === 'apartment') {
+    /* A day pass is one date and a window, not a night. */
+    if (b.booking_kind === 'day_pass') {
+      const t = x => x ? new Date(x).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Nairobi' }) : '';
+      return ['Day pass', CB.fmtDay(b.checkin_date), [t(b.day_start), t(b.day_end)].filter(Boolean).join('–')].filter(Boolean).join(' · ');
+    }
     const r = CB.fmtRange(b.checkin_date, b.checkout_date);
     const n = b.nights ? b.nights + (b.nights !== 1 ? ' nights' : ' night') : '';
-    return [r, n].filter(Boolean).join(' · ');
+    const rooms = b.booking_kind === 'hotel' && Array.isArray(b.rooms)
+      ? b.rooms.map(x => (x.qty || 1) + '× ' + (x.name || 'room')).join(', ') : '';
+    return [r, n, rooms].filter(Boolean).join(' · ');
   }
   if (b._type === 'tour') {
     const p = b.num_people ? b.num_people + (b.num_people !== 1 ? ' people' : ' person') : '';
