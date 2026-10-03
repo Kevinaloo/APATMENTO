@@ -2,7 +2,7 @@
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow | music-search
            | reconcile-payments | geocode | atlas | sos-alert | carhire-terrain
-           | route | karaoke
+           | route | karaoke | fx
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 60 };
@@ -48,6 +48,7 @@ import routeHandler from './lib/_route.js';
 import musicSearchHandler from './lib/_music-search.js';
 import karaokeHandler from './lib/_karaoke.js';
 import weatherHandler from './lib/_weather.js';
+import fxHandler from './lib/_fx.js';
 import scrapeHandler from './lib/_scrape.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
@@ -839,6 +840,12 @@ export default async function handler(req, res) {
     return weatherHandler(req, res);
   }
 
+  /* Display-only exchange rates for the price you see beside the real
+     one. Public and edge-cached; nothing anyone pays is converted. */
+  if (action === 'fx') {
+    return fxHandler(req, res);
+  }
+
   if (action === 'close-bookings') {
     return handleCloseBookings(req, res);
   }
@@ -872,7 +879,7 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, route, weather, music-search, karaoke, '
+    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, route, weather, fx, music-search, karaoke, '
          + 'scrape, close-bookings, welcome-email, indexnow, reconcile-payments, expire-match-offers, paypal-create-order, '
          + 'paypal-capture, paypal-webhook',
   });

@@ -78,7 +78,7 @@
       var el = document.querySelector('script[src^="/cabana-match.js"]');
       if (!el) {
         el = document.createElement('script');
-        el.src = '/cabana-match.js?v=2';
+        el.src = '/cabana-match.js?v=3';
         el.async = true;
         el.onerror = function () { _matchP = null; resolve(null); };
         (document.head || document.documentElement).appendChild(el);
