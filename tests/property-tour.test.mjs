@@ -5,6 +5,7 @@ import {JSDOM} from 'jsdom';
 const script=readFileSync(new URL('../cabana-property-tour.js',import.meta.url),'utf8');
 const id='65ef1d11-a4e3-4250-bbac-f826c0cd10d2';
 const shikaz='20b22953-2c13-4e6c-a5c4-3cbefcc20cae';
+const kileleshwa='2d488e1a-3582-409f-ac3c-5f67adc90c74';
 function setup(){
  const dom=new JSDOM('<button id="launch">Explore</button>',{url:'https://cabana.africa/apartments',runScripts:'outside-only'});
  dom.window.HTMLDialogElement.prototype.showModal=function(){this.open=true};
@@ -17,12 +18,31 @@ test('tour matches the exact property id, never a name or another property',()=>
  assert.match(api.section({_dbId:id,id:'native-1'}),/Explore in 3D/);
  assert.equal(api.section({id:'other',name:'The Jets Nest'}),'');d.window.close();
 });
-test('both tour properties have badges while similarly named Shikaz listings do not',()=>{
+test('all three tour properties have badges while similarly named listings do not',()=>{
  const d=setup(),api=d.window.CabanaPropertyTour;
- for(const property of [id,shikaz]){assert.match(api.badge({_dbId:property}),/3D TOUR/);assert.match(api.section({id:property}),/Explore in 3D/);}
+ for(const property of [id,shikaz,kileleshwa]){assert.match(api.badge({_dbId:property}),/3D TOUR/);assert.match(api.section({id:property}),/Explore in 3D/);}
  assert.equal(api.badge({id:'82132f0e-3987-46be-9bf0-7c98160d1944',name:'Shikaz Homes 2 Br @JKIA Syokimau'}),'');
  assert.equal(api.section({id:'other',name:'Shikaz Homes'}),'');
+ assert.equal(api.section({id:'other',name:'Fully furnished Elegant 1Bedroom in Kileleshwa'}),'');
  assert.equal(d.window.document.querySelectorAll('iframe').length,0);d.window.close();
+});
+
+test('Kileleshwa uses its exact listing id and loads its own viewer only on request',()=>{
+ const d=setup(),w=d.window,api=w.CabanaPropertyTour;
+ const listing={_dbId:kileleshwa,id:'native-1',name:'Fully furnished Elegant 1Bedroom in Kileleshwa'};
+ assert.equal(api.has(kileleshwa),true);
+ w.document.body.insertAdjacentHTML('beforeend',api.section(listing));
+ assert.match(w.document.querySelector('.cabana-tour-entry').textContent,/Kileleshwa/);
+ assert.equal(w.document.querySelectorAll('iframe').length,0);
+ w.document.getElementById('launch').focus();
+ api.open(kileleshwa);
+ assert.equal(w.document.querySelectorAll('iframe').length,1);
+ assert.match(w.document.querySelector('iframe').src,/\/tours\/kileleshwa-elegant\/index\.html$/);
+ assert.equal(w.document.querySelector('#cabana-tour-title').textContent,listing.name);
+ api.close();
+ assert.equal(w.document.querySelectorAll('iframe,dialog').length,0);
+ assert.equal(w.document.activeElement.id,'launch');
+ d.window.close();
 });
 test('opening Shikaz selects its own tour and unknown ids cannot launch a tour',()=>{
  const d=setup(),api=d.window.CabanaPropertyTour;
@@ -48,13 +68,13 @@ test('foreign messages cannot close the view',()=>{
  w.dispatchEvent(new w.MessageEvent('message',{origin:'https://untrusted.example',data:{type:'cabana-tour-close'}}));
  assert.ok(w.document.querySelector('iframe'));w.CabanaPropertyTour.close();d.window.close();
 });
-test('both viewers use absolute asset URLs that survive cleanUrls redirects',()=>{
+test('all three viewers use absolute asset URLs that survive cleanUrls redirects',()=>{
  const config=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
- for(const [slug,count] of [['jets-nest',17],['shikaz-homes',18]]){
+ for(const [slug,count] of [['jets-nest',17],['shikaz-homes',18],['kileleshwa-elegant',18]]){
   for(const suffix of ['', '/'])assert.ok(config.rewrites.some(r=>r.source==='/tours/'+slug+suffix&&r.destination==='/tours/'+slug+'/index.html'));
   const html=readFileSync(new URL('../tours/'+slug+'/index.html',import.meta.url),'utf8');
   assert.doesNotMatch(html,/(?:href|src)="\.\//);
-  const refs=[...html.matchAll(/(?:href="|import\(")([^"?]+)(?:\?[^" ]*)?"/g)].map(m=>m[1]);
+  const refs=[...html.matchAll(/(?:<link\b[^>]*href="|import\(")([^"?]+)(?:\?[^" ]*)?"/g)].map(m=>m[1]);
   assert.ok(refs.length>=2);
   for(const ref of refs){assert.ok(ref.startsWith('/tours/'+slug+'/'));assert.ok(existsSync(new URL('..'+ref,import.meta.url)));}
   for(let i=1;i<=count;i++)assert.ok(existsSync(new URL('../tours/'+slug+'/photos/'+i+'.jpg',import.meta.url)));

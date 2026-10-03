@@ -8,7 +8,8 @@
      which only the Cabana team can set. */
   const TOURS = {
     [JETS_NEST]: { name: 'The Jets Nest', url: '/tours/jets-nest/index.html', rooms: 'Living room, kitchen, bedroom & bathroom' },
-    '20b22953-2c13-4e6c-a5c4-3cbefcc20cae': { name: 'Shikaz Homes', url: '/tours/shikaz-homes/index.html', rooms: 'Two bedrooms, lounge, dining & more' }
+    '20b22953-2c13-4e6c-a5c4-3cbefcc20cae': { name: 'Shikaz Homes', url: '/tours/shikaz-homes/index.html', rooms: 'Two bedrooms, lounge, dining & more' },
+    '2d488e1a-3582-409f-ac3c-5f67adc90c74': { name: 'Fully furnished Elegant 1Bedroom in Kileleshwa', url: '/tours/kileleshwa-elegant/index.html', rooms: 'Living room, dining, kitchen, bedroom & bathroom' }
   };
   /* The same allow-list the database enforces: our own /tours/ viewer or a
      known 3D host. Anything else never reaches an iframe. */
