@@ -1786,7 +1786,7 @@ const CabanaNotif = (() => {
     if (window.CabanaMatchLoad) return window.CabanaMatchLoad();
     return new Promise((resolve) => {
       let el = document.querySelector('script[src^="/cabana-match.js"]');
-      if (!el) { el = document.createElement('script'); el.src = '/cabana-match.js?v=2'; el.defer = true; document.head.appendChild(el); }
+      if (!el) { el = document.createElement('script'); el.src = '/cabana-match.js?v=3'; el.defer = true; document.head.appendChild(el); }
       window.addEventListener('cabana:match-ready', () => resolve(window.CabanaMatch), { once: true });
       setTimeout(() => resolve(window.CabanaMatch || null), 8000);
     });

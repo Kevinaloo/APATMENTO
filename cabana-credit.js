@@ -526,6 +526,12 @@
     if (intro && intro.offsetParent !== null && !intro.classList.contains('lift')) return true;
     if (document.getElementById('apa-splash-curtain')) return true;
     if (document.hidden) return true;
+    /* Mid-search: typing a place, picking dates, in Filters, in a Match
+       sheet or choosing a currency. A card that lands on top of a press
+       in progress swallows it, so the offer waits for a clear moment. */
+    if (document.querySelector('html.cm-lock,html.sg-lock,body.sc-open,body.fm-open,.cfx')) return true;
+    var a = document.activeElement;
+    if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
     return false;
   }
 

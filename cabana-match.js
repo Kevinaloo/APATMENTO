@@ -27,8 +27,8 @@
   'use strict';
   if (global.CabanaMatch) return;
 
-  var VERSION = '2.0.0';
-  var CSS_HREF = '/cabana-match.css?v=2';
+  var VERSION = '2.1.0';
+  var CSS_HREF = '/cabana-match.css?v=3';
   var D = global.document;
   var LIVE_MS = 20 * 60 * 1000;
 
@@ -40,6 +40,18 @@
   }
   function num(v) { var n = Number(v); return v === null || v === '' || !isFinite(n) ? null : n; }
   function money(v) { var n = num(v); return n == null ? '' : 'KES ' + Math.round(n).toLocaleString('en-KE'); }
+  /* What a guest reads. KES stays exact; any other currency is shown
+     converted and marked ≈ by cabana-fx.js. Hosts always see KES. */
+  function fxOn() { return !!(global.CabanaFX && global.CabanaFX.code() !== 'KES'); }
+  function gmoney(v) { var n = num(v); if (n == null) return ''; return fxOn() ? global.CabanaFX.format(n) : money(n); }
+  function bandLabel(b) {
+    if (!b.min && !b.max) return 'Any';
+    if (!global.CabanaFX) return b.label;
+    var F = global.CabanaFX, c = function (v) { return F.format(v, { compact: true, approx: false }); },
+        bare = function (v) { return F.format(v, { compact: true, approx: false, bare: true }); };
+    if (b.min && b.max) return c(b.min) + '–' + bare(b.max);
+    return b.max ? 'Up to ' + c(b.max) : c(b.min) + '+';
+  }
   function plain(v) { var n = num(v); return n == null ? '' : Math.round(n).toLocaleString('en-KE'); }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -149,6 +161,10 @@
     bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
     pause: '<rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/>',
     speaker: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
+    mute: '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/>',
+    eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    send: '<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     sms: '<rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M9.5 18h5"/>',
     mail: '<rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="m3 6 9 7 9-7"/>'
   };
@@ -283,6 +299,21 @@
       tone(ac, t, 1318.51, 0.32, 0.15);
       tone(ac, t + 0.13, 1975.53, 0.6, 0.13);
       tone(ac, t + 0.13, 3951.07, 0.18, 0.02, 'triangle');
+    },
+    seen: function (ac, t) {
+      tone(ac, t, 1318.51, 0.28, 0.07);
+      tone(ac, t + 0.11, 1760, 0.42, 0.06);
+    },
+    pass: function (ac, t) {
+      tone(ac, t, 523.25, 0.3, 0.05);
+      tone(ac, t + 0.12, 392, 0.45, 0.045);
+    },
+    close: function (ac, t) {
+      [[0, 880], [0.12, 659.25], [0.24, 493.88]].forEach(function (n, i) { tone(ac, t + n[0], n[1], i === 2 ? 0.6 : 0.3, 0.06); });
+    },
+    low: function (ac, t) {
+      tone(ac, t, 987.77, 0.18, 0.05, 'triangle');
+      tone(ac, t + 0.2, 987.77, 0.18, 0.05, 'triangle');
     },
     sent: function (ac, t) {
       var o = ac.createOscillator(), g = ac.createGain();
@@ -446,6 +477,7 @@
     root.addEventListener('click', onSheetClick);
     root.addEventListener('input', onSheetInput);
     root.addEventListener('change', onSheetInput);
+    root.addEventListener('keydown', onSheetKey);
     root.addEventListener('pointerdown', primeAudio, { passive: true });
     dragToClose(sheet, root.querySelector('.cm-grab'));
     requestAnimationFrame(function () {
@@ -464,7 +496,9 @@
     s.el.classList.remove('is-on');
     setTimeout(function () { if (s.root.parentNode) s.root.remove(); }, 460);
     clearTimeout(C.timer);
+    G.confirm = false;
     if (s.mode === 'live') stopLiveTimers(false);
+    ambStop(true);
     renderFloat();
   }
 
@@ -569,9 +603,25 @@
     s.el.classList.remove('cm-live', 'cm-dark');
     renderComposer();
     previewSoon(0);
+    pinCrit();
     user().then(function (u) { C.user = u; updateGo(); });
     track('match_compose_open');
     return api;
+  }
+  /* A request typed as words ("Diani") still deserves a radius. Find the
+     point quietly and re-count once it lands. */
+  function pinCrit() {
+    var c = C.crit;
+    if (!c || c.lat != null || !c.location || !global.ApaGeo || !global.ApaGeo.search) return;
+    var want = c.location;
+    global.ApaGeo.search(want, { limit: 1 }).then(function (list) {
+      var p = list && list[0];
+      if (!p || !C.crit || C.crit.location !== want || C.crit.lat != null || !S || S.mode !== 'compose') return;
+      C.crit.lat = p.lat; C.crit.lng = p.lng;
+      C.crit.label = p.short || p.label || want;
+      renderComposer();
+      previewSoon(0);
+    }).catch(function () {});
   }
 
   function fromReq(r) {
@@ -607,20 +657,27 @@
           (c.bedrooms ? chip('rooms', 'bed', plural(c.bedrooms, 'bedroom') + '+') : '') +
         '</div>' +
         '<div class="cm-group">' +
-          '<div class="cm-label">Budget a night <small>KES</small></div>' +
+          '<div class="cm-label">Budget a night' +
+            (global.CabanaFX ? '<button type="button" class="cm-cur" data-cm="currency" aria-label="Change currency">' + esc(global.CabanaFX.code()) + svg('down') + '</button>' : ' <small>KES</small>') +
+          '</div>' +
           '<div class="cm-seg" role="group" aria-label="Budget a night">' +
             BANDS.map(function (b) {
-              return '<button type="button" data-cm="band" data-k="' + b.k + '" aria-pressed="' + (bk === b.k || (!bk && !custom && b.k === 'any')) + '">' + b.label + '</button>';
+              return '<button type="button" data-cm="band" data-k="' + b.k + '" aria-pressed="' + (bk === b.k || (!bk && !custom && b.k === 'any')) + '">' + esc(bandLabel(b)) + '</button>';
             }).join('') +
             (custom ? '<button type="button" data-cm="band" data-k="custom" aria-pressed="true">' + esc(customBand(c)) + '</button>' : '') +
           '</div>' +
+          (fxOn() ? '<div class="cm-fxnote">Hosts see your budget in KES. You pay in KES.</div>' : '') +
         '</div>' +
         (c.lat != null ? (
-        '<div class="cm-group">' +
-          '<div class="cm-label">How far <small>from ' + esc(placeOf(c)) + '</small></div>' +
-          '<div class="cm-range"><input type="range" min="3" max="100" step="1" value="' + (c.radius_km || 25) + '" data-cm="radius" aria-label="Distance in kilometres">' +
-          '<output class="cm-num">' + (c.radius_km || 25) + ' km</output></div>' +
-        '</div>') : '') +
+        '<div class="cm-group cm-reachctl">' +
+          '<div class="cm-label">How far hosts can be <small>from ' + esc(placeOf(c)) + '</small></div>' +
+          '<div class="cm-reach-grid">' +
+            '<div class="cm-reach-map" aria-hidden="true"></div>' +
+            '<div class="cm-reach-seg" role="radiogroup" aria-label="How far hosts can be"></div>' +
+          '</div>' +
+          '<p class="cm-reach-why" aria-live="polite"></p>' +
+        '</div>') : (c.location ? '<div class="cm-group"><div class="cm-pinhint">' + svg('pin') +
+          '<span>We’ll send this to hosts whose stays are listed in <b>' + esc(placeOf(c)) + '</b>. Pick a place from the list to choose how far hosts can be.</span></div></div>' : '')) +
         '<button type="button" class="cm-more" data-cm="note-toggle" aria-expanded="' + (!!c.notes) + '">' + svg('plus') + (c.notes ? 'Note for hosts' : 'Add a note for hosts') + '</button>' +
         '<div class="cm-note-wrap"' + (c.notes ? '' : ' hidden') + '>' +
           '<textarea class="cm-note" data-cm="note" maxlength="280" rows="3" placeholder="Late arrival, a quiet street, parking for one car…" aria-label="Note for hosts">' + esc(c.notes) + '</textarea>' +
@@ -639,12 +696,95 @@
         (live ? '<div class="cm-foot-note">This replaces the request you have live now.</div>' : '') +
       '</div>';
     renderReach();
+    renderReachCtl();
     updateGo();
   }
   function customBand(c) {
-    if (c.min_price && c.max_price) return (c.min_price / 1000) + 'K–' + (c.max_price / 1000) + 'K';
-    if (c.max_price) return 'Up to ' + (c.max_price / 1000) + 'K';
-    return (c.min_price / 1000) + 'K+';
+    return bandLabel({ min: c.min_price, max: c.max_price, label: c.min_price && c.max_price ? (c.min_price / 1000) + 'K–' + (c.max_price / 1000) + 'K'
+      : c.max_price ? 'Up to ' + (c.max_price / 1000) + 'K' : (c.min_price / 1000) + 'K+' });
+  }
+
+  /* ── reach: how far a request travels ─────────────────────────────
+     The old control was a bare 3–100 km slider with nothing to say what
+     it did. A request rings only the hosts whose stay lies inside this
+     circle, so each stop now says, live, how many hosts that is, the
+     rings show where they sit by distance, and one sentence says what
+     moving it changes. Five stops a person can name beat a slider
+     nobody can aim. */
+  var STOPS = [
+    { km: 5, t: 'Close by' }, { km: 10, t: 'Nearby' }, { km: 25, t: 'Across town' },
+    { km: 50, t: 'Wider area' }, { km: 100, t: 'Whole region' }
+  ];
+  var RING_R = { 5: 22, 10: 37, 25: 54, 50: 71, 100: 88 };
+  function snapKm(v) {
+    v = num(v) || 25;
+    var best = STOPS[0].km;
+    STOPS.forEach(function (s) { if (Math.abs(s.km - v) < Math.abs(best - v)) best = s.km; });
+    return best;
+  }
+  function critKey(c) {
+    return [c.location, c.lat, c.lng, c.checkin, c.checkout, c.guests, c.bedrooms, c.min_price, c.max_price].join('|');
+  }
+
+  function reachSVG(d, km) {
+    var seed = hash((C.crit && (C.crit.label || C.crit.location)) || 'x');
+    var h = '<svg viewBox="0 0 200 200">' +
+      '<defs><radialGradient id="cmRg" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#7B2FF7" stop-opacity=".18"/><stop offset="1" stop-color="#4D96FF" stop-opacity=".05"/></radialGradient></defs>';
+    STOPS.slice().reverse().forEach(function (s) {
+      var on = s.km <= km, sel = s.km === km;
+      h += '<circle cx="100" cy="100" r="' + RING_R[s.km] + '" class="rr' + (on ? ' on' : '') + (sel ? ' sel' : '') + '"' + (sel ? ' fill="url(#cmRg)"' : '') + '/>';
+    });
+    var prev = 0;
+    STOPS.forEach(function (s, i) {
+      var tot = d && d[s.km] ? (num(d[s.km].hosts) || 0) : 0;
+      var n = Math.max(0, tot - prev);
+      prev = Math.max(prev, tot);
+      var r0 = i ? RING_R[STOPS[i - 1].km] : 8, r1 = RING_R[s.km];
+      for (var j = 0; j < Math.min(n, 14); j++) {
+        var a = ((seed % 360) + i * 97 + j * 137.508) * Math.PI / 180;
+        var f = 0.3 + 0.55 * (((seed >>> (j % 16)) & 255) / 255);
+        var rr = r0 + (r1 - r0) * f;
+        h += '<circle class="hd' + (s.km <= km ? ' in' : '') + '" style="animation-delay:' + (i * 90 + j * 40) + 'ms" cx="' + (100 + Math.cos(a) * rr).toFixed(1) +
+          '" cy="' + (100 + Math.sin(a) * rr).toFixed(1) + '" r="4.2"/>';
+      }
+    });
+    h += '<circle cx="100" cy="100" r="7" class="me"/><circle cx="100" cy="100" r="7" class="me-ping"/>';
+    h += '<text x="100" y="' + (100 - RING_R[km] + 11) + '" class="rl">' + km + ' km</text>';
+    return h + '</svg>';
+  }
+
+  function renderReachCtl() {
+    if (!S || S.mode !== 'compose' || !C.crit) return;
+    var box = $('.cm-reachctl', S.stage);
+    if (!box) return;
+    var c = C.crit, d = C.ladder && C.ladder.key === critKey(c) ? C.ladder.data : null, km = snapKm(c.radius_km);
+    var seg = $('.cm-reach-seg', box);
+    if (!seg.children.length) {
+      seg.innerHTML = STOPS.map(function (s) {
+        return '<button type="button" role="radio" data-cm="reach" data-km="' + s.km + '" aria-checked="false">' +
+          '<span class="cm-rs-dot" aria-hidden="true"></span><b class="cm-num">' + s.km + ' km</b><span class="cm-rs-t">' + s.t + '</span>' +
+          '<em class="cm-num"></em></button>';
+      }).join('');
+    }
+    $$('[data-cm="reach"]', seg).forEach(function (b) {
+      var k = +b.getAttribute('data-km'), n = d && d[k] ? num(d[k].hosts) || 0 : null;
+      b.setAttribute('aria-checked', String(k === km));
+      b.tabIndex = k === km ? 0 : -1;
+      b.classList.toggle('is-zero', n === 0);
+      b.querySelector('em').innerHTML = n == null ? '<i class="cm-shimmer"></i>' : n === 0 ? 'No hosts' : plural(n, 'host');
+    });
+    $('.cm-reach-map', box).innerHTML = reachSVG(d, km);
+    var why = $('.cm-reach-why', box), cur = d && d[km], place = esc(placeOf(c));
+    if (!d) { why.textContent = 'Counting the hosts free for your dates at each distance…'; return; }
+    var n = num(cur && cur.hosts) || 0;
+    var more = STOPS.filter(function (s) { return s.km > km && d[s.km] && (num(d[s.km].hosts) || 0) > n; })[0];
+    var txt = n
+      ? 'Your request rings <b>' + plural(n, 'host') + '</b> within ' + km + ' km of ' + place +
+        (cur.nearest_km != null ? ', the nearest ' + fmtKm(cur.nearest_km) + ' away' : '') + '. Hosts further out never see it.'
+      : 'No host has a stay free within ' + km + ' km of ' + place + ' for these dates.';
+    if (more) txt += ' Going to ' + more.km + ' km reaches <b>' + plural(num(d[more.km].hosts), 'host') + '</b>.';
+    else if (n && km > 5) txt += ' A smaller circle keeps the trip short; a bigger one would not add anyone.';
+    why.innerHTML = txt;
   }
 
   function previewSoon(ms) {
@@ -660,6 +800,32 @@
       renderReach(); updateGo();
       return;
     }
+    if (c.lat != null) {
+      /* One count per stop, in parallel, so the reach control can say
+         what every distance would do before the guest picks one. */
+      c.radius_km = snapKm(c.radius_km);
+      var key = critKey(c);
+      if (C.ladder && C.ladder.key === key && C.ladder.data) { applyLadder(); return; }
+      C.preview = { loading: true, last: C.preview && C.preview.hosts != null ? C.preview : (C.preview && C.preview.last) };
+      C.ladder = { key: key, data: null };
+      renderReach(); renderReachCtl(); updateGo();
+      Promise.all(STOPS.map(function (st) {
+        var pl = payload(c); pl.radius_km = st.km;
+        return rpc('cabana_match_preview', { p: pl }, 12000).then(function (r) { return [st.km, r || { hosts: 0, listings: 0 }]; });
+      })).then(function (rows) {
+        if (seq !== C.seq) return;
+        var data = {};
+        rows.forEach(function (x) { data[x[0]] = x[1]; });
+        C.ladder = { key: key, data: data };
+        applyLadder();
+      }, function (e) {
+        if (seq !== C.seq) return;
+        C.ladder = null;
+        C.preview = { error: e.message, code: e.code };
+        renderReach(); renderReachCtl(); updateGo();
+      });
+      return;
+    }
     C.preview = { loading: true, last: C.preview && C.preview.hosts != null ? C.preview : (C.preview && C.preview.last) };
     renderReach(); updateGo();
     rpc('cabana_match_preview', { p: payload(c) }, 12000).then(function (r) {
@@ -671,6 +837,23 @@
       C.preview = { error: e.message, code: e.code };
       renderReach(); updateGo();
     });
+  }
+
+  function applyLadder() {
+    var c = C.crit, d = C.ladder && C.ladder.data;
+    if (!c || !d) return;
+    var km = snapKm(c.radius_km);
+    var cur = d[km] || { hosts: 0, listings: 0 };
+    var p = {};
+    Object.keys(cur).forEach(function (k) { p[k] = cur[k]; });
+    p.radius_km = km;
+    p.wider_hosts = null; p.wider_radius_km = null;
+    if (!num(p.hosts)) {
+      var w = STOPS.filter(function (s) { return s.km > km && d[s.km] && num(d[s.km].hosts) > 0; })[0];
+      if (w) { p.wider_hosts = d[w.km].hosts; p.wider_radius_km = w.km; }
+    }
+    C.preview = p;
+    renderReach(); renderReachCtl(); updateGo();
   }
 
   function renderReach() {
@@ -739,6 +922,18 @@
     e.hidden = false; e.textContent = msg;
   }
 
+  function onSheetKey(e) {
+    var t = e.target;
+    if (!t || t.getAttribute('data-cm') !== 'reach') return;
+    var i = STOPS.map(function (s) { return s.km; }).indexOf(+t.getAttribute('data-km'));
+    var j = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? i - 1 : null;
+    if (j == null) return;
+    e.preventDefault();
+    j = clamp(j, 0, STOPS.length - 1);
+    var b = $('[data-cm="reach"][data-km="' + STOPS[j].km + '"]', S.stage);
+    if (b) b.click();
+  }
+
   function onSheetInput(e) {
     var t = e.target, k = t && t.getAttribute('data-cm');
     if (!k || !C.crit) return;
@@ -747,12 +942,6 @@
       var cnt = $('.cm-note-count', S.stage);
       if (cnt) cnt.textContent = C.crit.notes.length + '/280';
       remember();
-    } else if (k === 'radius') {
-      C.crit.radius_km = clamp(parseInt(t.value, 10) || 25, 3, 150);
-      var out = t.parentNode.querySelector('output');
-      if (out) out.textContent = C.crit.radius_km + ' km';
-      remember();
-      if (e.type === 'change' || e.type === 'input') previewSoon(420);
     }
   }
 
@@ -766,17 +955,27 @@
       case 'band': pickBand(t.getAttribute('data-k')); break;
       case 'note-toggle': toggleNote(t); break;
       case 'widen':
-        C.crit.radius_km = clamp(parseInt(t.getAttribute('data-km'), 10) || 50, 3, 150);
-        remember(); renderComposer(); previewSoon(0);
+      case 'reach':
+        C.crit.radius_km = snapKm(parseInt(t.getAttribute('data-km'), 10) || 25);
+        remember();
+        if (C.ladder && C.ladder.data && C.ladder.key === critKey(C.crit)) applyLadder();
+        else previewSoon(0);
+        if (k === 'reach') { try { t.focus({ preventScroll: true }); } catch (x) {} }
+        break;
+      case 'currency':
+        if (global.CabanaFX) global.CabanaFX.picker(t);
         break;
       case 'retry': previewSoon(0); break;
       case 'browse': closeSheet(); if (hooks.browse) hooks.browse(); break;
       case 'send': send(); break;
       /* live */
-      case 'chat': engage(t.getAttribute('data-id'), 'chat'); break;
-      case 'book': engage(t.getAttribute('data-id'), 'book'); break;
+      case 'chat': engage(t.getAttribute('data-id'), 'chat', t); break;
+      case 'book': engage(t.getAttribute('data-id'), 'book', t); break;
       case 'extend': extend(t); break;
       case 'cancel': cancelReq(t); break;
+      case 'cancel-yes': cancelConfirm(true); break;
+      case 'cancel-no': cancelConfirm(false); break;
+      case 'sound': toggleSound(); break;
       case 'again': compose(fromReq(G.req || {})); break;
       case 'wider':
         var r = fromReq(G.req || {});
@@ -930,18 +1129,23 @@
     s.el.setAttribute('aria-label', 'Your Cabana Match request');
     s.el.classList.add('cm-live', 'cm-dark');
     var r = G.req;
+    G.narrAt = 0; G.narrIdx = -1;
     s.stage.innerHTML =
       '<div class="cm-body">' +
         '<div class="cm-live-top"><span class="cm-pill"><i></i><span class="cm-pill-t">Live</span></span>' +
+        '<span class="cm-beat cm-num" aria-live="off"></span>' +
+        '<button type="button" class="cm-snd" data-cm="sound" aria-pressed="false" aria-label="Sound"></button>' +
         '<span class="cm-timer cm-num" aria-label="Time left"></span></div>' +
         '<div class="cm-live-where"></div>' +
         '<div class="cm-live-when"></div>' +
         '<div class="cm-radar' + (justSent ? ' is-sent' : '') + '" aria-hidden="true">' +
+          '<svg class="cm-clock" viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="48.5"/><circle class="arc" cx="50" cy="50" r="48.5"/></svg>' +
           '<div class="cm-radar-disc"></div><div class="cm-radar-ring r1"></div><div class="cm-radar-ring r2"></div><div class="cm-radar-ring r3"></div>' +
           '<div class="cm-radar-sweep"></div><div class="cm-radar-dots"></div>' +
           '<div class="cm-burst"><i></i><i></i><i></i></div>' +
           '<div class="cm-radar-you"></div>' +
         '</div>' +
+        '<div class="cm-narr" aria-live="polite"><span class="cm-narr-ico"></span><span class="cm-narr-t"></span></div>' +
         '<div class="cm-stats">' +
           '<div class="cm-stat"><b class="cm-num" data-s="notified">0</b><span>alerted</span></div>' +
           '<div class="cm-stat is-seen"><b class="cm-num" data-s="seen">0</b><span>seen it</span></div>' +
@@ -949,8 +1153,10 @@
         '</div>' +
         '<div class="cm-offers-h"><h3>Offers</h3><small class="cm-offers-sub"></small></div>' +
         '<div class="cm-offers" aria-live="polite"></div>' +
+        '<div class="cm-feed-h"><h3>Live activity</h3></div>' +
+        '<ol class="cm-feed" aria-label="Live activity"></ol>' +
         '<details class="cm-learn"><summary>What happens now' + svg('down') + '</summary><ol>' +
-          '<li>Hosts with a stay free for your dates are being alerted, nearest first.</li>' +
+          '<li>Hosts with a stay free for your dates are alerted, nearest first.</li>' +
           '<li>Offers land here the moment they are sent. We’ll notify you too, so you can leave this page.</li>' +
           '<li>A special price is held for you for 48 hours. Chat first or book straight away.</li>' +
         '</ol></details>' +
@@ -960,10 +1166,297 @@
       $('.cm-live-where', s.stage).textContent = r.label || r.location || 'Your request';
       $('.cm-live-when', s.stage).textContent = [rangeShort(r.checkin, r.checkout), plural(r.nights || nightsOf(r.checkin, r.checkout), 'night'), plural(r.guests || 1, 'guest')]
         .concat(r.bedrooms ? [plural(r.bedrooms, 'bedroom') + '+'] : []).join(' · ');
+      feedSeed(r);
+      loadWeather(r);
     }
+    paintSound();
     updateLive(true);
+    renderFeed(true);
     startLiveTimers();
     renderFloat();
+    if (isLive()) ambStart();
+  }
+
+  /* ── what the guest hears while hosts look ──────────────────────
+     A quiet generative score tied to the real radar, never to a loop:
+     a soft pad that brightens as the request is seen and opens into a
+     major chord when an offer lands; a sonar ping each sweep; and a
+     note for every host on the scope as the beam crosses it, pitched by
+     how far out they sit and voiced by where they are (waiting, seen,
+     offered). It plays only while this sheet is open, the request is
+     live and the tab is visible, and the speaker button turns it off
+     for good. */
+  var SWEEP_S = 3.6;
+  var AMB = { on: false, bus: null, pad: null, timer: null, rev: 0 };
+  var PENTA = [587.33, 659.25, 739.99, 880, 987.77, 1174.66, 1318.51];
+  function ambNote(ac, t, f, len, vol, type, partial) {
+    if (!AMB.bus) return;
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g); g.connect(AMB.bus);
+    o.start(t); o.stop(t + len + 0.05);
+    if (partial) {
+      var o2 = ac.createOscillator(), g2 = ac.createGain();
+      o2.type = 'sine'; o2.frequency.setValueAtTime(f * partial, t);
+      g2.gain.setValueAtTime(0.0001, t);
+      g2.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.01);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + len * 0.6);
+      o2.connect(g2); g2.connect(AMB.bus); o2.start(t); o2.stop(t + len);
+    }
+  }
+  function ambChord() {
+    var rd = G.radar || {};
+    if (G.offers.length) return [146.83, 220, 293.66, 369.99];
+    if (rd.seen) return [146.83, 220, 293.66, 329.63];
+    return [146.83, 220, 293.66];
+  }
+  function ambStart() {
+    if (AMB.on || !soundOn() || !isLive() || D.visibilityState !== 'visible') return;
+    var ac = audio(true);
+    if (!ac) return;
+    if (ac.state !== 'running') { paintSound(); return; }
+    AMB.on = true;
+    var t = ac.currentTime;
+    var master = ac.createGain();
+    master.gain.setValueAtTime(0.0001, t);
+    master.gain.exponentialRampToValueAtTime(0.85, t + 1.6);
+    master.connect(ac.destination);
+    var delay = ac.createDelay(1.5), fb = ac.createGain(), lp = ac.createBiquadFilter(), dry = ac.createGain();
+    delay.delayTime.value = SWEEP_S / 8;
+    fb.gain.value = 0.34; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    delay.connect(lp); lp.connect(fb); fb.connect(delay); lp.connect(master);
+    dry.gain.value = 1; dry.connect(master); dry.connect(delay);
+    var padF = ac.createBiquadFilter(); padF.type = 'lowpass'; padF.frequency.value = 380; padF.Q.value = 0.6;
+    var padG = ac.createGain(); padG.gain.setValueAtTime(0.0001, t); padG.gain.exponentialRampToValueAtTime(0.05, t + 4);
+    padF.connect(padG); padG.connect(master);
+    var lfo = ac.createOscillator(), lfoG = ac.createGain();
+    lfo.frequency.value = 0.06; lfoG.gain.value = 140; lfo.connect(lfoG); lfoG.connect(padF.frequency); lfo.start(t);
+    var oscs = ambChord().map(function (f, i) {
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = i % 2 ? 'triangle' : 'sine';
+      o.frequency.value = f; o.detune.value = (i - 1.5) * 4;
+      g.gain.value = 0.22;
+      o.connect(g); g.connect(padF); o.start(t);
+      return { o: o, g: g };
+    });
+    AMB.bus = dry;
+    AMB.pad = { master: master, padF: padF, padG: padG, lfo: lfo, oscs: oscs, delay: delay, fb: fb, lp: lp };
+    AMB.rev = 0;
+    ambSchedule();
+    AMB.timer = setInterval(ambSchedule, SWEEP_S * 1000);
+    paintSound();
+  }
+  function ambRetune() {
+    if (!AMB.on || !AMB.pad) return;
+    var ac = audio(false), chord = ambChord();
+    if (!ac) return;
+    AMB.pad.oscs.forEach(function (x, i) {
+      var f = chord[i] || chord[chord.length - 1] * 1.5;
+      x.o.frequency.setTargetAtTime(f, ac.currentTime, 0.8);
+    });
+    AMB.pad.padF.frequency.setTargetAtTime(G.offers.length ? 900 : (G.radar && G.radar.seen ? 560 : 380), ac.currentTime, 1.2);
+  }
+  function ambStop(fade) {
+    if (!AMB.on) { paintSound(); return; }
+    AMB.on = false;
+    clearInterval(AMB.timer); AMB.timer = null;
+    var ac = audio(false), pad = AMB.pad;
+    AMB.bus = null; AMB.pad = null;
+    if (ac && pad) {
+      var t = ac.currentTime;
+      try {
+        pad.master.gain.cancelScheduledValues(t);
+        pad.master.gain.setValueAtTime(Math.max(0.0001, pad.master.gain.value), t);
+        pad.master.gain.exponentialRampToValueAtTime(0.0001, t + (fade ? 1.4 : 0.25));
+      } catch (e) {}
+      setTimeout(function () {
+        try { pad.oscs.forEach(function (x) { x.o.stop(); }); pad.lfo.stop(); pad.master.disconnect(); } catch (e) {}
+      }, fade ? 1600 : 400);
+    }
+    paintSound();
+  }
+  /* One revolution of the beam, scheduled against the sweep the guest
+     sees, so a dot sounds as the light crosses it. */
+  function ambSchedule() {
+    if (!AMB.on) return;
+    var ac = audio(false);
+    if (!ac || ac.state !== 'running' || !S || S.mode !== 'live') return;
+    var now = ac.currentTime + 0.05;
+    var phase = sweepPhase();
+    var rev = AMB.rev++;
+    var startIn = ((1 - phase) % 1) * SWEEP_S;        // seconds until the beam is back at the top
+    ambNote(ac, now + startIn, 1760, 1.1, 0.035, 'sine', 2.01);
+    var dots = $$('.cm-radar-dots .cm-dot', S.stage);
+    var waiting = 0, seen = 0;
+    dots.forEach(function (d, i) {
+      var ph = +d.getAttribute('data-ph') || 0, rr = +d.getAttribute('data-r') || 0.5;
+      var at = now + (((ph - phase) % 1 + 1) % 1) * SWEEP_S;
+      var pitch = PENTA[Math.min(PENTA.length - 1, Math.floor((1 - rr) * PENTA.length))];
+      var st = d.getAttribute('data-s') || '';
+      if (st === 'is-offer') ambNote(ac, at, pitch * 2, 1.4, 0.05, 'sine', 2.76);
+      else if (st === 'is-seen' && seen++ < 6) ambNote(ac, at, pitch, 0.7, 0.04, 'triangle');
+      else if (!st && rev % 2 === 0 && waiting++ < 4) ambNote(ac, at, pitch / 2, 0.35, 0.018, 'sine');
+    });
+  }
+  function sweepPhase() {
+    var el = S && $('.cm-radar-sweep', S.stage);
+    try {
+      var an = el && el.getAnimations && el.getAnimations()[0];
+      if (an && an.currentTime != null) return ((an.currentTime / 1000) % SWEEP_S) / SWEEP_S;
+    } catch (e) {}
+    return 0;
+  }
+  function paintSound() {
+    var b = S && S.mode === 'live' && $('.cm-snd', S.stage);
+    if (!b) return;
+    var on = soundOn(), ac = audio(false), blocked = on && (!ac || ac.state !== 'running');
+    b.innerHTML = svg(on && !blocked ? 'speaker' : 'mute');
+    b.setAttribute('aria-pressed', String(on && !blocked));
+    b.setAttribute('aria-label', on && !blocked ? 'Sound on. Turn off' : 'Sound off. Turn on');
+    b.title = on && !blocked ? 'Sound on' : 'Tap for sound';
+    b.classList.toggle('is-on', on && !blocked);
+    b.classList.toggle('is-playing', !!AMB.on);
+  }
+  function toggleSound() {
+    var on = !(soundOn() && AMB.on);
+    ls('cm_sound', on);
+    if (on) { primeAudio(); setTimeout(function () { ambStart(); paintSound(); }, 60); }
+    else ambStop(false);
+    paintSound();
+  }
+  D.addEventListener('visibilitychange', function () {
+    if (D.visibilityState !== 'visible') ambStop(false);
+    else if (S && S.mode === 'live') ambStart();
+  });
+
+  /* ── live activity: what actually happened, when ────────────────── */
+  function feedKey(id) { return 'cm_feed_' + id; }
+  function feedGet(id) { var f = ss(feedKey(id)); return Array.isArray(f) ? f : []; }
+  function feedPush(id, kind, text, at) {
+    if (!uuid(id)) return;
+    var f = feedGet(id);
+    f.unshift({ k: kind, t: text, at: at || Date.now(), n: 1 });
+    ss(feedKey(id), f.slice(0, 40));
+    if (S && S.mode === 'live' && G.req && G.req.id === id) renderFeed(false);
+  }
+  /* Several hosts opening the request in a burst is one event that grew,
+     not a column of identical lines. */
+  function feedBump(id, kind, k, one, many) {
+    var f = feedGet(id), top = f[0];
+    if (top && top.k === kind && Date.now() - top.at < 3 * 60000) {
+      top.n = (top.n || 1) + k;
+      top.t = top.n === 1 ? one : many(top.n);
+      top.at = Date.now();
+      ss(feedKey(id), f);
+      if (S && S.mode === 'live' && G.req && G.req.id === id) renderFeed(false);
+      return;
+    }
+    feedPush(id, kind, k === 1 ? one : many(k));
+    var g = feedGet(id); if (g[0]) { g[0].n = k; ss(feedKey(id), g); }
+  }
+  function feedSeed(r) {
+    if (!r || !uuid(r.id) || feedGet(r.id).length) return;
+    var rd = G.radar || {};
+    var at = r.created_at ? new Date(r.created_at).getTime() : Date.now();
+    feedPush(r.id, 'send', 'Request sent' + (rd.notified ? ' · ' + plural(rd.notified, 'host') + ' alerted' : ''), at);
+  }
+  var FEED_ICO = { send: 'send', seen: 'eye', offer: 'spark', pass: 'minus', extend: 'clock', close: 'x', end: 'clock', book: 'check', wx: 'sun' };
+  function renderFeed(first) {
+    if (!S || S.mode !== 'live' || !G.req) return;
+    var ol = $('.cm-feed', S.stage);
+    if (!ol) return;
+    var f = feedGet(G.req.id).slice(0, 8);
+    var sig = f.map(function (x) { return x.at + x.k + (x.n || 1); }).join(',');
+    if (ol.getAttribute('data-sig') !== sig) {
+      var before = ol.getAttribute('data-top');
+      ol.innerHTML = f.map(function (x, i) {
+        var fresh = !first && i === 0 && before !== String(x.at);
+        return '<li class="cm-feed-i k-' + esc(x.k) + (fresh ? ' is-new' : '') + '">' + svg(FEED_ICO[x.k] || 'radar') +
+          '<span class="cm-feed-t">' + esc(x.t) + '</span><time class="cm-num" data-at="' + x.at + '"></time></li>';
+      }).join('');
+      ol.setAttribute('data-sig', sig);
+      ol.setAttribute('data-top', f[0] ? String(f[0].at) : '');
+    }
+    $$('time', ol).forEach(function (t) {
+      var d = (Date.now() - +t.getAttribute('data-at')) / 1000;
+      t.textContent = d < 45 ? 'now' : d < 3600 ? Math.round(d / 60) + ' min' : Math.round(d / 3600) + ' h';
+    });
+  }
+  /* What changed between two reads of the request, as plain events. */
+  function feedDiff(prev, st) {
+    var r = st.request, id = r.id, rd = st.radar || {}, p = prev || {};
+    if (p.seen != null && rd.seen > p.seen) {
+      feedBump(id, 'seen', rd.seen - p.seen, 'A host opened your request', function (n) { return plural(n, 'host') + ' opened your request'; });
+      play('seen'); buzz(18);
+    }
+    if (p.passed != null && rd.passed > p.passed) {
+      feedBump(id, 'pass', rd.passed - p.passed, 'A host can’t take this one', function (n) { return plural(n, 'host') + ' can’t take this one'; });
+      play('pass');
+    }
+    if (p.status && p.status !== r.status) {
+      if (r.status === 'expired') { feedPush(id, 'end', 'Time is up · the request has closed'); play('close'); }
+      else if (r.status === 'booked') feedPush(id, 'book', 'Booked');
+      else if (r.status === 'closed' && G._closedByMe !== id) feedPush(id, 'close', 'The request has closed');
+    }
+  }
+
+  /* ── the line under the radar: real facts, one at a time ────────── */
+  function loadWeather(r) {
+    if (!r || G.wxFor === r.id) return;
+    G.wxFor = r.id; G.wx = null;
+    var q = num(r.lat) != null && num(r.lng) != null ? 'lat=' + r.lat + '&lng=' + r.lng : 'city=' + encodeURIComponent(placeOf(r));
+    try {
+      fetch('/api/utilities?action=weather&' + q).then(function (res) { return res.ok ? res.json() : null; }).then(function (w) {
+        if (!w || !w.live || !w.current || G.wxFor !== r.id) return;
+        G.wx = { temp: Math.round(w.current.temp), label: String(w.current.label || '').toLowerCase(), day: !!w.current.isDay };
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  function narrLines() {
+    var r = G.req, rd = G.radar || {}, L = [];
+    if (!r) return L;
+    var place = placeOf(r), live = isLive();
+    if (r.status === 'booked') return [{ i: 'check', t: 'Booked. Enjoy ' + place + '.' }];
+    if (!live) {
+      if (G.offers.length) L.push({ i: 'spark', t: plural(G.offers.length, 'offer') + ' held for you for 48 hours' });
+      else L.push({ i: 'clock', t: 'This request has closed' });
+      return L;
+    }
+    if (G.offers.length) {
+      var low = Math.min.apply(null, G.offers.map(function (o) { return num(o.nightly) || 9e15; }));
+      L.push({ i: 'spark', t: plural(G.offers.length, 'offer') + ' in · from ' + gmoney(low) + ' a night' });
+    }
+    if (rd.notified) L.push({ i: 'radar', t: 'Ringing ' + plural(rd.notified, 'host') + ' within ' + (r.radius_km || 25) + ' km of ' + place });
+    if (rd.seen) L.push({ i: 'eye', t: plural(rd.seen, 'host') + ' opened your request' + (G.offers.length ? '' : ' · they’re checking dates and pricing') });
+    else if (rd.notified) L.push({ i: 'bell', t: 'Hosts get an alert on their phone the moment you send' });
+    L.push({ i: 'tag', t: 'Hosts can reply with a price only you can book' });
+    if (G.wx) L.push({ i: 'sun', t: 'Right now in ' + place + ': ' + G.wx.temp + '° and ' + G.wx.label });
+    var push = false;
+    try { push = 'Notification' in global && Notification.permission === 'granted'; } catch (e) {}
+    L.push({ i: 'bell', t: push ? 'Alerts are on. You can leave this page' : 'You can leave this page. Offers wait here for you' });
+    L.push({ i: 'shield', t: 'Nothing is committed until you pay' });
+    return L;
+  }
+  function tickNarr(force) {
+    if (!S || S.mode !== 'live') return;
+    var box = $('.cm-narr', S.stage);
+    if (!box) return;
+    var L = narrLines();
+    if (!L.length) return;
+    if (!force && Date.now() - (G.narrAt || 0) < 5200) return;
+    G.narrAt = Date.now();
+    G.narrIdx = ((G.narrIdx || 0) + 1) % L.length;
+    if (force) G.narrIdx = 0;
+    var line = L[G.narrIdx];
+    var t = $('.cm-narr-t', box), ico = $('.cm-narr-ico', box);
+    if (t.textContent === line.t) return;
+    box.classList.remove('is-in'); void box.offsetWidth; box.classList.add('is-in');
+    t.textContent = line.t;
+    ico.innerHTML = svg(line.i);
   }
 
   function dotsFor(total) {
@@ -971,7 +1464,11 @@
     for (var i = 0; i < n; i++) {
       var a = seed + i * 2.39996323;                    // the golden angle
       var r = 0.24 + 0.66 * Math.sqrt((i + 0.6) / (n + 0.6));
-      out.push({ x: 50 + Math.cos(a) * r * 46, y: 50 + Math.sin(a) * r * 46 });
+      var dx = Math.cos(a), dy = Math.sin(a);
+      /* Where the beam crosses this dot: clockwise from twelve o'clock,
+         as a fraction of one turn. */
+      var ph = ((Math.atan2(dx, -dy) / (2 * Math.PI)) + 1) % 1;
+      out.push({ x: 50 + dx * r * 46, y: 50 + dy * r * 46, ph: ph, r: r });
     }
     return out;
   }
@@ -990,8 +1487,11 @@
     /* dots: offers gold, passes faded, seen lit, the rest waiting */
     var box = $('.cm-radar-dots', st), pts = dotsFor(rd.notified || 0);
     if (box.children.length !== pts.length) {
+      var phase = sweepPhase();
       box.innerHTML = pts.map(function (p, i) {
-        return '<i class="cm-dot" style="left:' + p.x.toFixed(2) + '%;top:' + p.y.toFixed(2) + '%;animation-delay:' + (first ? i * 45 : 0) + 'ms"></i>';
+        var bd = ((p.ph - phase) * SWEEP_S).toFixed(3);
+        return '<i class="cm-dot" data-ph="' + p.ph.toFixed(4) + '" data-r="' + p.r.toFixed(3) + '" style="left:' + p.x.toFixed(2) + '%;top:' + p.y.toFixed(2) +
+          '%;animation-delay:' + (first ? i * 45 : 0) + 'ms;--bd:' + bd + 's"></i>';
       }).join('');
     }
     var nOffer = Math.min(rd.offers || 0, pts.length);
@@ -1013,6 +1513,9 @@
 
     renderOffers(st, closed);
     renderLiveFoot(st, live, booked);
+    ambRetune();
+    if (!live) ambStop(true);
+    tickNarr(first);
     tickLive();
   }
   function setStat(st, k, v) {
@@ -1081,21 +1584,32 @@
         '<div class="cm-offer-meta">' + meta.join('') + '</div>' +
         '<div class="cm-offer-meta"><span>' + esc(o.host_name || 'Host') + '</span>' +
           (o.host_verified ? '<span class="cm-verified">' + svg('shield') + 'Verified</span>' : '') + '</div>' +
-        '<div class="cm-offer-price"><b class="cm-num">' + money(nightly) + '</b>' + (off >= 1 ? '<s class="cm-num">' + plain(list) + '</s>' : '') +
-          '<small class="cm-num">' + (total ? money(total + fee) + ' total · ' + plural(nights, 'night') : '') + '</small></div>' +
+        '<div class="cm-offer-price"><b class="cm-num">' + gmoney(nightly) + '</b>' + (off >= 1 ? '<s class="cm-num">' + (fxOn() ? gmoney(list).replace(/^≈\s*/, '') : plain(list)) + '</s>' : '') +
+          '<small class="cm-num">' + (total ? gmoney(total + fee) + ' total · ' + plural(nights, 'night') : '') + '</small>' +
+          (fxOn() && total ? '<small class="cm-num cm-kes">' + money(total + fee) + ' · you pay in KES</small>' : '') + '</div>' +
       '</div>' +
       (o.note ? '<div class="cm-offer-note">“' + esc(o.note) + '”</div>' : '') +
       '<div class="cm-offer-actions">' +
-        '<button type="button" data-cm="chat" data-id="' + esc(o.id) + '">' + svg('chat') + 'Chat</button>' +
+        '<button type="button" data-cm="chat" data-id="' + esc(o.id) + '">' + svg('chat') + '<span>Chat</span></button>' +
         '<button type="button" class="cm-book" data-cm="book" data-id="' + esc(o.id) + '">' + (o.status === 'booked' ? 'Booked' : 'View &amp; book') + svg('arrow') + '</button>' +
       '</div>';
   }
 
   function renderLiveFoot(st, live, booked) {
     var f = $('.cm-live-foot', st);
-    var key = live ? 'live:' + (G.req.extensions_used || 0) + ':' + (remaining() < 10 * 60000 ? 1 : 0) : booked ? 'booked' : 'closed:' + G.offers.length;
+    var key = live ? 'live:' + (G.req.extensions_used || 0) + ':' + (remaining() < 10 * 60000 ? 1 : 0) + ':' + (G.confirm ? 1 : 0) : booked ? 'booked' : 'closed:' + G.offers.length;
     if (f.getAttribute('data-k') === key) return;
     f.setAttribute('data-k', key);
+    f.classList.toggle('is-confirm', !!(live && G.confirm));
+    if (live && G.confirm) {
+      f.innerHTML = '<div class="cm-confirm" role="alertdialog" aria-labelledby="cm-confirm-t">' +
+        '<b id="cm-confirm-t">Close this request?</b>' +
+        '<span>Hosts stop seeing it straight away.' + (G.offers.length ? ' The ' + plural(G.offers.length, 'offer') + ' you have stay yours for 48 hours.' : '') + '</span>' +
+        '<div class="cm-confirm-a"><button type="button" class="cm-ghost" data-cm="cancel-no">Keep it live</button>' +
+        '<button type="button" class="cm-danger" data-cm="cancel-yes">Close request</button></div></div>';
+      setTimeout(function () { var y = $('[data-cm="cancel-no"]', f); if (y) y.focus({ preventScroll: true }); }, 30);
+      return;
+    }
     if (live) {
       var canExtend = (G.req.extensions_used || 0) < 2 && remaining() < 10 * 60000;
       f.innerHTML = (canExtend
@@ -1120,6 +1634,24 @@
         t.classList.toggle('is-low', live && left < 3 * 60000);
       }
       if (live && left < 10 * 60000) renderLiveFoot(S.stage, true, false);
+      /* The ring around the scope is the time left, draining. */
+      var arc = $('.cm-clock .arc', S.stage);
+      if (arc && G.req) {
+        var total = Math.max(60000, new Date(G.req.expires_at).getTime() - new Date(G.req.created_at || Date.now()).getTime());
+        var frac = live ? clamp(left / total, 0, 1) : 0;
+        arc.style.strokeDashoffset = (304.73 * (1 - frac)).toFixed(2);
+        arc.classList.toggle('is-low', live && left < 3 * 60000);
+      }
+      /* A heartbeat, so a quiet minute never looks like a frozen page. */
+      var beat = $('.cm-beat', S.stage);
+      if (beat) {
+        var ago = Math.max(0, Math.round((Date.now() - (G.lastFetch || Date.now())) / 1000));
+        beat.textContent = !live ? '' : G.loading ? 'Checking…' : 'Updated ' + (ago < 3 ? 'just now' : ago + 's ago');
+        beat.classList.toggle('is-busy', !!G.loading);
+      }
+      tickNarr(false);
+      if (Date.now() - (G.feedAt || 0) > 15000) { G.feedAt = Date.now(); renderFeed(false); }
+      if (live && left < 60000 && left > 58000 && !G._lowRung) { G._lowRung = true; play('low'); }
     }
     renderFloatTime();
     if (G.req && G.req.status === 'live' && left <= 0 && !G._expiredOnce) {
@@ -1140,6 +1672,7 @@
     }, isLive() ? 9000 : 30000);
   }
   function stopLiveTimers(all) {
+    ambStop(false);
     if (G.poll) { clearInterval(G.poll); G.poll = null; }
     if (all && G.tick) { clearInterval(G.tick); G.tick = null; }
     if (all) unwatch();
@@ -1176,8 +1709,16 @@
         (st.offers || []).forEach(function (o) { G.known[o.id] = 1; });
       }
       G.seededId = st.request.id;
+      /* A close the guest just asked for stands while the server catches up. */
+      if (G._closingId === st.request.id && st.request.status === 'live') st.request.status = 'closed';
+      var prevSnap = G.req && G.req.id === st.request.id && G.radar
+        ? { seen: G.radar.seen, passed: G.radar.passed, status: G.req.status } : null;
       G.req = st.request;
       G.radar = st.radar || {};
+      if (prevSnap) feedDiff(prevSnap, st);
+      fresh.forEach(function (o) {
+        feedPush(st.request.id, 'offer', 'Offer · ' + (o.title || 'A stay') + ' · ' + gmoney(o.nightly) + ' a night', o.created_at ? new Date(o.created_at).getTime() : Date.now());
+      });
       G.offers = st.offers || [];
       G.offset = st.server_time ? new Date(st.server_time).getTime() - Date.now() : 0;
       if (G.req.status === 'live') { G._expiredOnce = false; ls('cm_live', { id: G.req.id, exp: G.req.expires_at }); }
@@ -1246,39 +1787,80 @@
   function extend(btn) {
     if (!G.req) return;
     btn.disabled = true;
+    btn.classList.add('is-busy');
+    var lbl = btn.innerHTML;
+    btn.innerHTML = '<span class="cm-spin"></span>Adding time…';
     rpc('cabana_match_extend', { p_request: G.req.id }).then(function (r) {
       G.req.expires_at = r.expires_at;
       G.req.extensions_used = r.extensions_used;
-      G._expiredOnce = false;
+      G._expiredOnce = false; G._lowRung = false;
+      feedPush(G.req.id, 'extend', '10 more minutes added');
       toast('10 more minutes', { icon: 'clock' });
       ls('cm_live', { id: G.req.id, exp: G.req.expires_at });
       updateLive(false);
       refresh(G.req.id);
-    }, function (e) { btn.disabled = false; toast(e.message); });
+    }, function (e) { btn.disabled = false; btn.classList.remove('is-busy'); btn.innerHTML = lbl; toast(e.message); });
   }
 
-  function cancelReq(btn) {
+  function cancelReq() {
+    if (!G.req || !isLive()) return;
+    G.confirm = true;
+    if (S && S.mode === 'live') renderLiveFoot(S.stage, true, false);
+  }
+  /* The close used to wait for the server, then for a full reload of the
+     request, before anything on screen moved, behind a "tap again"
+     that looked like nothing had happened. Now the guest confirms once,
+     the request reads closed that instant, and the server is told in
+     the background. If it refuses, the request comes back live and the
+     guest is told why. */
+  function cancelConfirm(yes) {
     if (!G.req) return;
-    if (!btn.classList.contains('is-confirm')) {
-      btn.classList.add('is-confirm');
-      btn.textContent = 'Tap again to close';
-      setTimeout(function () { if (btn.isConnected) { btn.classList.remove('is-confirm'); btn.textContent = 'Close request'; } }, 3200);
-      return;
+    if (!yes) { G.confirm = false; if (S && S.mode === 'live') renderLiveFoot(S.stage, true, false); return; }
+    var id = G.req.id, before = { status: G.req.status, exp: G.req.expires_at };
+    G.confirm = false;
+    G._closingId = id; G._closedByMe = id;
+    G.req.status = 'closed';
+    ls('cm_live', null);
+    feedPush(id, 'close', 'You closed the request');
+    play('close'); buzz(20);
+    ambStop(true);
+    if (S && S.mode === 'live') updateLive(false);
+    renderFloat();
+    var hadOffers = G.offers.length;
+    if (!hadOffers) {
+      setTimeout(function () {
+        if (S && S.mode === 'live' && G.req && G.req.id === id && G.req.status !== 'live') {
+          closeSheet();
+          toast('Request closed', { icon: 'check', sub: 'Hosts no longer see it.' });
+        }
+      }, 700);
     }
-    btn.disabled = true;
-    rpc('cabana_match_close', { p_request: G.req.id }).then(function () {
-      G.req.status = 'closed';
-      ls('cm_live', null);
-      tell({ type: 'guest-changed', id: G.req.id });
+    rpc('cabana_match_close', { p_request: id }).then(function () {
+      G._closingId = null;
+      tell({ type: 'guest-changed', id: id });
       track('match_close');
-      refresh(G.req.id);
-      if (!G.offers.length) { closeSheet(); toast('Request closed', { icon: 'check' }); }
-    }, function (e) { btn.disabled = false; toast(e.message); });
+      refresh(id);
+    }, function (e) {
+      G._closingId = null;
+      if (G.req && G.req.id === id) {
+        G.req.status = before.status;
+        G.req.expires_at = before.exp;
+        if (isLive()) ls('cm_live', { id: id, exp: before.exp });
+      }
+      toast('Couldn’t close it, so it’s still live', { icon: 'bolt', sub: e.message, ms: 6000, action: function () { openLive(id); } });
+      if (S && S.mode === 'live') { updateLive(false); if (isLive()) ambStart(); }
+      renderFloat();
+    });
   }
 
-  function engage(offerId, how) {
+  function engage(offerId, how, btn) {
     var o = G.offers.filter(function (x) { return x.id === offerId; })[0];
     if (!o) return;
+    if (btn) {
+      if (btn.classList.contains('is-busy')) return;
+      btn.classList.add('is-busy'); btn.disabled = true;
+      setTimeout(function () { if (btn.isConnected) { btn.classList.remove('is-busy'); btn.disabled = false; } }, 6000);
+    }
     track('match_offer_' + how);
     var p = rpc('cabana_match_engage', { p_response: offerId }).catch(function () {
       return { conversation_id: o.conversation_id, listing_id: o.listing_id, checkin: G.req.checkin, checkout: G.req.checkout, guests: G.req.guests };
@@ -1288,6 +1870,7 @@
         var conv = r && r.conversation_id || o.conversation_id;
         if (conv && global.CabanaChat && global.CabanaChat.openConversation) { closeSheet(); global.CabanaChat.openConversation(conv); }
         else if (conv) { closeSheet({ navigating: true }); location.href = '/dashboard.html?inbox=1&c=' + encodeURIComponent(conv); }
+        else toast('The chat is still being set up. Try again in a moment.', { icon: 'chat' });
       });
       return;
     }
@@ -2081,6 +2664,11 @@
     state: function () { return { req: G.req, radar: G.radar, offers: G.offers.slice(), live: isLive(), left: remaining() }; },
     primeAudio: primeAudio,
     testAlert: testAlert,
+    refreshCurrency: function () {
+      if (!S) return;
+      if (S.mode === 'compose') renderComposer();
+      else if (S.mode === 'live') { $$('.cm-offer', S.stage).forEach(function (el) { el.removeAttribute('data-sig'); }); updateLive(false); }
+    },
     _thumb: thumb
   };
   global.CabanaMatch = api;
