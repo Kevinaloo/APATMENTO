@@ -62,8 +62,8 @@
     },open,close,register,has:id=>!!TOURS[String(id||'')]
   };
   // Shared by dashboard shelves, saved stays and any later listing cards.
-  if (!document.querySelector('link[href="/cabana-property-tour.css"]')) {
-    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/cabana-property-tour.css'; document.head.appendChild(link);
+  if (!document.querySelector('link[href^="/cabana-property-tour.css"]')) {
+    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = '/cabana-property-tour.css?v=3'; document.head.appendChild(link);
   }
   function annotate(root) {
     root.querySelectorAll('[data-listing-id],a[href*="apartments"]').forEach(card => {

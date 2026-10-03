@@ -552,7 +552,7 @@ function boot(){
   defer(function(){
     safe(injectIcons);
     safe(function () {
-      ['/cabana-property-tour.js', '/cabana-people.js?v=2-living', '/cabana-identity.js'].forEach(function (src) {
+      ['/cabana-property-tour.js?v=3', '/cabana-people.js?v=2-living', '/cabana-identity.js'].forEach(function (src) {
         var path = src.split('?')[0];
         if (Array.prototype.some.call(document.scripts, function (s) { return s.src.split('?')[0].endsWith(path); })) return;
         var script = document.createElement('script'); script.src = src; script.defer = true;
