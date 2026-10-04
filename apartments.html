@@ -3,6 +3,7 @@
 <head>
 <link rel="stylesheet" href="/cabana-property-tour.css?v=3"/>
 <script defer src="/cabana-property-tour.js?v=3"></script>
+<script defer src="/cabana-share.js?v=1"></script>
 <script defer src="/cabana-gallery.js"></script>
 <link rel="stylesheet" href="/cabana-location-flight.css"/>
 <script defer src="/cabana-location-globe.js"></script>
@@ -550,6 +551,9 @@ body.lb-open #agent-ref{display:none!important;}
 
 .drawer-close{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(252,252,253,.92);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);z-index:10;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 10px rgba(10,10,20,.1);}
 .drawer-close:hover{transform:scale(1.08);}
+/* Beside the close button: the gallery's slideshow toggle owns the
+   top-right corner. */
+.drawer-share{position:absolute;top:16px;left:64px;z-index:10;}
 
 /* ── Scrollable body ── */
 .dl-body{padding:24px 22px 120px;}
@@ -2999,6 +3003,7 @@ function renderCards(list) {
           : apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : ''}
         <button type="button" class="card-heart${isWishlisted(apt.id) ? ' on' : ''}" data-heart="${apt.id}"
           aria-label="Save this stay" aria-pressed="${isWishlisted(apt.id)}">${SVG_HEART}</button>
+        ${_cardShare(apt)}
         ${many ? `
           <button type="button" class="card-arr card-arr-prev" data-step="-1" aria-label="Previous photo" disabled>${SVG_CHEV_L}</button>
           <button type="button" class="card-arr card-arr-next" data-step="1" aria-label="Next photo">${SVG_CHEV_R}</button>
@@ -3093,6 +3098,32 @@ function _syncRail(media) {
   _hydrateSlides(media, idx + 1, 2);
 }
 
+/* ══ SHARE ═════════════════════════════════════════════════════════
+   The share glyph sits beside the heart on every card and on the
+   drawer's gallery. cabana-share.js loads deferred, so a grid painted
+   from cache before it arrives gets its buttons added in place once it
+   does, without repainting the cards (and their scrolled photo rails). */
+function _cardShare(apt) {
+  return window.CabanaShare?.button(apt, { variant: 'icon' }) || '';
+}
+window.addEventListener('cabana:share-ready', () => {
+  document.querySelectorAll('#grid .card').forEach(card => {
+    if (card.querySelector('[data-cabana-share]')) return;
+    const apt = currentListings.find(a => a.id === card.dataset.cardId);
+    const heart = card.querySelector('.card-heart');
+    if (apt && heart) heart.insertAdjacentHTML('afterend', _cardShare(apt));
+  });
+  const drawer = document.getElementById('drawer');
+  if (drawer?.classList.contains('open') && _galleryListingId) _drawerShare(_galleryListingId);
+});
+function _drawerShare(id) {
+  const apt = currentListings.find(a => a.id === id);
+  const gallery = document.querySelector('#drawer .dl-gallery');
+  if (!apt || !gallery || gallery.querySelector('[data-cabana-share]')) return;
+  gallery.insertAdjacentHTML('beforeend',
+    window.CabanaShare?.button(apt, { variant: 'glass', className: 'cshare-glass drawer-share', showLabel: true }) || '');
+}
+
 function wireCards() {
   const grid = document.getElementById('grid');
   if (!grid || grid.dataset.wired) return;
@@ -3125,6 +3156,10 @@ function wireCards() {
   }, true);   // capture: scroll does not bubble
 
   grid.addEventListener('click', e => {
+    /* Share is handled by cabana-share.js's delegated listener further
+       up the tree. Step aside so the tap does not also open the stay. */
+    if (e.target.closest('[data-cabana-share]')) return;
+
     const heart = e.target.closest('[data-heart]');
     if (heart) {
       e.stopPropagation();
@@ -3621,6 +3656,8 @@ function openDrawer(id) {
       </div>
     </div>
   `;
+
+  _drawerShare(id);
 
   /* open */
   document.getElementById('drawer').classList.add('open');
@@ -6286,12 +6323,29 @@ loadListings().then(async () => {
     cmApplyStay({ checkin: qp.get('checkin'), checkout: qp.get('checkout'), guests: parseInt(qp.get('guests'), 10) || 0 });
     applyAndRender();
   }
+  /* &tour=<token> (or tour=1) arrives from a shared 3D view: the stay
+     opens as usual and its walkthrough opens on top, at the exact spot
+     the sender was standing. The token belongs to the tour engine
+     (tools/tour-engine/src/share-code.ts); here it is only checked for
+     shape and handed over. */
+  const tourToken = qp.get('tour') || '';
+  const wantsTour = /^[a-z0-9~.\-]{1,120}$/i.test(tourToken);
   // Try immediately, then retry while listings are still populating
   const tryOpen = (attempts) => {
     const apt = currentListings.find(a =>
       a.id === openId || a._dbId === openId || String(a._dbId) === String(openId)
     );
-    if (apt) { openDrawer(apt.id); return; }
+    if (apt) {
+      openDrawer(apt.id);
+      const tourId = String(apt._dbId || apt.id);
+      if (wantsTour && window.CabanaPropertyTour?.has(tourId)) {
+        /* The recipient came for the room, not the thirty-second flight
+           to the neighbourhood the drawer opens with. */
+        window.CabanaLocationFlight?.close();
+        window.CabanaPropertyTour.open(tourId, tourToken === '1' ? undefined : tourToken);
+      }
+      return;
+    }
     if (attempts > 0) setTimeout(() => tryOpen(attempts - 1), 300);
   };
   tryOpen(10);

@@ -26,10 +26,10 @@ export function applyTheme(el: HTMLElement, theme: TourDefinition['theme']): voi
   const paper = parse(theme.paper, [246, 242, 233]);
   const accent = parse(theme.accent, [196, 164, 107]);
   const ink = parse(theme.accentInk, luminance(accent) > 0.4 ? night : [255, 255, 255]);
-  /* The HUD is smoked glass. A deep signature colour (a forest green, say) would
-     vanish on it, so lift it toward the paper tone until it reads as a line or a dot. */
+  /* The HUD is smoked glass over bright interiors. A deep or mid-tone signature colour (a forest green,
+     an antique gold) would vanish on it, so lift it toward the paper tone until it reads as a line or a dot. */
   let hi = accent;
-  for (let i = 0; i < 8 && luminance(hi) < 0.32; i++) hi = mix(hi, paper, 0.22);
+  for (let i = 0; i < 8 && luminance(hi) < 0.42; i++) hi = mix(hi, paper, 0.22);
   /* On paper the opposite: a champagne gold is too pale for text. */
   let lo = accent;
   for (let i = 0; i < 8 && luminance(lo) > 0.16; i++) lo = mix(lo, night, 0.22);

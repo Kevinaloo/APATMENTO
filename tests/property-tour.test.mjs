@@ -76,7 +76,13 @@ test('all three viewers use absolute asset URLs that survive cleanUrls redirects
   assert.doesNotMatch(html,/(?:href|src)="\.\//);
   const refs=[...html.matchAll(/(?:<link\b[^>]*href="|import\(")([^"?]+)(?:\?[^" ]*)?"/g)].map(m=>m[1]);
   assert.ok(refs.length>=2);
-  for(const ref of refs){assert.ok(ref.startsWith('/tours/'+slug+'/'));assert.ok(existsSync(new URL('..'+ref,import.meta.url)));}
+  // The shared engine bundle lives in /tours/_engine/; everything else stays under the tour's own folder.
+  for(const ref of refs){assert.ok(ref.startsWith('/tours/'+slug+'/')||ref.startsWith('/tours/_engine/'),ref);assert.ok(existsSync(new URL('..'+ref,import.meta.url)),ref);}
+  // The entry's own chunk imports must ship too, or the tour dies after the boot screen.
+  for(const ref of refs.filter(r=>r.startsWith('/tours/_engine/')&&r.endsWith('.js'))){
+   const js=readFileSync(new URL('..'+ref,import.meta.url),'utf8');
+   for(const [,chunk] of js.matchAll(/(?:from|import\()\s*"\.\/([\w-]+\.js)"/g))assert.ok(existsSync(new URL('../tours/_engine/assets/'+chunk,import.meta.url)),chunk);
+  }
   for(let i=1;i<=count;i++)assert.ok(existsSync(new URL('../tours/'+slug+'/photos/'+i+'.jpg',import.meta.url)));
  }
 });

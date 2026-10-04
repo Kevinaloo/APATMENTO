@@ -236,6 +236,21 @@ body{display:flex;flex-direction:column;}
 @media(max-width:520px){.pcb-row{flex-direction:column;align-items:flex-start;}
   .pcb-row .btn{width:100%;}}
 .lc-price{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--mint-d);margin-top:4px;}
+/* Share sits with the listing's own facts, not in the row of admin
+   actions: it is the one button here that faces guests. */
+.lc-share{display:inline-flex;align-items:center;gap:6px;margin-top:9px;height:30px;padding:0 12px 0 10px;
+  border-radius:100px;border:1px solid rgba(67,97,255,.22);background:linear-gradient(135deg,rgba(45,212,191,.1),rgba(67,97,255,.09));
+  color:var(--electric);font-family:var(--fb);font-size:11.5px;font-weight:750;transition:transform .18s,box-shadow .18s,border-color .18s;}
+.lc-share .cshare-glyph{width:14px;height:14px;}
+.lc-share:hover{transform:translateY(-1px);border-color:rgba(67,97,255,.45);box-shadow:0 6px 16px rgba(67,97,255,.16);}
+.lc-share:focus-visible{outline:2px solid var(--electric);outline-offset:2px;}
+/* On a phone the actions take their own row under the listing and wrap,
+   instead of squeezing the title and price into a one-word column. */
+@media(max-width:600px){
+  .listing-card{flex-wrap:wrap;align-items:flex-start;}
+  .lc-right{width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;}
+  .lc-acts{flex-wrap:wrap;}
+}
 .lc-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .lc-acts{display:flex;gap:6px;}
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:4px 10px;border-radius:100px;white-space:nowrap;}
@@ -1073,6 +1088,7 @@ function renderListings(list){
         <div class="lc-meta">${esc(svc)} &middot; ${esc(loc)} &middot; ${l.booking_count||0} booking${l.booking_count!==1?'s':''}</div>
         ${ownBadge(l)}
         <div class="lc-price">${priceLine(l)}</div>
+        ${isActive&&!waiting?(window.CabanaShare?.button(l,{host:true,className:'lc-share',showLabel:true})||''):''}
       </div>
       <div class="lc-right">
         <span class="badge ${waiting?'b-violet':isActive?'b-green':'b-amber'}">${waiting?'Waiting on verification':isActive?'Active':'Paused'}</span>
@@ -1286,5 +1302,6 @@ document.addEventListener('DOMContentLoaded',loadListings);
 <script src="/chat.js?v=41" defer></script>
 <script src="/cabana-identity.js" defer></script>
 <script src="/cabana-daypass-desk.js" defer></script>
+<script src="/cabana-share.js?v=1" defer></script>
 </body>
 </html>

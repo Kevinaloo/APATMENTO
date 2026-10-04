@@ -1774,6 +1774,15 @@ function shareRoom(id){
   var r = byId(id); if(!r) return;
   var url = location.origin + location.pathname + '?room=' + encodeURIComponent(r.id);
   var text = r.title + (r.price ? ' for ' + money(r.price, r.currency) + ' a month' : '') + ' in ' + r.location;
+  /* The /s/ link previews with this room's photo and rent in a chat,
+     and the sheet gives desktop the same choices a phone has. */
+  if(window.CabanaShare){
+    var link = CabanaShare.listingUrl({id: r.id, service: 'roommates'}) || url;
+    CabanaShare.share({title: r.title, text: text, url: link, heading: 'Share this room',
+      subtitle: [r.location, r.price ? money(r.price, r.currency) + ' a month' : ''].filter(Boolean).join(' · '),
+      imageUrl: r.photos && r.photos[0] ? r.photos[0] : ''}).then(function(how){ if(how === 'shared') track('share',{item_id:r.id}); });
+    return;
+  }
   if(navigator.share){
     navigator.share({title:r.title, text:text, url:url}).then(function(){ track('share',{item_id:r.id}); }, function(){});
   } else if(navigator.clipboard){
@@ -2227,5 +2236,6 @@ window.showToast = toast;
 <script src="/cabana-identity.js" defer></script>
 <script src="/cabana-pay.js" defer></script>
 <script src="/cabana-rooms-pass.js" defer></script>
+<script src="/cabana-share.js?v=1" defer></script>
 </body>
 </html>

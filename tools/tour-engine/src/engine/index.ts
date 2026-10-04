@@ -42,9 +42,13 @@ import { fetchWeather } from './weather';
 
 const STILL_MS = 180;
 const AO_FADE_MS = 200;
+/** Edge of the occlusion buffers while warming up shaders: big enough to run every pass, small enough to be free. */
+const WARM_SIZE = 128;
 const DAY_START = 5.5, DAY_END = 22, DAY_SECONDS = 24;
 const FOV_MIN = 35, FOV_MAX = 80;
 const DOLLHOUSE_FOV = 45, PLAN_FOV = 40;
+/** Share of the canvas height the shell's glass covers in plan: title and mode switch above, room strip below. */
+const PLAN_INSET_TOP = 0.12, PLAN_INSET_BOTTOM = 0.21;
 const UNREACHABLE = 'That spot can’t be reached from here';
 
 export const createTour: CreateTour = (host, def, cb) => {
@@ -448,9 +452,10 @@ function startTour(host: HTMLElement, def: TourDefinition, cb: TourCallbacks, re
 
   /** The perspective pose that frames exactly what the plan's orthographic camera shows. */
   function topDownPose(eye: T.Vector3, look: T.Vector3) {
-    const halfHeight = ortho.top / ortho.zoom;
+    const halfHeight = (ortho.top - ortho.bottom) / 2 / ortho.zoom;
     const h = halfHeight / Math.tan((PLAN_FOV / 2) * Math.PI / 180);
-    const tx = planOrbit.target.x, tz = planOrbit.target.z;
+    // The plan's frustum is lifted off-centre (see updatePlanFrustum); aim at what sits mid-canvas, south of the target.
+    const tx = planOrbit.target.x, tz = planOrbit.target.z - (ortho.top + ortho.bottom) / 2 / ortho.zoom;
     look.set(tx, 0, tz);
     // A hair south of straight down keeps lookAt well-defined and puts north at the top.
     eye.set(tx, h, tz + h * 1e-4);
@@ -460,11 +465,15 @@ function startTour(host: HTMLElement, def: TourDefinition, cb: TourCallbacks, re
     return out.set(x + Math.sin(yaw) * Math.cos(pitch) * 2, walker.eye + Math.sin(pitch) * 2, z + Math.cos(yaw) * Math.cos(pitch) * 2);
   }
 
+  /** Fits the plan into the band between the shell's top bar and room strip, so no room hides under glass. */
   function updatePlanFrustum() {
     const halfW = (b.maxX - b.minX) / 2 * 1.1 + 0.3, halfD = (b.maxZ - b.minZ) / 2 * 1.1 + 0.3;
     const aspect = width / height;
-    const top = Math.max(halfD, halfW / aspect);
-    ortho.top = top; ortho.bottom = -top; ortho.right = top * aspect; ortho.left = -top * aspect;
+    const top = Math.max(halfD / (1 - PLAN_INSET_TOP - PLAN_INSET_BOTTOM), halfW / aspect);
+    // Shift the frustum so the target lands at the band's centre rather than the canvas centre (in NDC, +y is up).
+    const shift = PLAN_INSET_BOTTOM - PLAN_INSET_TOP;
+    ortho.top = top * (1 - shift); ortho.bottom = -top * (1 + shift);
+    ortho.right = top * aspect; ortho.left = -top * aspect;
     ortho.updateProjectionMatrix();
   }
 
@@ -1037,8 +1046,12 @@ function startTour(host: HTMLElement, def: TourDefinition, cb: TourCallbacks, re
       renderer.render(scene, persp);
       await nextTask();
       if (governor.spec.ao) {
-        ensureRefiner();
-        refiner!.renderScene(renderer, persp, () => {}, () => {});
+        // Only the programs matter here, not the pixels. Occlusion at canvas size is the most expensive pass
+        // the engine has (seconds under software GL) and would hold the loading bar for nothing; the first
+        // refined frame grows the buffers to the canvas, which is a reallocation, not a recompile.
+        if (!refiner) refiner = new Refiner(scene, persp, WARM_SIZE, WARM_SIZE, { samples: 2, ao: true });
+        else refiner.setSize(WARM_SIZE, WARM_SIZE);
+        refiner.renderScene(renderer, persp, () => {}, () => {});
         refiner!.composite(renderer, 1, rig!.background, null);
       }
       load(0.96, 'Warming up');

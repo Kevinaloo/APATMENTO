@@ -1158,6 +1158,15 @@ function zoom(url){
 }
 function share(){
   var d={title:(R&&R.title)||'Cabana',text:R?('The menu at '+R.title):'',url:location.href};
+  /* A restaurant is a listing, so its /s/ link previews with the
+     kitchen's own photo in a chat; the sheet covers desktop. */
+  if(window.CabanaShare&&R){
+    CabanaShare.share({title:d.title,text:d.text,heading:'Share this restaurant',
+      url:CabanaShare.listingUrl({id:R.id,service:'food'})||d.url,
+      subtitle:[R.area,R.city].filter(Boolean).join(', ')||R.location||'',
+      imageUrl:(R.photos&&R.photos[0])||''});
+    return;
+  }
   if(navigator.share) navigator.share(d).catch(function(){});
   else if(navigator.clipboard) navigator.clipboard.writeText(location.href).then(function(){toast('Link copied');});
 }
@@ -1170,5 +1179,6 @@ function share(){
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-share.js?v=1" defer></script>
 </body>
 </html>

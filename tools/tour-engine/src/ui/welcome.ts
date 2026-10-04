@@ -27,7 +27,8 @@ export function mountWelcome(ctx: Ctx, cover: string, fallbackCover: string, sha
     h('div', { class: 'lrow' }, loadLabel, loadPct), h('div', { class: 'wbar' }, bar));
 
   const enterLabel = h('span', null, shared ? 'Step into the shared view' : 'Enter the apartment');
-  const enterBtn = h('button', { class: 'btn pri enter', type: 'button', disabled: true, onclick: enter }, enterLabel, icon('arrow'));
+  /* data-tour-enter is the hook bench/bench.cjs and the browser checks wait on. */
+  const enterBtn = h('button', { class: 'btn pri enter', type: 'button', disabled: true, 'data-tour-enter': true, onclick: enter }, enterLabel, icon('arrow'));
   const photosBtn = h('button', { class: 'btn quiet', type: 'button', onclick: () => ctx.openPhotos() }, icon('photos'), 'See the original photographs');
 
   let sharedNote: HTMLElement | null = null;

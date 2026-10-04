@@ -1,6 +1,8 @@
 /* Tour benchmark: loads a tour in headless Chromium, enters walk mode,
    holds W for a few seconds while turning, and reports frame timings.
-   Usage: node bench/bench.cjs <slug> [mobile] */
+   Usage: node bench/bench.cjs <slug> [mobile]
+   TOUR_BASE=http://localhost:4174 points it at another server (e.g. the old
+   viewers checked out of git history) for side-by-side numbers. */
 const { chromium } = require('/home/user/APATMENTO/node_modules/playwright');
 const slug = process.argv[2] || 'kileleshwa-elegant';
 const mobile = process.argv[3] === 'mobile';
@@ -11,11 +13,15 @@ const mobile = process.argv[3] === 'mobile';
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   const t0 = Date.now();
-  await page.goto('http://localhost:4173/tours/' + slug + '/index.html', { waitUntil: 'domcontentloaded' });
+  await page.goto((process.env.TOUR_BASE || 'http://localhost:4173') + '/tours/' + slug + '/index.html', { waitUntil: 'domcontentloaded' });
   const gl = await page.evaluate(() => { const c = document.createElement('canvas'); const g = c.getContext('webgl2'); return g ? g.getParameter(g.RENDERER) : 'none'; });
   // Wait for ready: an enter button or a canvas.
   await page.waitForFunction(() => document.querySelector('canvas'), null, { timeout: 60000 });
-  const enter = await page.waitForSelector('button.enter-button:not([disabled]), [data-tour-enter]:not([disabled])', { timeout: 60000 }).catch(() => null);
+  // Ready = the Enter button is enabled. Old viewers without a welcome screen (Jets Nest, Shikaz)
+  // count as ready once their room buttons are up.
+  await page.waitForFunction(() => document.querySelector('button.enter-button:not([disabled]), [data-tour-enter]:not([disabled])')
+    || (!document.querySelector('button.enter-button, [data-tour-enter]') && document.querySelector('.room-button')), null, { timeout: 120000 });
+  const enter = await page.$('button.enter-button:not([disabled]), [data-tour-enter]:not([disabled])');
   const readyMs = Date.now() - t0;
   if (enter) await enter.click();
   await page.waitForTimeout(800);

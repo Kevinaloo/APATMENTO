@@ -42,11 +42,19 @@
     document.body.style.overflow = previousOverflow;
     if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
   }
-  function open(id = JETS_NEST) {
+  /* A shared "exact view" (tools/tour-engine/src/share-code.ts). Opaque
+     here: only its alphabet and length are checked, and it is handed
+     only to our own /tours/ viewer, never to a third-party host. */
+  const VIEW_TOKEN = /^[a-z0-9~.\-]{1,120}$/i;
+  function viewSrc(url, view) {
+    const token = typeof view === 'string' && view !== '1' && VIEW_TOKEN.test(view) ? view : '';
+    return token && url.startsWith('/tours/') ? url + '?v=' + encodeURIComponent(token) : url;
+  }
+  function open(id = JETS_NEST, view) {
     const tour = TOURS[id];if (!tour || dialog) return;
     returnFocus = document.activeElement;previousOverflow = document.body.style.overflow;
     dialog = document.createElement('dialog');dialog.className = 'cabana-tour-dialog';dialog.setAttribute('aria-labelledby', 'cabana-tour-title');
-    dialog.innerHTML = '<header class="cabana-tour-bar"><div class="cabana-tour-bar-brand">'+cube+'<div><strong id="cabana-tour-title">'+escText(tour.name)+'</strong><span>Cabana 3D Tour · Estimated dimensions</span></div></div><button type="button" class="cabana-tour-close" aria-label="Close 3D walkthrough">Close <span aria-hidden="true">×</span></button></header><iframe title="Walk through '+escText(tour.name)+' in 3D" allow="fullscreen; xr-spatial-tracking" src="'+escText(tour.url)+'"></iframe>';
+    dialog.innerHTML = '<header class="cabana-tour-bar"><div class="cabana-tour-bar-brand">'+cube+'<div><strong id="cabana-tour-title">'+escText(tour.name)+'</strong><span>Cabana 3D Tour · Estimated dimensions</span></div></div><button type="button" class="cabana-tour-close" aria-label="Close 3D walkthrough">Close <span aria-hidden="true">×</span></button></header><iframe title="Walk through '+escText(tour.name)+' in 3D" allow="fullscreen; xr-spatial-tracking" src="'+escText(viewSrc(tour.url, view))+'"></iframe>';
     dialog.querySelector('button').addEventListener('click',close);
     dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
     document.body.appendChild(dialog);document.body.style.overflow='hidden';dialog.showModal();

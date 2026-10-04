@@ -3,7 +3,7 @@
    Mobile first, desktop from 761px. The page is the tour's own document, so
    class names are short and unprefixed, and shared shapes are grouped up front
    to keep the sheet under 30 KB. */
-.ct{--g:16px;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);--ln:#ffffff26;--ln2:#ffffff14;--tx:#fffffff5;--mu:#ffffffad;--fa:#ffffff75;--glass:rgba(var(--nr),.44);--deep:rgba(var(--nr),.86);--serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;--ease:cubic-bezier(.22,.8,.24,1);--chip:112px;position:fixed;inset:0;overflow:hidden;isolation:isolate;background:var(--night);color:var(--tx);font:14px/1.45 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+.ct{--g:16px;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);--ln:#ffffff26;--ln2:#ffffff14;--tx:#fffffff5;--mu:#ffffffad;--fa:#ffffff75;--glass:rgba(var(--nr),.52);--deep:rgba(var(--nr),.86);--serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;--ease:cubic-bezier(.22,.8,.24,1);--chip:112px;position:fixed;inset:0;overflow:hidden;isolation:isolate;background:var(--night);color:var(--tx);font:14px/1.45 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 /* :where() keeps the reset at zero specificity. */
 :where(.ct) *,:where(.ct) ::before,:where(.ct) ::after{box-sizing:border-box}
 :where(.ct) button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;touch-action:manipulation}
@@ -28,8 +28,9 @@
 .scene,.shade,.hud,.top,.modes,.caption,.map,.mapbtn,.dock,.br,.zone,.stick,.knob,.ghost,.foot,.toasts,.panels,.panel,.welcome,.wbg,.wshade,.fb,.ring,.arrow,.count,.thumb,.trk i,.card figcaption,.cdate input,.a-img figcaption,.stage img,.sr,.lci::after,.wbody::before,.tourb::after{position:absolute}
 .scene,.shade,.hud,.panels,.welcome,.wbg,.wshade,.fb,.ring,.stage img,.cdate input{inset:0}
 .modes button,.dial,.lci,.trk,.stage,.card,.cdate,.a-img,.wbody{position:relative}
+/* Wrappers that span empty space (the bottom-right column reaches up over the room strip on phones) pass taps through; only what they hold takes them. */
 .shade,.hud,.top,.dock,.br,.foot,.toasts,.panels,.caption,.stick,.ghost,.pr text{pointer-events:none}
-.hud>*,.top>*,.dock>*,.br>*,.panel,.foot button{pointer-events:auto}
+.hud>:not(.br,.foot,.caption),.top>*,.dock>*,.br>*,.panel,.foot button{pointer-events:auto}
 .btn,.tools,.modes,.modes button,.thumb,.tourb,.pill,.lc,.mlook,.toast,.seg button,.chip,.tabs button,.chips li,.trk,.count,.card figcaption{border-radius:99px}
 .round,.x,.tool,.lci,.run,.arrow,.stick,.knob,.ghost i,.trk i,.live i,.map footer i,.k i,.lci::after,.ll::before,.listing span::before{border-radius:50%}
 .gl,.gd,.pill,.tourb,.rooms,.line,.key,.mlook,.seg button,.chip,.tabs button,.presets button,.chips li,.arrow{border:1px solid var(--ln)}
@@ -60,7 +61,8 @@
 /* ── Scene, shading, HUD ── */
 .scene{outline:none;touch-action:none}
 .scene:focus-visible{outline:none;box-shadow:inset 0 0 0 2px rgba(var(--hr),.55)}
-.shade{z-index:1;opacity:0;transition:opacity .9s;background:linear-gradient(rgba(var(--nr),.6),rgba(var(--nr),0) 170px),linear-gradient(0deg,rgba(var(--nr),.62),rgba(var(--nr),0) 240px)}
+/* The top-left pool sits under the room caption: bright rooms (a gold headboard, a sunlit sheer) otherwise swallow its detail line. */
+.shade{z-index:1;opacity:0;transition:opacity .9s;background:radial-gradient(560px 230px at 0 170px,rgba(var(--nr),.42),rgba(var(--nr),0)),linear-gradient(rgba(var(--nr),.6),rgba(var(--nr),0) 170px),linear-gradient(0deg,rgba(var(--nr),.62),rgba(var(--nr),0) 240px)}
 .hud{z-index:3;opacity:0;visibility:hidden;transition:opacity .6s,visibility 0s .6s}
 [data-phase=tour] .shade{opacity:1}
 [data-phase=tour] .hud{opacity:1;visibility:visible;transition:opacity .9s .15s}
@@ -102,7 +104,7 @@
 .ct [aria-expanded=true]::after,.modes [data-tip]:hover::after{display:none}
 }
 /* ── Caption ── */
-.caption{left:var(--g);right:76px;top:calc(var(--st) + 114px);display:none;text-shadow:0 1px 18px #00000059}
+.caption{left:var(--g);right:76px;top:calc(var(--st) + 114px);display:none;text-shadow:0 1px 2px #00000052,0 1px 18px #00000059}
 .is-touring .caption,.caption.is-touring .cbar{display:block}
 .ctitle{font:28px/1.08 var(--serif);letter-spacing:-.01em;margin-top:8px}
 .cdet{font-size:13.5px;margin-top:6px;max-width:36ch}

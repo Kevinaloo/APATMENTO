@@ -113,11 +113,13 @@ export class LightRig {
     this.hemi.intensity = this.base.hemi * lerp(0.18, 1, sky) * (1 - 0.32 * golden) * (1 + 0.15 * cloud * sky);
 
     this.ambient.color.copy(c.dayAmbient).lerp(c.goldAmbient, golden * 0.55).lerp(c.nightAmbient, night);
-    this.ambientNow = this.base.ambient * lerp(0.55, 1, sky) * (1 - 0.15 * golden) * (1 + 0.1 * cloud * sky);
+    // After dark the even fill drops further than the lamps rise, so the room reads as lamp-lit
+    // (pools of warm light, quieter corners) rather than as the afternoon in a warmer colour.
+    this.ambientNow = this.base.ambient * lerp(0.4, 1, sky) * (1 - 0.15 * golden) * (1 + 0.1 * cloud * sky);
     this.ambient.intensity = this.ambientNow;
 
     // Lamps are on all day as fill (the photographs show them on); after dark they carry the room.
-    this.lampLevel = lerp(1, 1.45, night) + 0.25 * cloud * sky;
+    this.lampLevel = lerp(1, 1.65, night) + 0.25 * cloud * sky;
     this.lamps.setLevel(this.lampLevel);
     this.lamps.setColor(c.lamp.copy(c.lampDay).lerp(c.lampNight, night));
     if (this.glow) this.glow.emissiveIntensity = this.base.glow * lerp(1, 1.5, night);

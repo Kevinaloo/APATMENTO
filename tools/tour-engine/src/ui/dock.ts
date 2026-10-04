@@ -22,9 +22,15 @@ export function mountDock(ctx: Ctx): HTMLElement {
     h('span', { class: 'dial' }, ring, playIcon),
     h('span', { class: 'tourt' }, h('b', null, 'Guided tour'), tourSub));
 
+  /* A photograph that fails to load leaves the frame's quiet tint, not a broken-image glyph. */
+  const thumb = (src: string) => {
+    const img = h('img', { src, alt: '', loading: 'lazy', decoding: 'async' });
+    img.addEventListener('error', () => { img.style.visibility = 'hidden'; }, { once: true });
+    return img;
+  };
   const roomButtons = def.rooms.map((r, i) =>
     h('button', { class: 'room', type: 'button', 'data-room': r.id, 'aria-label': `${r.name}. ${r.detail}`, onclick: () => ctx.chooseRoom(r.id) },
-      h('span', { class: 'rimg' }, h('img', { src: def.photoUrl(r.image), alt: '', loading: 'lazy', decoding: 'async' })),
+      h('span', { class: 'rimg' }, thumb(def.photoUrl(r.image))),
       h('span', { class: 'rname' }, h('i', null, pad2(i + 1)), r.name)));
   const rooms = h('div', { class: 'rooms' }, roomButtons);
 
