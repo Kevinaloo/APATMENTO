@@ -62,6 +62,19 @@ test('the build refuses a bundle without the permissions or with the wrong signe
   assert.match(read('.vercelignore'), /^android\/$/m);
 });
 
+test('the bundle clears Play Console\'s large-screen, edge-to-edge and R8 recommendations', () => {
+  // Android 16 ignores orientation locks on tablets and foldables; Play flags any lock.
+  assert.equal(twa.orientation, 'default');
+  assert.ok(!/^(portrait|landscape)/.test(web.orientation), 'the web manifest must not lock orientation either');
+  assert.ok(twa.minSdkVersion >= 24, 'android-browser-helper 2.7 needs Android 7.0');
+  assert.match(read('android/build-aab.sh'), /node "\$HERE\/modernize-project\.mjs" "\$WORK"/);
+  const mod = read('android/modernize-project.mjs');
+  assert.match(mod, /BROWSER_HELPER_VERSION = '2\.7\.\d+'/, 'android-browser-helper 2.7 is the edge-to-edge release');
+  assert.match(mod, /AGP_VERSION = '9\./);
+  assert.match(mod, /proguard-android-optimize\.txt/);
+  assert.match(mod, /shrinkResources true/);
+});
+
 test('Android installs go to Google Play, not a second Chrome-installed app', () => {
   const pwa = read('pwa.js');
   assert.match(pwa, /window\.CabanaPWA = window\.ApatmentoPWA/, 'the install buttons call CabanaPWA');
