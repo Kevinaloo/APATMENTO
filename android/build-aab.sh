@@ -9,6 +9,9 @@
 #    · location and notification permissions are declared (location
 #      delegation is what makes Android, not Chrome, own the location
 #      permission and list it under Apps → Cabana → Permissions)
+#    · the app asks for them itself, before the website opens: the native
+#      permission launcher (android/LauncherActivity.java) is in the build
+#      and GPS is optional, so Play still offers the app to every phone
 #    · the version code is the one in twa-manifest.json
 #    · it is signed by the Play upload key, not some other keystore
 #    · it clears Play Console's pre-launch recommendations: edge-to-edge
@@ -116,6 +119,10 @@ for p in android.permission.POST_NOTIFICATIONS android.permission.ACCESS_FINE_LO
   grep -q "name='$p'" <<<"$PERMS" || die "The build does not declare $p"
 done
 BADGING="$("$AAPT2" dump badging "$APK")"
+grep -q "uses-feature-not-required: name='android.hardware.location.gps'" <<<"$BADGING" \
+  || die "GPS is a required feature, so Play would hide the app from phones without it"
+unzip -p "$APK" 'classes*.dex' | grep -aq 'cabana_native_permissions' \
+  || die "The native permission launcher is not in the build (android/LauncherActivity.java)"
 grep -q "package: name='$PACKAGE' versionCode='$VERSION_CODE' versionName='$VERSION_NAME'" <<<"$BADGING" \
   || die "Package or version mismatch: $(head -1 <<<"$BADGING")"
 grep -q "targetSdkVersion:'36'" <<<"$BADGING" || die "targetSdkVersion is not 36"
@@ -142,7 +149,7 @@ echo
 echo "✓ cabana-$VERSION_NAME-$VERSION_CODE.aab"
 echo "  package      $PACKAGE"
 echo "  version      $VERSION_NAME ($VERSION_CODE)"
-echo "  permissions  notifications, precise + approximate location"
+echo "  permissions  notifications, precise + approximate location, asked natively on launch"
 echo "  platform     edge-to-edge, any orientation, R8 optimised, AGP 9"
 echo "  signed by    $SIGNER"
 echo "  output       $OUT"

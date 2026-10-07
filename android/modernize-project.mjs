@@ -18,6 +18,12 @@
 //      resource shrinking.
 //    · Android Gradle Plugin 9 on Gradle 9, with the DSL the template
 //      uses but AGP 9 removed (lintOptions, jcenter, buildDir).
+//    · Native permissions: android/LauncherActivity.java replaces the
+//      generated launcher. It asks Android for notifications and
+//      location before the website opens, instead of waiting for Chrome
+//      to hand a request to the app (see the file's header). The manifest
+//      also marks GPS and location hardware as optional, so Play does not
+//      hide the app from phones without them.
 //
 //  Every edit must find what it replaces. If a Bubblewrap upgrade
 //  changes the template, this fails loudly, rather than shipping a
@@ -51,6 +57,31 @@ function patch(file, edits) {
   }
   writeFileSync(path, text);
 }
+
+// ── native permissions ─────────────────────────────────────────────
+const manifestPath = join(dir, 'app/src/main/AndroidManifest.xml');
+const packageName = (readFileSync(manifestPath, 'utf8').match(/<manifest[^>]*\spackage="([^"]+)"/) || [])[1];
+if (!packageName) {
+  console.error('✗ app/src/main/AndroidManifest.xml has no package attribute. Has the Bubblewrap template changed?');
+  process.exit(1);
+}
+const launcherPath = join(dir, 'app/src/main/java', ...packageName.split('.'), 'LauncherActivity.java');
+if (!existsSync(launcherPath) ||
+    !/extends\s+com\.google\.androidbrowserhelper\.trusted\.LauncherActivity/.test(readFileSync(launcherPath, 'utf8'))) {
+  console.error(`✗ ${launcherPath} is not the Bubblewrap LauncherActivity. Has the template changed?`);
+  process.exit(1);
+}
+writeFileSync(launcherPath,
+  readFileSync(new URL('./LauncherActivity.java', import.meta.url), 'utf8').replace(/__PACKAGE__/g, packageName));
+
+patch('app/src/main/AndroidManifest.xml', [
+  // ACCESS_FINE_LOCATION implies a GPS requirement unless declared optional.
+  ['    <application\n', `    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+    <application
+`],
+]);
 
 patch('build.gradle', [
   ["classpath 'com.android.tools.build:gradle:8.9.1'", `classpath 'com.android.tools.build:gradle:${AGP_VERSION}'`],
@@ -95,4 +126,5 @@ writeFileSync(join(dir, 'app/src/main/res/raw/keep.xml'),
   '<?xml version="1.0" encoding="utf-8"?>\n' +
   '<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/web_app_manifest" />\n');
 
+console.log(`▸ Native permission launcher installed for ${packageName}`);
 console.log(`▸ Project on AGP ${AGP_VERSION} / Gradle ${GRADLE_VERSION}, android-browser-helper ${BROWSER_HELPER_VERSION}, R8 optimisation and resource shrinking on`);

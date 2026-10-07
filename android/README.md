@@ -41,8 +41,37 @@ list in `twa-manifest.json`, deploy the site, then release.
 
 | Permission | How Cabana gets it |
 |---|---|
-| Notifications | Android permission, declared by the app. Asked on first launch with Cabana's explanation first (`cabana-permit.js`). |
-| Location (precise and approximate) | Android permission through location delegation. Asked on first launch with the same explanation; the permissions gate keeps signed-in members on it until it is on. |
+| Notifications | Android permission, declared by the app and **asked by the app itself on launch** (`LauncherActivity.java`), before the website opens. |
+| Location (precise and approximate) | Android permission, asked by the app on launch in the same step. Location delegation then lets Chrome read the answer, so the website never has to start an Android dialog. |
+
+### Why the app asks, not the website (1.3.0)
+
+Up to 1.2.0 the app opened the website and left both requests to the
+page. For location that means Chrome has to hand the request to the app
+and the app has to start Android's dialog. When Chrome already held a
+site "allow" for location but Android had never been asked, no dialog
+appeared and the page waited, then reported "Location is unavailable".
+
+`android/LauncherActivity.java` replaces the generated launcher
+(`modernize-project.mjs` copies it in, and `build-aab.sh` refuses a bundle
+without it). Before the website opens it:
+
+1. explains why, then shows Android's notification and location dialogs;
+2. after one refusal, asks once more with the reason;
+3. after Android has stopped showing its dialog, opens the app's settings
+   page (at most once a day);
+4. if location is allowed but the phone's own location switch is off,
+   opens the location settings.
+
+Every dialog has **Not now**, which opens the website. From there
+`cabana-permit.js` is the only gate: it keeps signed-in members on one
+card, naming the exact switch that is still off.
+
+The launcher was compiled, built into a signed bundle and checked
+(permissions, optional GPS, R8) but has not been run on a phone. After
+uploading to **Internal testing**, test on a real phone: a fresh install should show
+the explanation, then both Android dialogs, then the site with no gate.
+Then deny location twice and check the Settings dialog appears.
 | Camera, microphone | Asked by Chrome at the moment a page uses them (video calls, scanning). They are browser permissions in a TWA; declaring them in the app would not change who asks. |
 | Photos and files | None needed. Upload buttons open Android's own photo and file pickers, which need no permission. Do **not** add `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO`: Google Play only allows them for apps whose core purpose is a gallery or editor, and asks for a declaration that would be rejected. |
 
@@ -50,7 +79,7 @@ list in `twa-manifest.json`, deploy the site, then release.
 
 Bump `appVersionCode` (and `appVersionName`/`appVersion`) in
 `twa-manifest.json` for every upload. Play rejects a version code it has
-seen before, on any track. Versions 1 to 3 are already on Play (3, `1.1.1`, is in production).
+seen before, on any track. Versions 1 to 4 have been uploaded to Play; this release is `1.3.0` (5).
 
 ### Option A: GitHub Actions (recommended)
 
@@ -122,13 +151,13 @@ script; do not remove it.
 1. Deploy the website first (assetlinks, the Play install buttons and the
    permission flow all live there).
 2. Testing → Open testing → Create new release → Upload the `.aab`.
-3. Release name: `<version> (<code>)`, for example `1.2.0 (4)`. Release notes, for example:
+3. Release name: `<version> (<code>)`, for example `1.3.0 (5)`. Release notes, for example:
 
    ```
    <en-GB>
-   • Fills the whole screen, edge to edge, on Android 15 and later
-   • Rotates with your phone, tablet or foldable
-   • Smaller and faster to start
+   • Asks for notifications and location when you open the app, so alerts and pick-ups work straight away
+   • Tells you exactly which setting to change if either is off
+   • Fills the whole screen on Android 15 and later, and rotates on tablets and foldables
    </en-GB>
    ```
 4. Review the release, then roll out.

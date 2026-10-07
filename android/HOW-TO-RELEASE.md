@@ -239,7 +239,7 @@ website deployed (Vercel shows a green tick on the latest commit on
 
 6. Click the green run. Scroll to the bottom, to **Artifacts**.
 7. Click **cabana-android-bundle**. A zip file downloads.
-8. Open the zip. Inside is **`cabana-1.2.0-4.aab`**. That is the app.
+8. Open the zip. Inside is **`cabana-1.3.0-5.aab`**. That is the app.
    (The `.apk` next to it is only for installing by hand on a test phone.)
 
 ---
@@ -266,9 +266,9 @@ website deployed (Vercel shows a green tick on the latest commit on
 
 1. Left menu: **Test and release** → **Production**.
 2. Click **Create new release**.
-3. Drag `cabana-1.2.0-4.aab` into the **App bundles** box. Wait for the
-   green tick. (It shows version code **4** and version **1.2.0**.)
-4. **Release name**: `1.2.0 (4)`
+3. Drag `cabana-1.3.0-5.aab` into the **App bundles** box. Wait for the
+   green tick. (It shows version code **5** and version **1.3.0**.)
+4. **Release name**: `1.3.0 (5)`
 5. **Release notes**: copy the release notes box from
    [`store-listing/en-GB.md`](store-listing/en-GB.md).
 6. Click **Next**. Read any warnings (yellow is OK, red must be fixed),
@@ -278,7 +278,7 @@ website deployed (Vercel shows a green tick on the latest commit on
    review**.
 
 Google usually reviews within 1 to 3 days (sometimes up to 7). You get an
-email. Version 3 doesn't need deleting; version 4 replaces it.
+email. Older versions don't need deleting; version 5 replaces them.
 
 > You do **not** need to "Submit an appeal". The appeal is for when you
 > think Google is wrong. Here Google was right, and we fixed it.
@@ -305,7 +305,7 @@ Every upload needs a **bigger version number**. Google refuses a number it
 has already seen, even from a rejected release.
 
 1. Open `android/twa-manifest.json`.
-2. Change `appVersionCode` by adding 1 (now 4, next 5).
+2. Change `appVersionCode` by adding 1 (now 5, next 6).
 3. Change `appVersionName` **and** `appVersion` to the same new name, for
    example `1.2.1`.
 4. Merge, then repeat Parts 4, 6 and 7. (Parts 1 to 3 are once only;

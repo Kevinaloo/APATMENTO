@@ -562,14 +562,24 @@ function openPlayStore(source) {
 }
 
 /* ── REQUIRED APP PERMISSIONS ──────────────────────────────────────
-   A verified Trusted Web Activity is the installed Cabana app. Keep the
-   browser site usable without a surprise OS prompt, but make the app ask
-   for the two permissions it needs on first launch. The native permission
-   dialogs still have to be started by a user gesture; the branded gates
-   provide that gesture and explain why each permission is needed. */
+   A verified Trusted Web Activity is the installed Cabana app. The app
+   itself asks Android for notifications and location before this page
+   opens (android/LauncherActivity.java), so by the time the website
+   loads, both are normally already on.
+
+   What is left for the website is the member's own gate: cabana-permit.js
+   keeps a signed-in member on one card until both are on, and says
+   exactly which switch is off. It is the only surface that asks. A second
+   gate used to start here as well, and the two stood on top of each other
+   asking Android for the same permission at the same time. */
 function runningCabanaApp() {
-  return runningStandalone()
+  var app = runningStandalone()
     || (document.referrer || '').indexOf('android-app://africa.cabana.app') === 0;
+  try {
+    if (app) sessionStorage.setItem('cabana_in_app', '1');
+    else if (sessionStorage.getItem('cabana_in_app') === '1') app = true;
+  } catch (e) {}
+  return app;
 }
 
 function initRequiredAppPermissions() {
@@ -578,13 +588,10 @@ function initRequiredAppPermissions() {
 
   var tries = 0;
   var wait = setInterval(function () {
-    var loc = window.ApaLocation;
     var push = window.ApaPush;
-    if (loc && push && typeof loc.prime === 'function' && typeof push.requireNotifications === 'function') {
+    if (push && typeof push.requireNotifications === 'function') {
       clearInterval(wait);
-      Promise.resolve(loc.prime({ reason: 'default', required: true }))
-        .then(function () { return push.requireNotifications(); })
-        .catch(function () {});
+      Promise.resolve(push.requireNotifications()).catch(function () {});
     } else if (++tries > 100) {
       clearInterval(wait);
     }
