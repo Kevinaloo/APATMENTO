@@ -276,7 +276,8 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
    lines — the guest is here to compare places, and the place has to be
    the widest thing on the line. */
 .match-tags{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex:none;}
-.rev-prompt{margin-top:14px;padding:16px;border-radius:16px;background:#fafbfc;border:1.5px solid #e8eaee;}
+.rev-prompt{margin-top:14px;padding:16px;border-radius:16px;background:#fafbfc;border:1.5px solid #e8eaee;transition:box-shadow .4s,border-color .4s;}
+.rev-focus{border-color:#7B2FF7!important;box-shadow:0 0 0 4px rgba(123,47,247,.16);}
 .rev-t{font-weight:700;font-size:14px;color:#0f1117;margin-bottom:4px;}
 .rev-s{font-size:12.5px;line-height:1.55;color:#767d88;margin-bottom:12px;}
 .rev-stars{display:flex;gap:6px;margin-bottom:12px;}
@@ -550,6 +551,7 @@ async function loadAllBookings() {
 
   await loadTrustState(uid);
   renderBookings();
+  openReviewFromLink();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -746,7 +748,7 @@ function buildBookingCard(b, i) {
     body += '<button class="issue-btn" onclick="openIssue(\'' + b.id + '\')">' + label + '</button>';
   }
 
-  if (b._type === 'apartment' && b.status === 'checked_in' && !REVIEWED.has(b.id)) {
+  if (canReview(b)) {
     body += buildReviewPanel(b);
   }
 
@@ -1327,6 +1329,38 @@ async function openIssue(bookingId) {
    Never published. The host sees it only once they've written theirs,
    so neither is writing a reply. It still moves the listing's rank.
    ═══════════════════════════════════════════════════════════════ */
+/* The database takes a guest's review from check-in until 30 days after
+   checkout. The form used to appear only while the stay was checked_in,
+   and the nightly sweep marks it completed the night after checkout, so
+   it disappeared before most guests thought to write one. */
+function canReview(b) {
+  if (b._type !== 'apartment' || b.cancelled_at || REVIEWED.has(b.id)) return false;
+  if (!(b.status === 'checked_in' || b.status === 'completed' || b.checked_in_at)) return false;
+  const end = CB.endDay(b);
+  return end == null || CB.today() <= end + 30;
+}
+
+/* The review request (push, email or in-app) links here with ?review=<id>:
+   open the right tab and bring the form into view. */
+function openReviewFromLink() {
+  const id = new URLSearchParams(location.search).get('review');
+  if (!id || openReviewFromLink.done) return;
+  openReviewFromLink.done = true;
+  const b = allBookings.find(x => x.id === id);
+  if (!b) return;
+  if (b._lc.bucket !== currentWhen || currentType !== 'all') {
+    currentWhen = b._lc.bucket; currentType = 'all';
+    document.querySelectorAll('#tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.when === currentWhen));
+    renderBookings();
+  }
+  const target = $('rev-' + id) || $('card-' + id);
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  target.classList.add('rev-focus');
+  setTimeout(() => target.classList.remove('rev-focus'), 2600);
+  if (!$('rev-' + id)) showToast(REVIEWED.has(id) ? 'You have already reviewed this stay. Thank you.' : 'The review window for this stay has closed.');
+}
+
 function buildReviewPanel(b) {
   return '<div class="rev-prompt" id="rev-' + b.id + '">'
     + '<div class="rev-t">How was ' + esc(CB.title(b)) + '?</div>'

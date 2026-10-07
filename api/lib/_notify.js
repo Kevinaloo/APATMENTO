@@ -19,14 +19,14 @@
 
 import { deliverNotification } from '../push-send.js';
 
-export async function notify({ user_id, endpoint, title, body, url, kind = 'general', persist = true }) {
+export async function notify({ user_id, endpoint, title, body, url, kind = 'general', persist = true, meta }) {
   if (!title || (!user_id && !endpoint)) {
     console.warn('[notify] skipped: need title + (user_id|endpoint)');
     return { ok: false, skipped: true };
   }
 
   try {
-    const out = await deliverNotification({ user_id, endpoint, title, body, url, kind, persist });
+    const out = await deliverNotification({ user_id, endpoint, title, body, url, kind, persist, meta });
     return { ok: true, ...out };
   } catch (err) {
     // Never let a notification failure break the calling flow.
