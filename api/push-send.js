@@ -223,7 +223,7 @@ export function pushPlan({ kind = 'general', meta = {}, title, body, url }) {
    listing" nudge is not; a booking, a payment, a support reply or an
    incoming call is. Consent and deduplication are handled inside
    sendTemplate, so this only has to decide relevance. */
-const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'message', 'call', 'security', 'payout', 'urgent', 'order', 'match']);
+const EMAIL_WORTHY = new Set(['booking', 'payment', 'support', 'message', 'call', 'security', 'payout', 'urgent', 'order', 'match', 'review']);
 
 async function mirrorToEmail({ user_id, title, body, url, kind, email, force }) {
   if (!force && !EMAIL_WORTHY.has(kind)) return false;
@@ -250,10 +250,12 @@ async function mirrorToEmail({ user_id, title, body, url, kind, email, force }) 
       name: firstName,
       email: to, title, body, url,
       label: kind === 'call' ? 'Open the call' : kind === 'support' ? 'Open the conversation'
-           : kind === 'order' ? 'Open the order' : kind === 'match' ? 'Open the request' : 'Open Cabana',
+           : kind === 'order' ? 'Open the order' : kind === 'match' ? 'Open the request'
+           : kind === 'review' ? 'Write your private review' : 'Open Cabana',
       emoji: kind === 'booking' ? '🗓️' : kind === 'payment' ? '💳'
            : kind === 'support' ? '💬' : kind === 'call' ? '📞'
-           : kind === 'payout' ? '💸' : kind === 'order' ? '🍽️' : kind === 'match' ? '📡' : '🔔',
+           : kind === 'payout' ? '💸' : kind === 'order' ? '🍽️' : kind === 'match' ? '📡'
+           : kind === 'review' ? '⭐' : '🔔',
     },
   });
   return !!(res && res.ok && !res.skipped);

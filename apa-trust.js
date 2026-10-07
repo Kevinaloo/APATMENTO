@@ -827,8 +827,9 @@
       var c = sb(); if (!c) return [];
       var b = await c.from('apartment_bookings').select('*')
                 .or('guest_id.eq.' + userId + ',host_id.eq.' + userId)
-                .eq('status', 'checked_in')
-                .gte('checkout_date', new Date(Date.now() - 14 * 864e5).toISOString().slice(0,10));
+                .in('status', ['checked_in', 'completed'])
+                .is('cancelled_at', null)
+                .gte('checkout_date', new Date(Date.now() - 30 * 864e5).toISOString().slice(0,10));
       var rows = b.data || [];
       if (!rows.length) return [];
       var ids = rows.map(function (x) { return x.id; });
