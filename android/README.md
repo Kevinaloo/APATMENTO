@@ -1,5 +1,8 @@
 # Cabana for Android
 
+> **New to this?** Follow [HOW-TO-RELEASE.md](HOW-TO-RELEASE.md), a click-by-click guide.
+> Play store text lives in [store-listing/en-GB.md](store-listing/en-GB.md).
+
 The Play Store app (`africa.cabana.app`) is a Trusted Web Activity: Chrome
 renders cabana.africa full screen inside an app that Android treats as
 Cabana's own. Two things decide whether it feels like a native app:
