@@ -1938,7 +1938,7 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 <script src="/cabana-people.js?v=2-living" defer></script>
 <script src="/apa-rail.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=41-match" defer></script>
+<script src="/pwa.js?v=42-play" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/cabana-credit.js" defer></script>
@@ -2071,6 +2071,7 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
   // Set correct label immediately based on platform
   if (isIOS)            label.textContent = 'Add to Home Screen';
   else if (isSafariDesktop) label.textContent = 'Add to Dock';
+  else if (isAndroid)   label.textContent = 'Get it on Google Play';
   else                  label.textContent = 'Get the app';
 
   btn.classList.add('on');
@@ -2213,6 +2214,10 @@ document.querySelectorAll('.svc-tile').forEach((t,i)=>{t.style.transitionDelay=(
 
   /* ── Button click handler ── */
   btn.addEventListener('click', async function(){
+    // 0. Android: the app is the Play Store app, not a Chrome install.
+    //    Play hands off from in-app browsers too, so this goes first.
+    if (isAndroid && window.CabanaPWA && window.CabanaPWA.openPlayStore) { window.CabanaPWA.openPlayStore('hero'); return; }
+
     // 1. In-app browsers cannot install. Handle first
     if (isInAppBrowser) { showInAppBrowserModal(); return; }
 

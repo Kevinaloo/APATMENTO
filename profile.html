@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>My Profile · Cabana</title>
 <meta name="description" content="Your Cabana profile: your look, your verification ticks, who follows you and what the world sees."/>
-<script src="/pwa.js?v=41-match" defer></script>
+<script src="/pwa.js?v=42-play" defer></script>
 <script src="/apa-push.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -170,6 +170,11 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 .pref-row:last-child{border-bottom:none;padding-bottom:0}
 .pref-info strong{font-size:13.5px;font-weight:600;color:var(--ink);display:block;margin-bottom:2px}
 .pref-info span{font-size:12px;color:var(--ink4)}
+.state{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:650;white-space:nowrap;background:rgba(20,184,166,.12);color:#0F766E}
+.state svg{width:13px;height:13px}
+.state.warn{background:rgba(229,72,77,.08);color:#B4262B}
+.state.wait{background:rgba(15,17,23,.06);color:var(--ink3)}
+.state-btn{flex-shrink:0;border:0;cursor:pointer;border-radius:999px;padding:8px 14px;font:650 12.5px/1 inherit;font-family:inherit;color:#fff;background:linear-gradient(135deg,#8B3DFF,#4A36E0);box-shadow:0 6px 16px rgba(106,45,240,.28)}
 .toggle{width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;background:#D1D5DB}
 .toggle[aria-checked=true]{background:var(--reef)}
 .toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;transition:transform .3s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
@@ -222,7 +227,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
         <div class="hero-name"><span id="hero-name">Loading…</span><span id="hero-tick"></span></div>
         <div class="hero-handle" id="hero-handle"></div>
         <div class="hero-meta">
-          <span class="pill off" id="hero-vis">Private</span>
+          <span class="pill live" id="hero-vis">Public profile</span>
           <a class="pill" id="hero-view" href="#" target="_blank" rel="noopener" hidden>View public profile ↗</a>
           <button class="pill" id="hero-share" type="button" hidden>Copy link</button>
         </div>
@@ -318,7 +323,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
   <!-- 4 · PRIVACY -->
   <section class="card" id="privacy">
     <div class="card-title">Who can see what</div>
-    <div class="pref-row"><div class="pref-info"><strong>Publish my profile</strong><span>Anyone on Cabana can view your profile and follow you. Off: only people you message see your first name and look.</span></div><button class="toggle" type="button" role="switch" aria-checked="false" data-pref="published" aria-label="Publish my profile"></button></div>
+    <div class="pref-row"><div class="pref-info"><strong>Your profile is public</strong><span>Every Cabana profile is public, so hosts, guests and partners always know who they are dealing with. Anyone on Cabana can view yours and follow you.</span></div><span class="state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Public</span></div>
     <div class="pref-row"><div class="pref-info"><strong>Allow people to follow me</strong><span>Followers get to see what you list and share first.</span></div><button class="toggle" type="button" role="switch" aria-checked="true" data-pref="allow_follow" aria-label="Allow followers"></button></div>
     <div class="pref-row"><div class="pref-info"><strong>Show follower counts and lists</strong><span>Off hides who follows you and who you follow.</span></div><button class="toggle" type="button" role="switch" aria-checked="true" data-pref="show_followers" aria-label="Show followers"></button></div>
     <div class="pref-row"><div class="pref-info"><strong>Show my listings on my profile</strong><span>Your live stays and services, as cards.</span></div><button class="toggle" type="button" role="switch" aria-checked="true" data-pref="show_listings" aria-label="Show my listings"></button></div>
@@ -357,9 +362,10 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 
   <section class="card">
     <div class="card-title">Notifications</div>
-    <div class="pref-row"><div class="pref-info"><strong>Booking confirmations</strong><span>Get notified when a booking is confirmed</span></div><button class="toggle legacy on" id="notif-bookings" onclick="togglePref(this)" aria-label="Booking confirmations"></button></div>
-    <div class="pref-row"><div class="pref-info"><strong>Check-in reminders</strong><span>Reminder the day before your check-in</span></div><button class="toggle legacy on" id="notif-checkin" onclick="togglePref(this)" aria-label="Check-in reminders"></button></div>
-    <div class="pref-row"><div class="pref-info"><strong>Promotions & offers</strong><span>Special deals and new services</span></div><button class="toggle legacy off" id="notif-promos" onclick="togglePref(this)" aria-label="Promotions"></button></div>
+    <div class="pref-row" id="device-row"><div class="pref-info"><strong>Alerts and location on this device</strong><span id="device-sub">Checking…</span></div><span class="state wait" id="device-state">…</span></div>
+    <div class="pref-row"><div class="pref-info"><strong>Booking confirmations</strong><span>The moment a booking is confirmed</span></div><span class="state">Always on</span></div>
+    <div class="pref-row"><div class="pref-info"><strong>Check-in reminders</strong><span>The day before you check in</span></div><span class="state">Always on</span></div>
+    <div class="pref-row"><div class="pref-info"><strong>Promotions & offers</strong><span>Member deals, new services and seasonal offers</span></div><span class="state">On</span></div>
   </section>
 
   <section class="card">
@@ -407,6 +413,7 @@ const NEXT = (n => /^\/(?!\/)[\w\-./?=&%#]{0,200}$/.test(n || '') ? n : null)(ne
   CURRENT_USER = session.user;
   buildStatic();
   await Promise.all([loadStudio(), loadProfile()]);
+  deviceStatus();
   if (new URLSearchParams(location.search).get('verify') === 'return') pollVerification();
   if (location.hash) setTimeout(() => document.querySelector(location.hash)?.scrollIntoView({ behavior: 'smooth' }), 300);
 })();
@@ -535,9 +542,11 @@ function renderAll(rerenderLook) {
   $('hero-name').textContent = d.display_name || 'Your name';
   $('hero-tick').innerHTML = p.badge ? PP.tick(p.badge, { size: 22 }) : '';
   $('hero-handle').textContent = d.handle ? '@' + d.handle : '';
-  const vis = $('hero-vis');
-  vis.textContent = S.saved.published ? 'Public profile' : 'Private profile';
-  vis.className = 'pill ' + (S.saved.published ? 'live' : 'off');
+  // Every profile is public. The one exception is a profile moderation
+  // hid; saving it again republishes it.
+  const hidden = S.saved.published === false, vis = $('hero-vis');
+  vis.textContent = hidden ? 'Hidden by moderation. Save to republish' : 'Public profile';
+  vis.className = 'pill ' + (hidden ? 'off' : 'live');
   const view = $('hero-view'), share = $('hero-share');
   view.hidden = share.hidden = !S.saved.handle;
   if (S.saved.handle) {
@@ -651,7 +660,7 @@ function renderPhoto() {
     return;
   }
   const has = s.photo_url, showing = has && s.photo_status === 'approved';
-  box.innerHTML = `<div class="photo-box"><div class="ph">${has ? `<img src="${esc(s.photo_url)}" alt="Your current photo">` : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="12" cy="12" r="3.4"/></svg>'}</div>
+  box.innerHTML = `<div class="photo-box"><div class="ph">${has ? `<img src="${esc(s.photo_url)}" alt="Your current photo" fetchpriority="high" decoding="async"/>` : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="12" cy="12" r="3.4"/></svg>'}</div>
     <div style="flex:1;min-width:200px"><strong>${has ? (showing ? 'Your photo is live' : 'Your photo is hidden') : org ? 'Add your logo or a photo' : 'Add a photo of you'}</strong>
     <p class="field-hint" style="margin-top:4px;font-size:12.5px">${s.photo_pending ? 'Your latest photo is waiting for a quick review by our team.' : 'JPEG, PNG or WebP. We crop it square, shrink it and strip location data before it leaves your phone. Every photo is checked against our community standards.'}</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
@@ -745,7 +754,7 @@ function renderTiers() {
   html += `<div class="tier t-provider ${prov ? 'done' : ''}"><div class="tier-ico">${PP.tick('provider', { size: 28 })}</div><div style="flex:1">
     <h3>${T.provider.label} ${prov ? stateTag('ok', 'Active') : stateTag('', 'Earned automatically')}</h3>
     <p>Cabana’s own mark, used nowhere else. It appears on its own when a verified ${org ? 'organisation' : 'person'} offers services on Cabana: a live stay or room, an approved tour or event, a verified fleet, Cabana Move driving, or host-approved agent work. Pause everything and it quietly steps back to your ${org ? 'gold' : 'purple'} tick.</p>
-    ${prov ? '' : `<div class="acts"><a class="btn btn-ghost" href="/add-listing.html">List a stay</a><a class="btn btn-ghost" href="/list-your-tour.html">Offer a tour</a><a class="btn btn-ghost" href="/list-your-event.html">Host an event</a><a class="btn btn-ghost" href="/list-your-fleet.html">Hire out cars</a></div>`}</div></div>`;
+    ${prov ? '' : `<div class="acts"><a class="btn btn-ghost" href="/add-listing">List a stay</a><a class="btn btn-ghost" href="/list-your-tour">Offer a tour</a><a class="btn btn-ghost" href="/list-your-event">Host an event</a><a class="btn btn-ghost" href="/list-your-fleet">Hire out cars</a></div>`}</div></div>`;
   html += `<div class="privacy-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Members only ever see your tick, never your documents, ID number, date of birth or legal name. Ticks cannot be bought, and pasting check symbols into your name is blocked.</span></div>`;
   $('tiers').innerHTML = html;
   $('verify-go')?.addEventListener('click', startVerification);
@@ -822,12 +831,12 @@ async function saveStudio() {
   $('discard').disabled = true;
   document.querySelectorAll('.field-input.bad').forEach(x => x.classList.remove('bad'));
   const d = clone(S.draft), body = {};
-  ['display_name', 'handle', 'headline', 'bio', 'account_type', 'city', 'country_code', 'languages', 'interests', 'theme', 'avatar', 'published', 'show_location', 'show_followers', 'allow_follow', 'show_listings', 'org_kind', 'org_website']
+  ['display_name', 'handle', 'headline', 'bio', 'account_type', 'city', 'country_code', 'languages', 'interests', 'theme', 'avatar', 'show_location', 'show_followers', 'allow_follow', 'show_listings', 'org_kind', 'org_website']
     .forEach(k => { if (JSON.stringify(d[k]) !== JSON.stringify(S.saved[k])) body[k] = d[k]; });
   if (d.account_type === 'individual') { delete body.org_kind; delete body.org_website; }
   try {
     const r = await PP.api('save', null, body);
-    toast(d.published && !S.saved.published ? 'Saved. Your profile is now public.' : 'Profile saved');
+    toast('Profile saved');
     PP.changed(CURRENT_USER.id);
     S.saved = clone(d); S.saved.handle = r.handle || d.handle;
     if (S.draft.handle === d.handle) S.draft.handle = S.saved.handle;
@@ -883,7 +892,43 @@ async function changePassword() {
   toast('Password updated');
   document.getElementById('new-pwd').value = ''; document.getElementById('confirm-pwd').value = '';
 }
-function togglePref(btn) { btn.classList.toggle('on'); btn.classList.toggle('off'); toast('Preference saved'); }
+/* ═══ this device: alerts and location ═══
+   The real Android/browser permission state, read through the same
+   gate that asks for it everywhere else in Cabana. */
+function loadPermit() {
+  if (window.CabanaPermit) return Promise.resolve(window.CabanaPermit);
+  return new Promise(resolve => {
+    const el = document.createElement('script');
+    el.src = '/cabana-permit.js?v=1';
+    el.onload = () => resolve(window.CabanaPermit || null);
+    el.onerror = () => resolve(null);
+    document.head.appendChild(el);
+  });
+}
+async function deviceStatus() {
+  const sub = $('device-sub'), row = $('device-row');
+  const P = await loadPermit();
+  if (!P) { sub.textContent = 'Could not check this device. Refresh to try again.'; return; }
+  let st;
+  try { st = await P.status(); } catch (_) { sub.textContent = 'Could not check this device. Refresh to try again.'; return; }
+  const ok = v => v === 'on' || v === 'unsupported';
+  const off = [!ok(st.notifications) && 'notifications', !ok(st.location) && 'location'].filter(Boolean);
+  const old = $('device-state');
+  if (!off.length) {
+    sub.textContent = 'Notifications and location are on. Cabana can reach you the moment something happens.';
+    old.outerHTML = '<span class="state" id="device-state">On</span>';
+    return;
+  }
+  sub.textContent = 'Turn on ' + off.join(' and ') + ' so hosts, guests and the safety desk can reach you.';
+  old.outerHTML = '<button class="state-btn" type="button" id="device-state">Turn on</button>';
+  $('device-state').addEventListener('click', () => {
+    P.show({ force: true });
+    // The gate closes itself once both are on; reflect that here.
+    const t = setInterval(() => { if (!document.querySelector('.cp')) { clearInterval(t); deviceStatus(); } }, 800);
+  });
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('device-row')) deviceStatus(); });
+
 async function signOut() { await sb.auth.signOut(); window.location.href = 'auth.html'; }
 function showToast(msg) { toast(msg); }
 </script>

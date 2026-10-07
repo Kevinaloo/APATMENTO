@@ -28,3 +28,9 @@ artifacts/programme-redesign/
 artifacts/programme-shots/
 artifacts/people-ui/
 artifacts/member-ui/
+
+# Android signing keys and built bundles. The upload keystore lives in
+# the ANDROID_KEYSTORE_BASE64 secret, never in the repository.
+*.keystore
+*.jks
+android/dist/
