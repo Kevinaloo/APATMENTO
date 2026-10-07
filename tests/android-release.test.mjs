@@ -68,6 +68,7 @@ test('the bundle clears Play Console\'s large-screen, edge-to-edge and R8 recomm
   assert.ok(!/^(portrait|landscape)/.test(web.orientation), 'the web manifest must not lock orientation either');
   assert.ok(twa.minSdkVersion >= 24, 'android-browser-helper 2.7 needs Android 7.0');
   assert.match(read('android/build-aab.sh'), /node "\$HERE\/modernize-project\.mjs" "\$WORK"/);
+  assert.match(read('android/build-aab.sh'), /export ANDROID_HOME="\$SDK" ANDROID_SDK_ROOT="\$SDK"/, 'GitHub runners preset ANDROID_SDK_ROOT; both variables must name the same SDK');
   const mod = read('android/modernize-project.mjs');
   assert.match(mod, /BROWSER_HELPER_VERSION = '2\.7\.\d+'/, 'android-browser-helper 2.7 is the edge-to-edge release');
   assert.match(mod, /AGP_VERSION = '9\./);
