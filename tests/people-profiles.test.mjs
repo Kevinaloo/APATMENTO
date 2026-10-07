@@ -179,8 +179,25 @@ test('profile saves reject spoofed ticks, contact details and taken handles, and
   assert.equal(r.code, 409, 'a verified organisation owns its name');
   r = res(); await profiles(post('save', { display_name: 'Amani Otieno', badge: 'provider', identity_verified: true, photo_url: 'https://evil', published: true }), r, h.deps);
   assert.equal(r.code, 200);
-  const patch = h.calls.find(c => c.opts.method === 'PATCH' && c.path.startsWith('member_public_profiles'));
+  const patches = h.calls.filter(c => c.opts.method === 'PATCH' && c.path.startsWith('member_public_profiles'));
+  assert.ok(patches.some(c => JSON.stringify(c.opts.body) === '{"published":true}'), 'a profile from before every profile was public is published');
+  const patch = patches.find(c => 'display_name' in c.opts.body);
   assert.deepEqual(Object.keys(patch.opts.body).sort(), ['display_name', 'published', 'updated_at']);
+  assert.equal(patch.opts.body.published, true);
+  h.calls.length = 0;
+  r = res(); await profiles(post('save', { headline: 'Coast weekends', published: false }), r, h.deps);
+  assert.equal(r.code, 200);
+  const last = h.calls.filter(c => c.opts.method === 'PATCH' && 'headline' in (c.opts.body || {})).pop();
+  assert.equal(last.opts.body.published, true, 'there is no way to make a profile private');
+});
+
+test('a profile moderation hid stays hidden until its owner edits it', async () => {
+  const h = harness(), inner = h.deps.db;
+  h.deps.db = async (path, opts = {}) => path.startsWith('profile_reports?target_id=') ? [{ id: 1 }] : inner(path, opts);
+  const r = res(); await profiles(get({ op: 'profile', id: ME }), r, h.deps);
+  assert.equal(r.code, 200);
+  assert.ok(!h.calls.some(c => c.opts.method === 'PATCH' && JSON.stringify(c.opts.body) === '{"published":true}'));
+  assert.equal(r.data.profile.settings.published, false);
 });
 
 test('only verified members can publish photos; follows and reports bind to the session', async () => {

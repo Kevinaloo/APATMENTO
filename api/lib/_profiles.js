@@ -31,8 +31,10 @@
      · The only public projection is cabana_people_cards(): no email,
        phone, payment, ID number, document or exact location exists in
        any response.
-     · A traveller who has not published their profile is invisible to
-       strangers. People they are already messaging see a first name.
+     · Every member profile is public. The only unpublished profiles are
+       ones moderation has hidden; strangers cannot see those, and people
+       already messaging that member see a first name. Saving the profile
+       again republishes it.
      · Every write binds to the caller's verified session; no body field
        can name who is acting, claim a role or set a badge.
    ════════════════════════════════════════════════════════════════════ */
@@ -232,8 +234,20 @@ export async function profiles(req, res, deps) {
     return out;
   }
 
+  /* Moderation hides a profile by unpublishing it in the same write that
+     closes the report, so a reset newer than the row's last edit means
+     the member has not edited since and it stays hidden. */
+  async function hiddenByModeration(row) {
+    const [hit] = await db(`profile_reports?target_id=eq.${row.user_id}&resolution=eq.reset_profile&reviewed_at=gte.${encodeURIComponent(row.updated_at)}&select=id&limit=1`).catch(() => [null]);
+    return Boolean(hit);
+  }
   async function ensureRow(userId) {
     const [row] = await db(`member_public_profiles?user_id=eq.${userId}&select=*`);
+    if (row && row.published === false && !(await hiddenByModeration(row))) {
+      // Profiles from before every profile was public.
+      await db(`member_public_profiles?user_id=eq.${userId}`, { method: 'PATCH', body: { published: true } });
+      row.published = true;
+    }
     if (row) return row;
     const [p] = await db(`profiles?id=eq.${userId}&select=first_name,last_name`).catch(() => [null]);
     const first = titleName(p?.first_name), last = titleName(p?.last_name);
@@ -241,7 +255,7 @@ export async function profiles(req, res, deps) {
     const handle = await suggestHandle(first ? `${first}${last ? '.' + last : ''}` : 'traveller', userId);
     const [created] = await db('member_public_profiles?on_conflict=user_id', {
       method: 'POST', prefer: 'resolution=ignore-duplicates,return=representation',
-      body: { user_id: userId, display_name: hasContact(display) ? 'Cabana member' : display, bio: '', published: false, handle, updated_at: now().toISOString() },
+      body: { user_id: userId, display_name: hasContact(display) ? 'Cabana member' : display, bio: '', published: true, handle, updated_at: now().toISOString() },
     });
     if (created) return created;
     const [again] = await db(`member_public_profiles?user_id=eq.${userId}&select=*`);
@@ -492,7 +506,7 @@ export async function profiles(req, res, deps) {
           account_type: m.account_type || 'individual', org_kind: m.org_kind || null, org_website: m.org_website || null,
           city: clean(m.city, 60), country_code: m.country_code || null, show_location: m.show_location === true,
           languages: m.languages || [], interests: m.interests || [], theme: m.theme || 'equator', avatar: cleanAvatar(m.avatar),
-          published: m.published === true, show_followers: m.show_followers !== false, allow_follow: m.allow_follow !== false, show_listings: m.show_listings !== false,
+          published: m.published !== false, show_followers: m.show_followers !== false, allow_follow: m.allow_follow !== false, show_listings: m.show_listings !== false,
           photo_url: m.photo_url || null, photo_status: m.photo_status || 'none', photo_pending: Boolean(pending),
           photo_locked: photosToday.length >= 3,
         };
@@ -600,7 +614,9 @@ export async function profiles(req, res, deps) {
         if (b.avatar === null) set('avatar', null);
         else { const a = cleanAvatar(b.avatar); if (!a) return res.status(400).json({ error: 'That avatar could not be saved. Pick it again.', field: 'avatar' }); set('avatar', a); }
       }
-      for (const k of ['published', 'show_location', 'show_followers', 'allow_follow', 'show_listings']) if (b[k] !== undefined) set(k, b[k] === true);
+      // Every profile is public; saving also republishes one moderation hid.
+      set('published', true);
+      for (const k of ['show_location', 'show_followers', 'allow_follow', 'show_listings']) if (b[k] !== undefined) set(k, b[k] === true);
       if (b.org_kind !== undefined) { if (b.org_kind && !ORG_KINDS.includes(b.org_kind)) return res.status(400).json({ error: 'Choose what kind of organisation this is.', field: 'org_kind' }); set('org_kind', b.org_kind || null); }
       if (b.org_website !== undefined) { const w = cleanWebsite(clean(b.org_website, 140)); if (w === undefined) return res.status(400).json({ error: 'Enter a website address like https://example.com', field: 'org_website' }); set('org_website', w); }
 

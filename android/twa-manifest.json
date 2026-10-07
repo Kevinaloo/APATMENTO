@@ -1,0 +1,84 @@
+{
+  "packageId": "africa.cabana.app",
+  "host": "cabana.africa",
+  "name": "Cabana — Stays, Flights & More in Kenya",
+  "launcherName": "Cabana",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "themeColor": "#6D28FF",
+  "themeColorDark": "#6D28FF",
+  "navigationColor": "#FFFFFF",
+  "navigationColorDark": "#0D0A26",
+  "navigationDividerColor": "#FFFFFF",
+  "navigationDividerColorDark": "#0D0A26",
+  "backgroundColor": "#FFFFFF",
+  "enableNotifications": true,
+  "startUrl": "/?utm_source=pwa",
+  "iconUrl": "https://cabana.africa/cabana-icon-512-v2.png",
+  "maskableIconUrl": "https://cabana.africa/cabana-icon-maskable-512-v2.png",
+  "monochromeIconUrl": "https://cabana.africa/cabana-badge-96.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "my-key-alias"
+  },
+  "appVersionCode": 2,
+  "appVersionName": "1.1.0",
+  "shortcuts": [
+    {
+      "name": "Find a Stay",
+      "shortName": "Stays",
+      "url": "https://cabana.africa/apartments.html",
+      "chosenIconUrl": "https://cabana.africa/cabana-icon-96-v2.png"
+    },
+    {
+      "name": "Book a Tour",
+      "shortName": "Tours",
+      "url": "https://cabana.africa/tours.html",
+      "chosenIconUrl": "https://cabana.africa/cabana-icon-96-v2.png"
+    },
+    {
+      "name": "List Your Property",
+      "shortName": "List",
+      "url": "https://cabana.africa/add-listing.html",
+      "chosenIconUrl": "https://cabana.africa/cabana-icon-96-v2.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://cabana.africa/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://cabana.africa/",
+  "minSdkVersion": 23,
+  "fingerprints": [
+    {
+      "name": "Play app signing (deployment certificate)",
+      "value": "24:3E:36:4C:FB:5F:AA:6B:F2:79:06:40:5B:D9:F9:12:D4:DC:EE:3E:5B:DC:33:35:2D:53:D9:90:15:D9:3E:CF"
+    },
+    {
+      "name": "Play app signing (hybrid classical certificate)",
+      "value": "95:A4:E6:6B:20:CE:9F:08:53:C0:35:8F:33:20:1F:42:71:BD:30:2F:57:15:DF:75:0E:DB:58:86:CD:D0:6D:AB"
+    },
+    {
+      "name": "Play app signing (hybrid PQC certificate)",
+      "value": "91:3B:49:7E:A9:D4:28:CC:52:9C:A3:F8:93:2D:7C:B0:82:15:34:17:DE:01:54:06:F2:84:4F:52:1B:4A:5A:8B"
+    },
+    {
+      "name": "Upload key (PWABuilder signing.keystore)",
+      "value": "DA:AC:E6:93:91:F2:36:A9:F0:F6:66:F5:6B:A0:E7:68:F2:AC:56:8C:2C:21:3A:81:78:9D:18:FD:9D:AC:67:0C"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "1.1.0"
+}

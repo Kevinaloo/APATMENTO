@@ -448,7 +448,7 @@
       ${ops ? `<div class="cbp-sec"><h3>Also on Cabana as</h3><div class="cbp-chips">${ops}</div></div>` : ''}
       ${chips ? `<div class="cbp-chips">${chips}</div>` : ''}
       ${listings ? `<div class="cbp-sec"><h3>${org ? 'Listings' : 'Hosting'}</h3><div class="cbp-ls">${listings}</div></div>` : ''}
-      ${p.level === 'peer' ? '<p class="cbp-muted">You can see this member because you are messaging each other. Their full profile is private.</p>' : ''}
+      ${p.level === 'peer' ? '<p class="cbp-muted">You can see this member because you are messaging each other. Their full profile is not available right now.</p>' : ''}
       ${!p.viewer?.self && p.viewer?.signed_in ? `<button type="button" class="cbp-report" data-cbp-report>Report profile</button>` : ''}`;
   }
   function reportForm(id) {

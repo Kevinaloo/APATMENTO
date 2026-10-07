@@ -52,7 +52,7 @@
 </script>
 <!-- Needed by the install gate: captures beforeinstallprompt and
      exposes CabanaPWA.install(). -->
-<script src="/pwa.js?v=41-match" defer></script>
+<script src="/pwa.js?v=42-play" defer></script>
 <script src="/apa-agent.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -1009,6 +1009,7 @@ function refreshInstallStep() {
   const isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
   const lbl   = document.getElementById('install-step-btn-label');
   if (isIOS && lbl) lbl.textContent = 'Add to Home Screen to continue';
+  else if (/android/i.test(ua) && lbl) lbl.textContent = 'Get it on Google Play (recommended)';
 }
 
 function enableCreateBtn() {
@@ -1040,6 +1041,20 @@ function markStepArmed() {
   if (btnLbl) btnLbl.textContent = 'Installed';
 
   enableCreateBtn();
+}
+
+/* Google Play opened in its own app; this page stays put. Nothing is
+   installed yet, so say what happens next rather than "installed". */
+function markPlayHandoff() {
+  markStepArmed();
+  const title  = document.getElementById('install-step-title');
+  const sub    = document.getElementById('install-step-sub');
+  const btn    = document.getElementById('install-step-btn');
+  const btnLbl = document.getElementById('install-step-btn-label');
+  if (title)  title.textContent = 'Cabana is on Google Play';
+  if (sub)    sub.textContent = 'Install it from Google Play, then finish creating your account here. You can sign in to the app with the same details.';
+  if (btn)    btn.disabled = false;
+  if (btnLbl) btnLbl.textContent = 'Open Google Play again';
 }
 
 /* Platform / browser detection for install instructions. */
@@ -1114,6 +1129,14 @@ async function armInstall() {
 
   // Already installed / running standalone. Nothing to do.
   if (installAlreadySatisfied()) { markStepArmed(); return; }
+
+  // Android: the app is the Play Store app. A Chrome install would be a
+  // second, separate Cabana, so hand off to Google Play instead.
+  if (env.isAndroid && window.CabanaPWA && window.CabanaPWA.openPlayStore) {
+    window.CabanaPWA.openPlayStore('signup');
+    markPlayHandoff();
+    return;
+  }
 
   // If manual instructions were already shown, the gate is armed and
   // this tap just confirms. Don't re-show the instructions.
