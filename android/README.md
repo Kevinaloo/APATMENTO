@@ -47,7 +47,7 @@ list in `twa-manifest.json`, deploy the site, then release.
 
 Bump `appVersionCode` (and `appVersionName`/`appVersion`) in
 `twa-manifest.json` for every upload. Play rejects a version code it has
-seen before. Version 1 is the PWABuilder bundle already on Play.
+seen before, on any track. Versions 1 and 2 are already on Play (2 is in open testing).
 
 ### Option A: GitHub Actions (recommended)
 
@@ -80,7 +80,7 @@ The bundle lands in `android/dist/` (git-ignored).
 ### Option C: PWABuilder
 
 Package for Android with **the same settings** as `twa-manifest.json`:
-package ID `africa.cabana.app`, version code 2 or higher, host
+package ID `africa.cabana.app`, a version code higher than any already on Play (next: 3), host
 `cabana.africa`, start URL `/?utm_source=pwa`, **Notification delegation
 on**, **Location delegation on**, monochrome icon
 `https://cabana.africa/cabana-badge-96.png`, and *Use mine* for the
@@ -92,7 +92,7 @@ rejected by Play.
 1. Deploy the website first (assetlinks, the Play install buttons and the
    permission flow all live there).
 2. Testing → Open testing → Create new release → Upload the `.aab`.
-3. Release name: `1.1.0 (2)`. Release notes, for example:
+3. Release name: `<version> (<code>)`, for example `1.1.1 (3)`. Release notes, for example:
 
    ```
    <en-GB>
