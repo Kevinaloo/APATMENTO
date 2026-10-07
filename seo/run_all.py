@@ -22,6 +22,9 @@ STEPS = [
     ("Index gate         ", "index_gate.py --apply"),
     ("Sitemaps           ", "sitemaps.py"),
     ("Polish pass        ", "polish.py"),
+    # Google's "Get it on Google Play" badge in every standard footer.
+    # Marker-based and idempotent, so it runs after anything that rewrites pages.
+    ("Get-the-app badge  ", "getapp.py"),
     # Recompiles the search box's offline gazetteer from the same place
     # graph the pages above were built from, so a city that just gained a
     # landing page is a city guests can search for. Offline: it reads the
