@@ -82,6 +82,11 @@ fi
 ln -sfn cmdline-tools/latest/bin "$SDK/bin"
 ln -sfn cmdline-tools/latest/lib "$SDK/lib"
 
+# GitHub's runners (and many dev machines) already set ANDROID_SDK_ROOT to
+# their own SDK. Gradle refuses to build when two variables disagree, so
+# point both at the SDK this script installed.
+export ANDROID_HOME="$SDK" ANDROID_SDK_ROOT="$SDK"
+
 mkdir -p "$HOME/.bubblewrap"
 node -e "require('fs').writeFileSync(process.argv[1], JSON.stringify({jdkPath:process.argv[2],androidSdkPath:process.argv[3]}))" \
   "$HOME/.bubblewrap/config.json" "$JAVA_HOME" "$SDK"
