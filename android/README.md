@@ -47,7 +47,7 @@ list in `twa-manifest.json`, deploy the site, then release.
 
 Bump `appVersionCode` (and `appVersionName`/`appVersion`) in
 `twa-manifest.json` for every upload. Play rejects a version code it has
-seen before, on any track. Versions 1 and 2 are already on Play (2 is in open testing).
+seen before, on any track. Versions 1 to 3 are already on Play (3, `1.1.1`, is in production).
 
 ### Option A: GitHub Actions (recommended)
 
@@ -80,25 +80,52 @@ The bundle lands in `android/dist/` (git-ignored).
 ### Option C: PWABuilder
 
 Package for Android with **the same settings** as `twa-manifest.json`:
-package ID `africa.cabana.app`, a version code higher than any already on Play (next: 3), host
+package ID `africa.cabana.app`, a version code higher than any already on Play (next: 4), host
 `cabana.africa`, start URL `/?utm_source=pwa`, **Notification delegation
 on**, **Location delegation on**, monochrome icon
 `https://cabana.africa/cabana-badge-96.png`, and *Use mine* for the
 signing key with your existing `signing.keystore`. A new key would be
 rejected by Play.
 
+PWABuilder cannot apply `modernize-project.mjs`, so its bundle brings
+back Play Console's edge-to-edge and R8 warnings. Use it only if
+Options A and B are both unavailable.
+
+## Play Console recommendations
+
+Bubblewrap 1.25.0 generates a project that Play Console flags on every
+release. `build-aab.sh` runs `modernize-project.mjs` on the generated
+project before building, and refuses a bundle that lost any of these
+fixes:
+
+| Play Console says | Cause | Fix |
+|---|---|---|
+| Edge-to-edge may not display for all users | android-browser-helper 2.6.2 never opts in to edge-to-edge | android-browser-helper 2.7.4: `LauncherActivity` calls `WindowCompat.enableEdgeToEdge()` and the splash screen draws under the system bars. The site already pads for the bars with `viewport-fit=cover` and `env(safe-area-inset-*)` |
+| Deprecated APIs for edge-to-edge (`setStatusBarColor`, `setNavigationBarColor`, `getStatusBarColor`) | The 2.6.2 splash screen and WebView fallback call them on every Android version | 2.7.4 only calls them on Android 14 and below, where they are not deprecated. Google's own `enableEdgeToEdge()` makes the same calls for those versions, so Play may still list them; that is expected |
+| Remove resizability and orientation restrictions (`LauncherActivity.onCreate`) | `orientation: portrait-primary` locked the app to portrait | `orientation: default` in `twa-manifest.json` and `any` in the web manifest. The site is responsive, and the immersive viewer asks for landscape itself |
+| R8: optimisation and resource shrinking not enabled | The template sets `minifyEnabled` only | `proguard-android-optimize.txt` and `shrinkResources true`. The bundle drops from 2.8 MB to 2.1 MB |
+| Upgrade the Android Gradle plugin to 9.0 or higher | Template pins AGP 8.9.1 on Gradle 8.11 | AGP 9.4.1 on Gradle 9.6.1, with the DSL AGP 9 removed (`lintOptions`, `jcenter()`, `buildDir`, `resValue` off by default) updated |
+
+`minSdkVersion` is 24 (Android 7.0), which android-browser-helper 2.7
+requires. Version 3 already declared 24 once its dependencies were
+merged, so no phone loses the app.
+
+If a Bubblewrap upgrade changes the template, `modernize-project.mjs`
+stops the build and names the line it could not find. Update the
+script; do not remove it.
+
 ## Releasing on Play
 
 1. Deploy the website first (assetlinks, the Play install buttons and the
    permission flow all live there).
 2. Testing → Open testing → Create new release → Upload the `.aab`.
-3. Release name: `<version> (<code>)`, for example `1.1.1 (3)`. Release notes, for example:
+3. Release name: `<version> (<code>)`, for example `1.2.0 (4)`. Release notes, for example:
 
    ```
    <en-GB>
-   • Opens full screen, like every other app on your phone
-   • Location is now an Android permission you control under Settings → Apps → Cabana
-   • Sharper notification icon in the status bar
+   • Fills the whole screen, edge to edge, on Android 15 and later
+   • Rotates with your phone, tablet or foldable
+   • Smaller and faster to start
    </en-GB>
    ```
 4. Review the release, then roll out.
@@ -114,3 +141,6 @@ rejected by Play.
    send you notifications?" dialogs.
 4. Settings → Apps → Cabana → Permissions lists **Location** and
    **Notifications**.
+5. Rotate the phone: Cabana turns with it. On Android 15 and later the
+   splash screen and pages run under the status and navigation bars
+   without anything hidden behind them.

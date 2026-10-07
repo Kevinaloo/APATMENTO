@@ -11,6 +11,11 @@
 #      permission and list it under Apps → Cabana → Permissions)
 #    · the version code is the one in twa-manifest.json
 #    · it is signed by the Play upload key, not some other keystore
+#    · it clears Play Console's pre-launch recommendations: edge-to-edge
+#      through android-browser-helper 2.7 instead of the system bar
+#      colour APIs Android 15 deprecated, no orientation lock on large
+#      screens, R8 optimisation with resource shrinking, and Android
+#      Gradle Plugin 9 (see modernize-project.mjs)
 #
 #  Usage
 #    ANDROID_KEYSTORE=/path/to/signing.keystore \
@@ -89,6 +94,7 @@ BW=(npx --yes "@bubblewrap/cli@$BUBBLEWRAP_VERSION")
 
 say "Generating the Android project for $PACKAGE $VERSION_NAME ($VERSION_CODE)"
 ( cd "$WORK" && "${BW[@]}" update --skipVersionUpgrade --manifest=./twa-manifest.json )
+node "$HERE/modernize-project.mjs" "$WORK"
 
 say "Building and signing"
 ( cd "$WORK" && "${BW[@]}" build --skipPwaValidation --manifest=./twa-manifest.json \
@@ -108,6 +114,15 @@ BADGING="$("$AAPT2" dump badging "$APK")"
 grep -q "package: name='$PACKAGE' versionCode='$VERSION_CODE' versionName='$VERSION_NAME'" <<<"$BADGING" \
   || die "Package or version mismatch: $(head -1 <<<"$BADGING")"
 grep -q "targetSdkVersion:'36'" <<<"$BADGING" || die "targetSdkVersion is not 36"
+"$AAPT2" dump resources "$APK" | grep -A1 'string/orientation$' | grep -q '"default"' \
+  || die "The app locks its orientation. Android 16 ignores that on tablets and foldables; set orientation to default"
+
+META="$WORK/bundle-metadata"
+unzip -qo "$AAB" 'BUNDLE-METADATA/*' -d "$META"
+grep -q '^androidGradlePluginVersion=9\.' "$META/BUNDLE-METADATA/com.android.tools.build.gradle/app-metadata.properties" \
+  || die "The bundle was not built with Android Gradle Plugin 9"
+node -e "const o=require(process.argv[1]).options; process.exit(o.isOptimizationsEnabled && o.isShrinkingEnabled ? 0 : 1)" \
+  "$META/BUNDLE-METADATA/com.android.tools/r8.json" || die "R8 optimisation or shrinking is off"
 
 SIGNER="$(keytool -printcert -jarfile "$AAB" 2>/dev/null | awk '/SHA256:/{print $2; exit}')"
 [ -n "$SIGNER" ] || die "The bundle is not signed"
@@ -123,5 +138,6 @@ echo "✓ cabana-$VERSION_NAME-$VERSION_CODE.aab"
 echo "  package      $PACKAGE"
 echo "  version      $VERSION_NAME ($VERSION_CODE)"
 echo "  permissions  notifications, precise + approximate location"
+echo "  platform     edge-to-edge, any orientation, R8 optimised, AGP 9"
 echo "  signed by    $SIGNER"
 echo "  output       $OUT"

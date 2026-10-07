@@ -32,7 +32,7 @@ jobs:
             ~/.cabana-android-sdk
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: cabana-android-${{ hashFiles('android/build-aab.sh') }}
+          key: cabana-android-${{ hashFiles('android/build-aab.sh', 'android/modernize-project.mjs') }}
       - name: Restore the upload keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
