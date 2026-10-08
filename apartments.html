@@ -307,6 +307,10 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .card-tag-featured svg{color:#f5d99e;}
 .card-tag svg{width:10px;height:10px;}
 
+.cbn-share-btn{display:inline-grid;place-items:center;border:0;border-radius:50%;cursor:pointer;padding:0}
+.card-share{position:absolute;top:8px;right:46px;z-index:4;width:34px;height:34px;box-shadow:none;background:rgba(10,10,20,.32);color:#fff;backdrop-filter:blur(4px)}
+.card-share svg{width:16px;height:16px}
+.drawer-share{position:absolute;top:16px;right:16px;z-index:10}
 .card-heart{
   position:absolute;top:8px;right:8px;z-index:4;
   width:34px;height:34px;border-radius:50%;border:none;padding:0;
@@ -2674,7 +2678,7 @@ async function loadNativeListings() {
       .slice(0, 120);
 
     console.log('[listings] Loaded', data.length, 'rows →', stays.length, 'stays');
-    return stays.map(l => ({
+    const mapStay = l => ({
       id: `n_${l.id}`,
       _dbId: l.id,
       name: l.title || 'Untitled',
@@ -2729,7 +2733,9 @@ async function loadNativeListings() {
         days: Array.isArray(l.day_pass_days) ? l.day_pass_days : [],
         maxGuests: Number(l.day_pass_max_guests) || l.max_guests || 2,
       } : null,
-    }));
+    });
+    window.__mapStayRow = mapStay;
+    return stays.map(mapStay);
   } catch(e) { console.warn('[listings] Exception:', e.message); return []; }
 }
 
@@ -3035,6 +3041,7 @@ function renderCards(list) {
           : apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : ''}
         <button type="button" class="card-heart${isWishlisted(apt.id) ? ' on' : ''}" data-heart="${apt.id}"
           aria-label="Save this stay" aria-pressed="${isWishlisted(apt.id)}">${SVG_HEART}</button>
+        ${shareButtonHTML(apt, 'card-share')}
         ${many ? `
           <button type="button" class="card-arr card-arr-prev" data-step="-1" aria-label="Previous photo" disabled>${SVG_CHEV_L}</button>
           <button type="button" class="card-arr card-arr-next" data-step="1" aria-label="Next photo">${SVG_CHEV_R}</button>
@@ -3500,6 +3507,14 @@ let _galleryListingId = null;
 let _drawerAreaMap = null;
 let _drawerGeneration = 0;
 
+/* One share button for every listing. The link is cabana.africa/s/<id>:
+   it unfolds as a real card in chats and lands on this exact listing. */
+function shareButtonHTML(apt, cls) {
+  const id = apt._dbId || apt.id;
+  if (!id) return '';
+  return `<button type="button" class="cbn-share-btn ${cls || ''}" data-cbn-share data-share-id="${_esc(String(id))}" data-share-title="${_esc(apt.name)}" aria-label="Share ${_esc(apt.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg></button>`;
+}
+
 function openDrawer(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
@@ -3518,7 +3533,7 @@ function openDrawer(id) {
   _galPhotos = apt.photos?.length ? [...apt.photos] : [];
   _galIdx    = 0;
 
-  const galleryHTML = _buildGallery(_galPhotos, apt.grad, apt.photoPositions) + (window.CabanaPropertyTour?.section(apt) || '');
+  const galleryHTML = _buildGallery(_galPhotos, apt.grad, apt.photoPositions, shareButtonHTML(apt, 'drawer-share')) + (window.CabanaPropertyTour?.section(apt) || '');
 
   /* ── amenities ── */
   const AMEN_TICK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
@@ -3710,7 +3725,7 @@ function openDrawer(id) {
 }
 
 /* ── gallery builder ── */
-function _buildGallery(photos, grad, positions) {
+function _buildGallery(photos, grad, positions, extraHTML) {
   const bg = grad || 'linear-gradient(135deg,#B8A4F4,#7B2FF7)';
   const slidesHTML = photos.length
     ? photos.map((p,i) => {const pos=positions?.[i]||{};const fit=pos.fit==='contain'?'contain':'cover';const rawX=Number(pos.x);const rawY=Number(pos.y);const x=Math.max(0,Math.min(100,Number.isFinite(rawX)?rawX:50));const y=Math.max(0,Math.min(100,Number.isFinite(rawY)?rawY:30));return `<div class="dl-gallery-slide" onclick="openLightbox(${i})" role="button" tabindex="0"
@@ -3735,6 +3750,7 @@ function _buildGallery(photos, grad, positions) {
       <button class="drawer-close" onclick="closeDrawer()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
+      ${extraHTML || ''}
       <div class="dl-gallery-track" id="dl-gal-track">${slidesHTML}</div>
       ${showNav ? `
         <button class="dl-gal-arr dl-gal-prev${photos.length<=1?' hidden':''}" id="dl-gal-prev" onclick="galStep(-1)" aria-label="Previous photo">
@@ -6306,6 +6322,24 @@ function updateResultLabel(mode) {
 function toggleHeart(e, el) { e.stopPropagation(); el.classList.toggle('on'); }
 function sortListings() { applyAndRender(); }
 
+/* A shared or bookmarked link can point at a stay that is not among the
+   120 the page loads (or a stay outside today's search). Fetch just that
+   one, add it to the page, and open it, so every link lands on its listing. */
+async function openSharedListing(openId) {
+  try {
+    if (!sb || !window.__mapStayRow || !/^[A-Za-z0-9_-]{6,64}$/.test(openId)) return;
+    const { data } = await sb.from('listings').select('*').eq('id', openId).eq('is_active', true).is('deleted_at', null).limit(1);
+    const row = data && data[0];
+    if (!row || (row.status && row.status !== 'active')) { showToastSafe('That listing is no longer available.'); return; }
+    const apt = window.__mapStayRow(row);
+    await applyAllInPrices([apt]);
+    currentListings = [apt, ...currentListings.filter(a => a._dbId !== apt._dbId)];
+    applyAndRender();
+    openDrawer(apt.id);
+  } catch (e) { console.warn('[open]', e && e.message); }
+}
+function showToastSafe(msg) { try { (window.showToast || window.toast || (() => {}))(msg); } catch (e) { /* no toast helper on this page */ } }
+
 /* ── GO ── */
 loadListings().then(async () => {
   // Cached data can resolve before deferred gallery/tour helpers execute.
@@ -6328,7 +6362,8 @@ loadListings().then(async () => {
       a.id === openId || a._dbId === openId || String(a._dbId) === String(openId)
     );
     if (apt) { openDrawer(apt.id); return; }
-    if (attempts > 0) setTimeout(() => tryOpen(attempts - 1), 300);
+    if (attempts > 0) { setTimeout(() => tryOpen(attempts - 1), 300); return; }
+    openSharedListing(openId);
   };
   tryOpen(10);
 });
@@ -6361,6 +6396,7 @@ loadListings().then(async () => {
    and a full-screen z-9999 curtain stayed over the site for good. */
 
 </script>
+<script src="/cabana-share.js" defer></script>
 <script src="/analytics.js" defer></script>
 <script src="/cabana-host-metrics.js" defer></script>
 <script src="/chat.js?v=41" defer></script>

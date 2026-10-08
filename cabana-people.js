@@ -90,7 +90,7 @@
     const q = new URLSearchParams(Object.assign({ op }, params || {}));
     const r = await fetch('/api/people?' + q, { method: body ? 'POST' : 'GET', headers: await authHeaders(), ...(body ? { body: JSON.stringify(body) } : {}), ...(options?.signal ? { signal: options.signal } : {}) });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw Object.assign(new Error(data.error || 'Something went wrong. Please try again.'), { status: r.status, data });
+    if (!r.ok) throw Object.assign(new Error(data.error || 'Something went wrong. Please try again.'), { status: r.status, data, code: data.code });
     return data;
   }
   async function request(id, body) { // v1 compatibility

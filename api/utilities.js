@@ -49,6 +49,7 @@ import musicSearchHandler from './lib/_music-search.js';
 import karaokeHandler from './lib/_karaoke.js';
 import weatherHandler from './lib/_weather.js';
 import fxHandler from './lib/_fx.js';
+import listingShareHandler from './lib/_listing-share.js';
 import scrapeHandler from './lib/_scrape.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
@@ -868,6 +869,11 @@ export default async function handler(req, res) {
 
   /* Display-only exchange rates for the price you see beside the real
      one. Public and edge-cached; nothing anyone pays is converted. */
+  /* /s/:id, the link people share. Real preview card, then the exact listing. */
+  if (action === 'listing-share') {
+    return listingShareHandler(req, res);
+  }
+
   if (action === 'fx') {
     return fxHandler(req, res);
   }

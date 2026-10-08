@@ -90,6 +90,34 @@
 }
 @media (max-width: 720px) { #cbn-sup-launcher { right: 14px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); } }
 
+/* ── The dock (see cabana-support.js) ──────────────────────────────────
+   Position is set by script so the launcher can ride above bars, tuck
+   away while the guest scrolls and be dragged off whatever it covers. */
+#cbn-sup-launcher {
+  transition: bottom .32s var(--sup-ease), transform .38s var(--sup-spring), opacity .22s var(--sup-ease);
+  touch-action: manipulation;
+}
+#cbn-sup-launcher.cbn-sup--dragging { transition: none; touch-action: none; cursor: grabbing; }
+#cbn-sup-launcher.cbn-sup--dragging .cbn-sup-orb { transform: scale(1.08); }
+
+/* Tucked: half the mark slides off the edge and only a slim tab stays,
+   so whatever was underneath can be pressed. One tap still opens APA. */
+.cbn-sup--tucked #cbn-sup-launcher { transform: translateX(34px); }
+.cbn-sup--tucked[data-dock-side="l"] #cbn-sup-launcher { transform: translateX(-34px); }
+.cbn-sup--tucked .cbn-sup-orb { opacity: .88; box-shadow: 0 6px 18px rgba(109, 40, 255, .30); }
+.cbn-sup--tucked .cbn-sup-ring, .cbn-sup--tucked .cbn-sup-hint { display: none; }
+.cbn-sup--tucked #cbn-sup-launcher:focus-within, .cbn-sup--tucked #cbn-sup-launcher:hover { transform: none; }
+
+/* Something modal is open: step aside entirely. */
+.cbn-sup--yield #cbn-sup-launcher { opacity: 0; pointer-events: none; transform: scale(.8); }
+.cbn-sup--yield #cbn-apa-welcome { display: none; }
+
+@media (max-width: 720px) {
+  .cbn-sup-orb { width: 54px; height: 54px; }
+  .cbn-sup-orb img { width: 30px; height: 30px; }
+}
+@media print { #cbn-sup-root { display: none !important; } }
+
 /* Keep the assistant launcher clear of the host/guest message composer. */
 body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(#cbn-sup-launcher, #cbn-apa-welcome) {
   visibility: hidden;
@@ -203,9 +231,10 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(#cbn-sup-launcher, #cbn-apa-
   transform: translateY(18px) scale(.97);
   transform-origin: bottom right;
   pointer-events: none;
-  transition: opacity .3s var(--sup-ease), transform .38s var(--sup-spring);
+  visibility: hidden;
+  transition: opacity .3s var(--sup-ease), transform .38s var(--sup-spring), visibility 0s linear .38s;
 }
-.cbn-sup--open #cbn-sup-panel { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.cbn-sup--open #cbn-sup-panel { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; visibility: visible; transition-delay: 0s; }
 
 /* On a phone it is a sheet, not a floating card. */
 @media (max-width: 560px) {

@@ -114,6 +114,12 @@ app.get(/^\/k\/([A-Za-z0-9]{6})$/, (req, res) => {
   res.redirect(302, `/events/karaoke/room/${req.params[0].toUpperCase()}`);
 });
 
+/* Shared listing links. Mirrors the vercel.json rewrite /s/:id. */
+app.get(/^\/s\/([A-Za-z0-9_-]{6,64})$/, async (req, res) => {
+  const { default: share } = await import('./api/lib/_listing-share.js');
+  return share({ query: { id: req.params[0] } }, res);
+});
+
 /* Public profile links. Mirrors the vercel.json rewrite /u/:handle. */
 app.get(/^\/u\/([A-Za-z0-9._]{3,24})$/, (req, res) => {
   res.sendFile(join(__dirname, 'person.html'));

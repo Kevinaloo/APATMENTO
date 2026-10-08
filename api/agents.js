@@ -789,10 +789,15 @@ export default async function handler(req, res) {
     if (a === 'public-profile') return await people(req, res, {db, session});
     if (a === 'people' || a === 'didit-webhook') return await profiles(req, res, {
       db, session,
+      mailTo: ({ to, subject, title, text, cta, ctaUrl }) => mail({ to, subject, html: shell({
+        emoji: '🪪', title, sub: 'Your Cabana identity',
+        body: `<p style="color:#4A4C66;font-size:14px;">${String(text).replace(/[<>&]/g, '')}</p>`,
+        cta, ctaUrl,
+      }) }),
       notifyAdmins: (subject, text) => Promise.all(ADMINS.map(to => mail({ to, subject, html: shell({
         emoji: '🏅', title: 'Profile verification', sub: subject,
         body: `<p style="color:#4A4C66;font-size:14px;">${text.replace(/[<>&]/g, '')}</p>`,
-        cta: 'Review', ctaUrl: `${SITE}/admin.html#/profiles`,
+        cta: 'Open Linked accounts', ctaUrl: `${SITE}/admin.html#/profiles?tab=links`,
       }) }))),
     });
     if (a === 'signup'       && req.method === 'POST') return await handleSignup(req, res);

@@ -180,6 +180,80 @@ export async function profiles(req, res, deps) {
     await db('notifications', { method: 'POST', body: { user_id: userId, title, body, url, kind, read: false, meta: meta || {} } }).catch(() => {});
   }
 
+
+  /* ── moving a verified identity between accounts ──────────────────
+     The account that holds the verification today is asked first. An
+     operator can step in when its owner cannot get back into it. */
+  const SITE_URL = (env.SITE_URL || 'https://cabana.africa').replace(/\/$/, '');
+  const MOVE_DAYS = 14;
+  const emailOf = async id => (await db(`profiles?id=eq.${id}&select=email`).catch(() => []))[0]?.email || null;
+  async function tell(userId, { title, text, url, event, cta }) {
+    await notify(userId, title, text, url, 'profile', { event });
+    if (deps.mailTo) {
+      const to = await emailOf(userId);
+      if (to) await deps.mailTo({ to, subject: title, title, text, cta: cta || 'Open Cabana', ctaUrl: `${SITE_URL}${url}` }).catch(() => {});
+    }
+  }
+  async function expireMoves() {
+    await db(`identity_moves?status=eq.pending&expires_at=lt.${encodeURIComponent(now().toISOString())}`, { method: 'PATCH', body: { status: 'expired', decided_at: now().toISOString() } }).catch(() => {});
+  }
+  async function performMove(move, { by, via }) {
+    const at = now().toISOString();
+    const [src] = await db(`verification_status?user_id=eq.${move.from_user}&select=*`);
+    if (!src || src.identity_state !== 'approved') throw err(409, 'That account no longer holds a verification.', { code: 'source_not_verified' });
+    const [dst] = await db(`verification_status?user_id=eq.${move.to_user}&select=*`);
+    if (dst?.identity_state === 'approved') throw err(409, 'The new account is already verified.', { code: 'target_already_verified' });
+    // Claim first, so a double tap or two operators cannot run it twice.
+    const claimed = await db(`identity_moves?id=eq.${move.id}&status=eq.pending`, { method: 'PATCH', prefer: 'return=representation', body: { status: 'approved', decided_by: by, decided_via: via, decided_at: at } });
+    if (!claimed?.length) throw err(409, 'This request has already been answered.', { code: 'already_decided' });
+    const [mine] = await db(`verification_sessions?id=eq.${move.session_id || '00000000-0000-0000-0000-000000000000'}&select=*`).catch(() => []);
+    try {
+      await db('verification_status?on_conflict=user_id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: {
+        user_id: move.to_user, identity_state: 'approved', identity_at: src.identity_at, identity_expires: src.identity_expires, display_name: src.display_name,
+        document_country: src.document_country, document_type: src.document_type, cleared_tier: src.cleared_tier, last_session_id: move.session_id || src.last_session_id, updated_at: at } });
+      await db(`verification_status?user_id=eq.${move.from_user}`, { method: 'PATCH', body: { identity_state: 'moved', cleared_tier: 0, updated_at: at } });
+    } catch (e) {
+      // put everything back exactly as it was
+      await db(`verification_status?user_id=eq.${move.from_user}`, { method: 'PATCH', body: { identity_state: src.identity_state, cleared_tier: src.cleared_tier, updated_at: at } }).catch(() => {});
+      if (dst) await db(`verification_status?user_id=eq.${move.to_user}`, { method: 'PATCH', body: { identity_state: dst.identity_state, identity_at: dst.identity_at, display_name: dst.display_name, cleared_tier: dst.cleared_tier } }).catch(() => {});
+      else await db(`verification_status?user_id=eq.${move.to_user}`, { method: 'DELETE' }).catch(() => {});
+      await db(`identity_moves?id=eq.${move.id}`, { method: 'PATCH', body: { status: 'pending', decided_by: null, decided_via: null, decided_at: null } }).catch(() => {});
+      throw err(500, 'We could not move the verification. Nothing was changed. Please try again.', { code: 'move_failed' });
+    }
+    // Secondary bookkeeping; the verification itself has already moved.
+    await db(`profiles?id=eq.${move.to_user}`, { method: 'PATCH', body: { id_verification_status: 'approved' } }).catch(() => {});
+    await db(`profiles?id=eq.${move.from_user}`, { method: 'PATCH', body: { id_verification_status: 'not_started' } }).catch(() => {});
+    if (mine) await db(`verification_sessions?id=eq.${mine.id}`, { method: 'PATCH', body: { state: 'approved', decline_reason: null, updated_at: at, completed_at: mine.completed_at || at, decision: { ...(mine.decision || {}), cabana: { outcome: 'moved', from: move.from_user } } } }).catch(() => {});
+    try {
+      const old = await db(`identity_fingerprints?user_id=eq.${move.from_user}&select=*`);
+      if (old.length) {
+        await db('identity_fingerprints?on_conflict=user_id,kind,hash', { method: 'POST', prefer: 'resolution=ignore-duplicates', body: old.map(f => ({ user_id: move.to_user, kind: f.kind, hash: f.hash, source: f.source, session_id: f.session_id })) });
+        await db(`identity_fingerprints?user_id=eq.${move.from_user}`, { method: 'DELETE' });
+      }
+    } catch (e) { console.warn('[people] fingerprint move failed', e.message); }
+    const [lo, hi] = move.from_user < move.to_user ? [move.from_user, move.to_user] : [move.to_user, move.from_user];
+    await db(`identity_links?user_a=eq.${lo}&user_b=eq.${hi}`, { method: 'PATCH', body: { status: 'moved', reviewed_by: by, reviewed_at: at, note: 'Verification moved' } }).catch(() => {});
+    await db(`identity_moves?from_user=eq.${move.from_user}&status=eq.pending`, { method: 'PATCH', body: { status: 'cancelled', decided_at: at } }).catch(() => {});
+    await db('admin_audit_log', { method: 'POST', body: { action: `identity.move_${via}`, target_type: 'profile', target_id: move.to_user, meta: { from: move.from_user, move: move.id, by } } }).catch(() => {});
+    await tell(move.to_user, { title: 'Your verification is now on this account', text: 'Your purple checkmark and ID check are live here. Everything that needs a verified identity now knows it is you.', url: '/profile#verification', event: 'identity_moved_in', cta: 'Open my profile' });
+    await tell(move.from_user, { title: 'Your verification moved to your new account', text: 'The ID check now lives on your new Cabana account. This account keeps working, and you can verify it again with a different ID.', url: '/profile#verification', event: 'identity_moved_out', cta: 'Open my profile' });
+    return { from: move.from_user, to: move.to_user };
+  }
+  async function myMoves(uid) {
+    await expireMoves();
+    const [incoming, outgoing] = await Promise.all([
+      db(`identity_moves?from_user=eq.${uid}&status=eq.pending&select=id,to_user,requested_at,expires_at&order=requested_at.desc&limit=3`).catch(() => []),
+      db(`identity_moves?to_user=eq.${uid}&select=id,from_user,status,requested_at,expires_at,decided_via&order=requested_at.desc&limit=1`).catch(() => []),
+    ]);
+    const ids = [...new Set([...incoming.map(m => m.to_user), ...outgoing.map(m => m.from_user)])];
+    const prof = ids.length ? await db(`profiles?id=in.(${ids.join(',')})&select=id,email`).catch(() => []) : [];
+    const hint = id => Identity.maskEmail(prof.find(p => p.id === id)?.email);
+    return {
+      incoming: incoming.map(m => ({ id: m.id, requested_at: m.requested_at, expires_at: m.expires_at, from_hint: hint(m.to_user) })),
+      outgoing: outgoing[0] ? { id: outgoing[0].id, status: outgoing[0].status, requested_at: outgoing[0].requested_at, expires_at: outgoing[0].expires_at, holder_hint: hint(outgoing[0].from_user), decided_via: outgoing[0].decided_via } : null,
+    };
+  }
+
   /* ── cards ─────────────────────────────────────────────────────── */
   async function rawCards(ids) {
     if (!ids.length) return new Map();
@@ -493,12 +567,13 @@ export async function profiles(req, res, deps) {
         }));
       }
       if (level === 'self') {
-        const [[vs], [session], [orgv], [pending], photosToday] = await Promise.all([
+        const [[vs], [session], [orgv], [pending], photosToday, moves] = await Promise.all([
           db(`verification_status?user_id=eq.${id}&select=identity_state,identity_at,identity_expires,display_name,document_country,document_type`),
           db(`verification_sessions?user_id=eq.${id}&select=state,verification_url,expires_at,created_at,decline_reason,decision&order=created_at.desc&limit=1`),
           db(`organization_verifications?user_id=eq.${id}&select=status,legal_name,org_kind,country_code,website,review_note,created_at,reviewed_at&order=created_at.desc&limit=1`),
           db(`profile_photo_reviews?user_id=eq.${id}&status=eq.pending_review&select=created_at&order=created_at.desc&limit=1`),
           db(`profile_photo_reviews?user_id=eq.${id}&status=eq.rejected&created_at=gt.${new Date(now().getTime() - 30 * 864e5).toISOString()}&select=id`),
+          myMoves(id),
         ]);
         const identityState = row.identity_verified ? 'approved' : vs?.identity_state || 'not_started';
         profile.settings = {
@@ -522,6 +597,7 @@ export async function profiles(req, res, deps) {
             last_decline: session?.state === 'declined' ? session.decline_reason || 'declined' : null,
             duplicate_hint: session?.decline_reason === 'duplicate_identity' ? session.decision?.cabana?.hint || null : null,
             under_review: session?.state === 'review',
+            move: moves,
             available: didit.configured(),
           },
           organization: orgv ? { status: orgv.status, legal_name: orgv.legal_name, org_kind: orgv.org_kind, country_code: orgv.country_code, note: orgv.status === 'rejected' ? orgv.review_note || null : null, submitted: orgv.created_at, reviewed: orgv.reviewed_at } : null,
@@ -788,11 +864,56 @@ export async function profiles(req, res, deps) {
     case 'identity-move': {
       if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
       const s = await caller(true), uid = s.user.id;
+      await expireMoves();
       const [latest] = await db(`verification_sessions?user_id=eq.${uid}&decline_reason=eq.duplicate_identity&select=id&order=created_at.desc&limit=1`);
       if (!latest) return res.status(400).json({ error: 'There is no verification to move.' });
-      const links = await db(`identity_links?or=(user_a.eq.${uid},user_b.eq.${uid})&reason=in.(same_document,same_id_number)&status=eq.open&select=id`);
-      if (links.length) await db(`identity_links?id=in.(${links.map(l => l.id).join(',')})`, { method: 'PATCH', body: { status: 'move_requested', severity: 'review', note: 'Member asked to move their verification to this account' } });
-      if (deps.notifyAdmins) await deps.notifyAdmins('Verification move requested', 'A member asked to move their verified identity to a newer account. Review it in Profiles & ticks → Linked accounts.').catch(() => {});
+      const links = await db(`identity_links?or=(user_a.eq.${uid},user_b.eq.${uid})&reason=in.(same_document,same_id_number,same_face)&status=neq.dismissed&select=user_a,user_b`);
+      const others = [...new Set(links.map(l => (l.user_a === uid ? l.user_b : l.user_a)))];
+      const holders = others.length ? await db(`verification_status?user_id=in.(${others.join(',')})&identity_state=eq.approved&select=user_id,identity_at&order=identity_at.desc&limit=1`) : [];
+      if (!holders.length) return res.status(409).json({ error: 'The account that held this ID is no longer verified. Try verifying again.', code: 'retry_verification' });
+      const from = holders[0].user_id;
+      const [open] = await db(`identity_moves?from_user=eq.${from}&to_user=eq.${uid}&status=eq.pending&select=id,expires_at`);
+      if (open) return res.status(200).json({ ok: true, already: true, move: (await myMoves(uid)).outgoing });
+      const recent = await db(`identity_moves?to_user=eq.${uid}&requested_at=gt.${encodeURIComponent(new Date(now().getTime() - 864e5).toISOString())}&select=id`);
+      if (recent.length >= 3) return res.status(429).json({ error: 'You have asked a few times today. Please wait until tomorrow, or contact support.' });
+      const [move] = await db('identity_moves', { method: 'POST', prefer: 'return=representation', body: { from_user: from, to_user: uid, session_id: latest.id, expires_at: new Date(now().getTime() + MOVE_DAYS * 864e5).toISOString() } });
+      const [lo, hi] = from < uid ? [from, uid] : [uid, from];
+      await db(`identity_links?user_a=eq.${lo}&user_b=eq.${hi}&status=in.(open,same_person)`, { method: 'PATCH', body: { status: 'move_requested', severity: 'review', note: 'Member asked to move their verification to this account' } }).catch(() => {});
+      const mine = await emailOf(uid);
+      await tell(from, {
+        title: 'Move your verified ID to a new account?',
+        text: `Someone using ${Identity.maskEmail(mine) || 'a new Cabana account'} just verified with the same ID that is verified on this account. If that is you, approve the move and your purple tick goes to the new account. If it is not you, decline, and we will look into it.`,
+        url: `/profile?move=${move.id}#verification`, event: 'identity_move_request', cta: 'Review the request' });
+      if (deps.notifyAdmins) await deps.notifyAdmins('Verification move requested', `A member asked to move a verified identity (${Identity.maskEmail(await emailOf(from)) || 'older account'} → ${Identity.maskEmail(mine) || 'new account'}). The older account has been asked to confirm. Step in from Profiles & ticks → Linked accounts only if its owner cannot.`).catch(() => {});
+      return res.status(200).json({ ok: true, move: (await myMoves(uid)).outgoing });
+    }
+
+    case 'identity-move-respond': {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
+      const s = await caller(true), uid = s.user.id, b = bodyOf(req), id = String(b.id || '');
+      if (!UUID.test(id)) return res.status(400).json({ error: 'Choose a request.' });
+      await expireMoves();
+      const [move] = await db(`identity_moves?id=eq.${id}&select=*`);
+      if (!move || move.from_user !== uid) return res.status(404).json({ error: 'This request is not for this account.', code: 'wrong_account' });
+      if (move.status !== 'pending') return res.status(409).json({ error: move.status === 'expired' ? 'This request has expired. Ask them to send it again.' : 'This request has already been answered.', code: move.status });
+      if (b.decision === 'approve') {
+        await performMove(move, { by: uid, via: 'owner' });
+        return res.status(200).json({ ok: true, moved: true });
+      }
+      if (b.decision !== 'decline') return res.status(400).json({ error: 'Unknown choice.' });
+      const at = now().toISOString();
+      await db(`identity_moves?id=eq.${id}&status=eq.pending`, { method: 'PATCH', body: { status: 'declined', decided_by: uid, decided_via: 'owner', decided_at: at } });
+      const [lo, hi] = move.from_user < move.to_user ? [move.from_user, move.to_user] : [move.to_user, move.from_user];
+      await db(`identity_links?user_a=eq.${lo}&user_b=eq.${hi}&status=eq.move_requested`, { method: 'PATCH', body: { status: 'open', severity: 'review', note: 'The owner of the verified account declined the move' } }).catch(() => {});
+      await db('ops_alerts', { method: 'POST', body: { kind: 'identity', severity: 'warn', title: 'Verification move declined by its owner', body: 'The holder of a verified ID said a move request was not them. Review it in Profiles & ticks → Linked accounts.', meta: { user_id: move.to_user } } }).catch(() => {});
+      await tell(move.to_user, { title: 'The verification was not moved', text: 'The owner of the verified account did not approve the move. If you believe this is a mistake, contact Cabana support and we will help you.', url: '/profile#verification', event: 'identity_move_declined', cta: 'Open my profile' });
+      return res.status(200).json({ ok: true, declined: true });
+    }
+
+    case 'identity-move-cancel': {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
+      const s = await caller(true), uid = s.user.id;
+      await db(`identity_moves?to_user=eq.${uid}&status=eq.pending`, { method: 'PATCH', body: { status: 'cancelled', decided_at: now().toISOString() } });
       return res.status(200).json({ ok: true });
     }
 
@@ -813,13 +934,38 @@ export async function profiles(req, res, deps) {
       if (!UUID.test(id)) return res.status(400).json({ error: 'Choose a link.' });
       const [link] = await db(`identity_links?id=eq.${id}&select=*`);
       if (!link) return res.status(404).json({ error: 'Not found.' });
+      const pair = `user_a=eq.${link.user_a}&user_b=eq.${link.user_b}`;
+      await expireMoves();
+      if (b.decision === 'move' || b.decision === 'decline_move') {
+        const [pending] = await db(`identity_moves?status=eq.pending&or=(and(from_user.eq.${link.user_a},to_user.eq.${link.user_b}),and(from_user.eq.${link.user_b},to_user.eq.${link.user_a}))&select=*&order=requested_at.desc&limit=1`);
+        if (b.decision === 'decline_move') {
+          if (!pending) return res.status(409).json({ error: 'There is no open move request for these accounts.' });
+          await db(`identity_moves?id=eq.${pending.id}&status=eq.pending`, { method: 'PATCH', body: { status: 'declined', decided_by: s.user.id, decided_via: 'operator', decided_at: at, note: clean(b.note, 300) || null } });
+          await db(`identity_links?${pair}&status=eq.move_requested`, { method: 'PATCH', body: { status: 'open', reviewed_by: s.user.id, reviewed_at: at } }).catch(() => {});
+          await tell(pending.to_user, { title: 'The verification was not moved', text: clean(b.note, 300) || 'Cabana could not confirm the move. Contact support if you think this is a mistake.', url: '/profile#verification', event: 'identity_move_declined', cta: 'Open my profile' });
+          await db('admin_audit_log', { method: 'POST', body: { action: 'identity.move_declined_operator', target_type: 'profile', target_id: pending.to_user, meta: { from: pending.from_user } } }).catch(() => {});
+          return res.status(200).json({ ok: true });
+        }
+        let move = pending;
+        if (!move) {
+          // The member never pressed "move" (or it lapsed). The operator names who receives it.
+          const to = String(b.to || ''), from = to === link.user_a ? link.user_b : to === link.user_b ? link.user_a : null;
+          if (!from) return res.status(400).json({ error: 'Choose which account should receive the verification.' });
+          const [latest] = await db(`verification_sessions?user_id=eq.${to}&select=id&order=created_at.desc&limit=1`);
+          [move] = await db('identity_moves', { method: 'POST', prefer: 'return=representation', body: { from_user: from, to_user: to, session_id: latest?.id || null, expires_at: new Date(now().getTime() + MOVE_DAYS * 864e5).toISOString() } });
+        }
+        const out = await performMove(move, { by: s.user.id, via: 'operator' });
+        return res.status(200).json({ ok: true, moved: true, ...out });
+      }
       const status = { allow: 'allowed', same_person: 'same_person', dismiss: 'dismissed' }[b.decision];
       if (!status) return res.status(400).json({ error: 'Unknown decision.' });
       // One decision covers every signal between the same two accounts.
-      await db(`identity_links?user_a=eq.${link.user_a}&user_b=eq.${link.user_b}`, { method: 'PATCH', body: { status, reviewed_by: s.user.id, reviewed_at: at, note: clean(b.note, 300) || link.note } });
+      await db(`identity_links?${pair}`, { method: 'PATCH', body: { status, reviewed_by: s.user.id, reviewed_at: at, note: clean(b.note, 300) || link.note } });
+      // A pending move no longer applies once an operator settles the link another way.
+      await db(`identity_moves?status=eq.pending&or=(and(from_user.eq.${link.user_a},to_user.eq.${link.user_b}),and(from_user.eq.${link.user_b},to_user.eq.${link.user_a}))`, { method: 'PATCH', body: { status: 'cancelled', decided_at: at } }).catch(() => {});
       // Allowing re-runs any identity check this link was holding back.
       let rechecked = 0;
-      if (status !== 'same_person' || b.move) {
+      if (status === 'allowed') {
         const held = await db(`verification_sessions?user_id=in.(${link.user_a},${link.user_b})&decline_reason=in.(identity_review,duplicate_identity)&select=*&order=created_at.desc&limit=4`);
         for (const row of held) { try { await syncSession(row, { force: true }); rechecked++; } catch (e) { console.warn('[people] recheck failed', e.message); } }
       }
@@ -905,14 +1051,31 @@ export async function profiles(req, res, deps) {
         return res.status(200).json({ items: ids.map(i => { const r = raw.get(i); return { ...groups.get(i), person: r ? toCard(r, 'full') : { id: i, name: 'Member' } }; }) });
       }
       if (kind === 'links') {
-        const rows = await db(`identity_links?status=in.(open,move_requested)&severity=neq.info&select=*&order=detected_at.desc&limit=100`);
+        await expireMoves();
+        const resolved = req.query.scope === 'resolved';
+        const rows = resolved
+          ? await db(`identity_links?status=in.(moved,allowed,same_person,dismissed)&severity=neq.info&select=*&order=reviewed_at.desc.nullslast&limit=100`)
+          : await db(`identity_links?status=in.(open,move_requested)&severity=neq.info&select=*&order=detected_at.desc&limit=100`);
         const ids = [...new Set(rows.flatMap(r => [r.user_a, r.user_b]))];
-        const [cards, profs] = await Promise.all([rawCards(ids), ids.length ? db(`profiles?id=in.(${ids.join(',')})&select=id,email,banned,suspended_until,host_status,created_at`) : []]);
-        const pm = new Map(profs.map(p => [p.id, p]));
-        const person = u => { const c = cards.get(u), p = pm.get(u) || {}; return { ...(c ? toCard(c, 'full') : { id: u, name: 'Member' }), email: Identity.maskEmail(p.email), restricted: !!(p.banned || (p.suspended_until && new Date(p.suspended_until) > now()) || ['suspended', 'banned'].includes(p.host_status)), joined: p.created_at, identity_verified: !!c?.identity_verified }; };
+        const [cards, profs, held, moves] = await Promise.all([
+          rawCards(ids),
+          ids.length ? db(`profiles?id=in.(${ids.join(',')})&select=id,email,banned,suspended_until,host_status,created_at`) : [],
+          ids.length ? db(`verification_status?user_id=in.(${ids.join(',')})&identity_state=eq.approved&select=user_id`) : [],
+          ids.length ? db(`identity_moves?or=(from_user.in.(${ids.join(',')}),to_user.in.(${ids.join(',')}))&select=id,from_user,to_user,status,requested_at,expires_at,decided_via&order=requested_at.desc&limit=200`) : [],
+        ]);
+        const pm = new Map(profs.map(p => [p.id, p])), holders = new Set(held.map(h => h.user_id));
+        const person = u => { const c = cards.get(u), p = pm.get(u) || {}; return { ...(c ? toCard(c, 'full') : { id: u, name: 'Member' }), email: Identity.maskEmail(p.email), restricted: !!(p.banned || (p.suspended_until && new Date(p.suspended_until) > now()) || ['suspended', 'banned'].includes(p.host_status)), joined: p.created_at, identity_verified: !!c?.identity_verified, holds_verification: holders.has(u) }; };
         const groups = new Map();
-        rows.forEach(r => { const k = r.user_a + r.user_b; const g = groups.get(k) || { id: r.id, a: person(r.user_a), b: person(r.user_b), reasons: [], severity: 'info', status: r.status, detected_at: r.detected_at, note: r.note };
-          g.reasons.push(r.reason); if (r.severity === 'critical' || (r.severity === 'review' && g.severity === 'info')) g.severity = r.severity; if (r.status === 'move_requested') g.status = r.status; groups.set(k, g); });
+        rows.forEach(r => {
+          const k = r.user_a + r.user_b;
+          const mv = moves.find(m => (m.from_user === r.user_a && m.to_user === r.user_b) || (m.from_user === r.user_b && m.to_user === r.user_a));
+          const g = groups.get(k) || { id: r.id, a: person(r.user_a), b: person(r.user_b), reasons: [], severity: 'info', status: r.status, detected_at: r.detected_at, reviewed_at: r.reviewed_at, note: r.note,
+            move: mv ? { id: mv.id, from: mv.from_user, to: mv.to_user, status: mv.status, requested_at: mv.requested_at, expires_at: mv.expires_at, decided_via: mv.decided_via } : null };
+          g.reasons.push(r.reason);
+          if (r.severity === 'critical' || (r.severity === 'review' && g.severity === 'info')) g.severity = r.severity;
+          if (r.status === 'move_requested') g.status = r.status;
+          groups.set(k, g);
+        });
         return res.status(200).json({ items: [...groups.values()] });
       }
       if (kind === 'verified') {
