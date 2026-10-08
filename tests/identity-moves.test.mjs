@@ -83,7 +83,7 @@ test('asking twice does not create a second request or email', async () => {
 });
 
 test('if the other account is no longer verified there is nothing to move and the member is told to verify again', async () => {
-  const w = world({ caller: NEW }); w.t.vs[OLD].identity_state = 'moved';
+  const w = world({ caller: NEW }); w.t.vs[OLD].identity_state = 'not_started';
   const r = res(); await profiles(post('identity-move', {}), r, w.deps);
   assert.equal(r.code, 409); assert.equal(r.data.code, 'retry_verification');
 });
@@ -99,7 +99,7 @@ test('only the account that holds the verification can answer, and approving mov
   r = res(); await profiles(post('identity-move-respond', { id: MOVE, decision: 'approve' }), r, owner.deps);
   assert.equal(r.code, 200); assert.ok(r.data.moved);
   assert.equal(w.t.vs[NEW].identity_state, 'approved'); assert.equal(w.t.vs[NEW].display_name, 'Kevin A.');
-  assert.equal(w.t.vs[OLD].identity_state, 'moved');
+  assert.equal(w.t.vs[OLD].identity_state, 'not_started', 'the old account lets go of it');
   assert.equal(w.t.profiles[NEW].id_verification_status, 'approved'); assert.equal(w.t.profiles[OLD].id_verification_status, 'not_started');
   assert.equal(w.t.sessions[SESSION].state, 'approved'); assert.equal(w.t.sessions[SESSION].decline_reason, null);
   assert.ok(owner.t.prints.every(p => p.user_id === NEW), 'fingerprints follow the identity');
@@ -168,4 +168,36 @@ test('the support launcher cannot paint before its stylesheet and keeps clear of
   assert.match(js, /link\.addEventListener\('load', reveal\)/);
   assert.match(js, /function dockBarTop/); assert.match(js, /function dockScroll/); assert.match(js, /cbn\.support\.dock/);
   assert.match(css, /\.cbn-sup--tucked #cbn-sup-launcher/); assert.match(css, /#cbn-sup-panel[\s\S]*visibility: hidden/);
+});
+
+/* The move once failed in production with "invalid input value for enum verification_state: moved",
+   which a mocked database cannot catch. verification_status.identity_state is a Postgres enum, so
+   every literal the API writes to it must be one of its real labels. */
+test('the API only ever writes identity_state values that exist in the database enum', () => {
+  const ENUM = new Set(['not_started', 'in_progress', 'pending', 'approved', 'declined', 'expired', 'review']);
+  for (const f of ['api/lib/_profiles.js', 'api/lib/_identity.js', 'api/agents.js']) {
+    const src = read(f);
+    for (const m of src.matchAll(/identity_state:\s*'([a-z_]+)'/g)) assert.ok(ENUM.has(m[1]), `${f} writes identity_state '${m[1]}'`);
+    for (const m of src.matchAll(/identity_state=(?:eq\.)?'?([a-z_]+)/g)) assert.ok(ENUM.has(m[1]), `${f} filters identity_state '${m[1]}'`);
+  }
+});
+
+test('a failed move says why instead of the generic message the API uses for server errors', () => {
+  assert.match(read('api/lib/_profiles.js'), /err\(409, 'We could not move the verification just now/);
+});
+
+test('the APA panel and call overlay are not rendered at all until they are needed', () => {
+  const css = read('cabana-support.css');
+  assert.match(css, /#cbn-sup-panel \{[^}]*display: none;/);
+  assert.match(css, /\.cbn-sup--mounted #cbn-sup-panel \{ display: flex; \}/);
+  assert.match(css, /\.cbn-call \{[^}]*display: none;/);
+  assert.match(css, /\.cbn-call\[data-on="1"\] \{ display: flex;/);
+  assert.match(css, /--cbn-vh/); assert.match(css, /\.cbn-sup--kb #cbn-sup-panel/);
+  assert.match(read('cabana-support.js'), /visualViewport/);
+});
+
+test('a stay with a day pass keeps its price readable on a phone', () => {
+  const html = read('apartments.html');
+  assert.match(html, /dl-cta\$\{apt\.dayPass && apt\.bookingModel !== 'hotel' \? ' has-dp' : ''\}/);
+  assert.match(html, /\.dl-cta\.has-dp\{flex-direction:column/);
 });

@@ -707,13 +707,34 @@
   /* ══════════════════════════════════════════════════════════════════
      OPEN / CLOSE
   ══════════════════════════════════════════════════════════════════ */
+  var unmountT = 0;
+
+  /* The visual viewport is what the guest can really see. When the keyboard
+     opens it shrinks (and, on iOS, the layout viewport does not), so the
+     card is sized and lifted from these two numbers rather than from vh. */
+  function viewportSync() {
+    var vv = global.visualViewport, root = el.root;
+    if (!root) return;
+    var h = vv ? vv.height : global.innerHeight;
+    var kb = vv ? Math.max(0, Math.round(global.innerHeight - vv.height - vv.offsetTop)) : 0;
+    var typing = !!(vv && global.innerHeight - vv.height > 140);
+    root.style.setProperty('--cbn-vh', Math.round(h) + 'px');
+    root.style.setProperty('--cbn-kb', kb + 'px');
+    root.classList.toggle('cbn-sup--kb', open && typing);
+    if (open && typing) toBottom(false);
+  }
+
   function openPanel(focus) {
     if (open) return;
     open = true;
     dismissWelcome();
     ls(LS_USED, '1');
     ss(SS_OPEN, '1');
-    el.root.classList.add('cbn-sup--open', 'cbn-sup--used');
+    clearTimeout(unmountT);
+    el.root.classList.add('cbn-sup--mounted', 'cbn-sup--used');
+    void el.panel.offsetWidth;                       // lay it out once so the entrance can animate
+    el.root.classList.add('cbn-sup--open');
+    viewportSync();
     el.launch.setAttribute('aria-expanded', 'true');
     setUnread(0);
     if (!booted) boot();
@@ -726,7 +747,9 @@
     open = false;
     hushVoice();   /* nothing should still be talking to a closed panel */
     ss(SS_OPEN, null);
-    el.root.classList.remove('cbn-sup--open');
+    el.root.classList.remove('cbn-sup--open', 'cbn-sup--kb');
+    clearTimeout(unmountT);
+    unmountT = setTimeout(function () { if (!open) el.root.classList.remove('cbn-sup--mounted'); }, 480);
     el.launch.setAttribute('aria-expanded', 'false');
     clearTimeout(pollTimer);
     /* Keep polling while a human is mid-conversation: a reply arriving
@@ -1434,8 +1457,13 @@
       .catch(function () { /* state events carry the reason */ });
   }
 
+  var callBound = false, bindTries = 0;
   function bindCall() {
-    if (!global.CabanaCall) return;
+    if (callBound) return;
+    /* cabana-call.js is deferred and may land after this script. Wait for it
+       rather than silently never wiring the call screen. */
+    if (!global.CabanaCall) { if (++bindTries < 30) setTimeout(bindCall, 400); return; }
+    callBound = true;
     var C = global.CabanaCall;
 
     C.setGuestKeyProvider(guestKey);
@@ -1773,6 +1801,8 @@
     build();
     delegate();
     dockInit();
+    if (global.visualViewport) { global.visualViewport.addEventListener('resize', viewportSync); global.visualViewport.addEventListener('scroll', viewportSync); }
+    global.addEventListener('orientationchange', function () { setTimeout(viewportSync, 250); });
     bindCall();
     watchAuth();
     scheduleWelcome();
