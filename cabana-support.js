@@ -1709,6 +1709,9 @@
   function dockApply() {
     dock.raf = 0;
     if (!el.launch) return;
+    /* Layout reads for a launcher nobody can see are pure battery. The
+       visibilitychange listener re-settles it when the tab returns. */
+    if (doc.hidden) return;
     var vh = global.innerHeight, base = dockBase();
     var lift = 0;
     try { var bt = dockBarTop(); if (bt < vh) lift = Math.max(0, vh - bt + 12 - base); } catch (e) { lift = 0; }
@@ -1791,7 +1794,8 @@
       for (var i = 0; i < list.length; i++) { if (!(el.root && el.root.contains(list[i].target))) { clearTimeout(t); t = setTimeout(tick, 120); return; } }
     });
     mo.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'open', 'hidden', 'aria-hidden'] });
-    setInterval(tick, 2500);                 // belt and braces for bars that animate in
+    setInterval(function () { if (!doc.hidden) tick(); }, 2500);   // belt and braces for bars that animate in
+    doc.addEventListener('visibilitychange', function () { if (!doc.hidden) tick(); });
     dockSettle();
   }
 

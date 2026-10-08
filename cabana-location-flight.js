@@ -21,7 +21,7 @@
     if (!s) return;
     active = null;
     clearTimeout(s.timeout);
-    cancelAnimationFrame(s.frame);
+    cancelAnimationFrame(s.frame); clearTimeout(s.tick);
     document.removeEventListener('visibilitychange', s.visibility);
     s.motion?.removeEventListener?.('change', s.motionChange);
     s.observer?.disconnect();
@@ -139,7 +139,8 @@
       if (active !== s) return;
       const elapsed = Math.max(performance.now() - s.start, DURATION - (s.deadline - Date.now()));
       if (elapsed >= DURATION) { close(); return; }
-      const reduced = !!s.motion?.matches;
+      // Battery saver / low charge / Save-Data get the still version too.
+      const reduced = !!s.motion?.matches || !!window.CabanaCalm?.lowPower?.();
       dialog.classList.toggle('clf-reduced', reduced);
       const stage = !s.center ? 0 : reduced ? 4 : elapsed < STAGE_AT[1] ? 0 : elapsed < STAGE_AT[2] ? 1 : elapsed < STAGE_AT[3] ? 2 : elapsed < STAGE_AT[4] ? 3 : 4;
       const labels = ['Our world', s.continent || 'Your continent', s.country || 'Your country', s.city || 'Your city / town', s.area || s.city || 'Your stay’s neighbourhood'];
@@ -178,7 +179,9 @@
       const loading = 'Loading the area map… You can continue to the listing at any time.';
       if (elapsed > 19500 && !s.tilesReady && s.center && !s.mapFailed && status.textContent !== loading) status.textContent = loading;
       else if (mapVisible && status.textContent) status.textContent = '';
-      s.frame = requestAnimationFrame(frame);
+      // ~35 fps: a short timer gap, then one frame. The globe is a full-canvas
+      // redraw, and a 60 fps loop for 30 s is what warms a phone.
+      s.tick = setTimeout(() => { s.frame = requestAnimationFrame(frame); }, 16);
     }
     s.frame = requestAnimationFrame(frame);
   }

@@ -35,12 +35,14 @@
     const geography = await preload();
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Canvas unavailable');
-    const d3 = window.d3, projection = d3.geoOrthographic().clipAngle(90).precision(.5);
+    const d3 = window.d3, projection = d3.geoOrthographic().clipAngle(90).precision(1);
     const path = d3.geoPath(projection, context), sphere = {type:'Sphere'}, grid = d3.geoGraticule10();
     let dead = false, width = 0, height = 0, dpr = 1, previous;
     function resize() {
       width = canvas.clientWidth; height = canvas.clientHeight;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      /* 1.5x is indistinguishable on a globe this soft, and 44% fewer pixels to fill
+         on every frame of a 30 s animation. */
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
       previous = null;
     }
@@ -69,7 +71,9 @@
         land.addColorStop(0,'#c9d9ad');land.addColorStop(.45,'#95b99d');land.addColorStop(1,'#428183');
         context.beginPath();path(geography.land);context.fillStyle=land;context.fill();
         context.strokeStyle='#d9ecd160';context.lineWidth=.65;context.stroke();
-        context.beginPath();path(geography.borders);context.strokeStyle='#173f4b55';context.lineWidth=.55;context.stroke();
+        /* Country borders are hairlines at world scale; drawing ~200 polylines per
+           frame only pays off once the globe is zoomed in. */
+        if (scale >= 1.4) { context.beginPath();path(geography.borders);context.strokeStyle='#173f4b55';context.lineWidth=.55;context.stroke(); }
         context.save();context.beginPath();path(sphere);context.clip();
         const shade=context.createRadialGradient(cx-radius*.35,cy-radius*.4,radius*.2,cx+radius*.08,cy+radius*.07,radius*1.03);
         shade.addColorStop(0,'#001a2700');shade.addColorStop(.66,'#001a2707');shade.addColorStop(1,'#000e248c');
