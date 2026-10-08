@@ -281,6 +281,8 @@ a{color:inherit;}
 .c-price{font-family:var(--fd);font-weight:600;font-size:21px;letter-spacing:-.025em;line-height:1.1;}
 .c-price small{font-size:12px;font-weight:500;color:var(--ink-3);letter-spacing:0;}
 .c-per{font-size:11px;color:var(--ink-3);margin-top:2px;}
+.c-share{width:38px;height:38px;margin-left:auto;margin-right:8px;background:var(--bg-soft,#f3f0fb);color:var(--ink);box-shadow:none;flex:none}
+.c-share svg{width:16px;height:16px}
 .c-open{padding:10px 16px;border-radius:100px;background:var(--ink);color:#fff;font-weight:700;font-size:12.5px;
   display:inline-flex;align-items:center;gap:6px;transition:.24s;flex-shrink:0;}
 .c-open:hover{background:linear-gradient(120deg,#7B2FF7,#3D5AFE);transform:translateX(2px);}
@@ -1375,6 +1377,7 @@ function cardHtml(r){
     + '<div class="c-price num">'+(r.price ? esc(money(r.price, r.currency)) : '<small>Rent on request</small>')+'</div>'
     + '<div class="c-per">'+(r.price ? 'per month' : 'ask the host')
     + (r.deposit ? ' · ' + esc(shortMoney(r.deposit, r.currency)) + ' deposit' : '') + '</div></div>'
+    + '<button type="button" class="c-share cbn-share-btn" data-cbn-share data-share-id="'+attr(r.id)+'" data-share-title="'+attr(r.title)+'" data-share-url="https://cabana.africa/roommates?room='+encodeURIComponent(r.id)+'" aria-label="Share this room">'+svg('share',16)+'</button>'
     + '<button type="button" class="c-open" data-open="'+attr(r.id)+'">View room'+svg('arrow',14)+'</button>'
     + '</div></div></article>';
 }
@@ -2223,7 +2226,7 @@ window.showToast = toast;
 .sf-bottom-right a:hover{color:rgba(255,255,255,.6);}
 </style>
 <script src="/cabana-call.js" defer></script>
-<script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
+<script src="/cabana-share.js" defer></script><script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
 <script src="/cabana-identity.js" defer></script>
 <script src="/cabana-pay.js" defer></script>

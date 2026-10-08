@@ -1157,6 +1157,8 @@ function zoom(url){
     +'<button class="sh-x" onclick="closeSheet()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>');
 }
 function share(){
+  /* The shared link is /s/<id>: a real preview card in chats, then this exact menu. */
+  if(window.CabanaShare && R && R.id){ window.CabanaShare.open({id:String(R.id),title:R.title,text:'The menu at '+R.title+' on Cabana'}); return; }
   var d={title:(R&&R.title)||'Cabana',text:R?('The menu at '+R.title):'',url:location.href};
   if(navigator.share) navigator.share(d).catch(function(){});
   else if(navigator.clipboard) navigator.clipboard.writeText(location.href).then(function(){toast('Link copied');});
@@ -1167,6 +1169,7 @@ function share(){
 <script src="/telemetry.js" defer></script>
 <script src="/pwa.js?v=35-programmes" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
+<script src="/cabana-share.js" defer></script>
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>

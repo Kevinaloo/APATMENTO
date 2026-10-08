@@ -92,8 +92,15 @@ The tick needs something live. Provider (Reef) requires one of: an active listin
 | Shared device, phone or email alias | Nothing | Info or review link only |
 
 - **Denylist:** `identity_denylist` keeps a banned member's fingerprints and SHA-256 phone and email hashes even after the account is deleted.
-- **Operator controls:**
-  - **Allow both:** re-runs any identity check the link was holding back.
-  - **Same person, noted:** records it with no effect on the member.
+- **Moving a verification** (`identity_moves`, `/api/people?op=identity-move`):
+  1. The new account taps **Move my verification here** on `/profile#verification`.
+  2. The account that **holds** the verification is emailed and notified, with a link to `/profile?move=<id>#verification`. They sign in as that account and press **Yes, move it** or **No, that is not me**. The link survives the sign-in round trip, and a visitor signed in as the wrong account is told so and offered *Switch account*.
+  3. Approving moves the tick, ID check, fingerprints and links across; the old account is left as `moved` and can verify again with a different ID. Declining keeps everything and raises an operator alert.
+  4. Operators are emailed as a fallback only (deep link: `/admin.html#/profiles?tab=links`). If the owner cannot get back in, an operator can press **Move verification** (audited as `identity.move_operator`).
+  Requests expire after 14 days, a member can send three a day, and every answer notifies both accounts.
+- **Operator controls** (Console → Profiles & ticks → Linked accounts, which shows *who holds the verification* → *who wants it*, plus a Resolved history):
+  - **Move verification / Decline the move:** the two decisions that change anything.
+  - **Keep both verified:** both accounts may hold a verified ID; re-runs any identity check the link was holding back.
+  - **Same person, noted:** only records it. Nothing changes for either account.
   - **Not related:** dismisses the link.
 - The Identity panel in every member drawer shows the verification source, Didit warnings, agent and driver status, and linked accounts.

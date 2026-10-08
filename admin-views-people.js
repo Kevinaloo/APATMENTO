@@ -30,7 +30,7 @@
     render: function (v) {
       var tab = v.q.tab || 'photos';
       set(v.el, html`${pageHd('People', 'Profiles & ticks', LEDE)}${CX.skeleton('list')}`);
-      var kind = tab === 'orgs' ? 'orgs' + (v.q.status ? '&status=' + encodeURIComponent(v.q.status) : '') : tab;
+      var kind = tab === 'orgs' ? 'orgs' + (v.q.status ? '&status=' + encodeURIComponent(v.q.status) : '') : tab === 'links' && v.q.scope === 'resolved' ? 'links&scope=resolved' : tab;
       return api('op=admin-queue&kind=' + kind).then(function (j) {
         if (!v.alive()) return;
         var items = j.items || [];
@@ -39,11 +39,12 @@
         if (tab === 'photos') body = photos(items);
         else if (tab === 'orgs') body = orgs(items, v.q.status || 'submitted');
         else if (tab === 'reports') body = reports(items);
-        else if (tab === 'links') body = linksView(items);
+        else if (tab === 'links') body = linksView(items, v.q.scope === 'resolved');
         else body = verified(items);
         set(v.el, html`${pageHd('People', 'Profiles & ticks', LEDE)}${bar}${body}`);
-        on(v.el, '[data-tab]', 'click', function (el) { var t = el.getAttribute('data-tab'); v.setQ({ tab: t === 'photos' ? null : t, status: null }); v.refresh(); });
+        on(v.el, '[data-tab]', 'click', function (el) { var t = el.getAttribute('data-tab'); v.setQ({ tab: t === 'photos' ? null : t, status: null, scope: null }); v.refresh(); });
         on(v.el, '[data-ostatus]', 'click', function (el) { v.setQ({ status: el.getAttribute('data-ostatus') === 'submitted' ? null : el.getAttribute('data-ostatus') }); v.refresh(); });
+        on(v.el, '[data-lscope]', 'click', function (el) { v.setQ({ scope: el.getAttribute('data-lscope') === 'open' ? null : 'resolved' }); v.refresh(); });
         on(v.el, '[data-open]', 'click', function (el) { P() && P().open(el.getAttribute('data-open')); });
         wire(v);
         if (tab === 'photos') items.forEach(function (it) {
@@ -95,24 +96,50 @@
     })}</div>`;
   }
   var REASON = { same_document: 'Same ID document', same_id_number: 'Same ID number', same_name_dob: 'Same name and birth date', same_face: 'Same face (Didit)', same_device: 'Same device', same_phone: 'Same phone number', same_email_alias: 'Email alias', same_payout: 'Same payout number' };
-  function person(pp) {
+  function acct(pp, role, tone) {
     pp = pp || {};
-    return html`<div class="cell">${face(pp, 36)}<div><div class="t-main">${pp.name || 'Member'} ${tick(pp.badge)} ${pp.restricted ? html`<span class="pill p-bad">Restricted</span>` : ''}</div><div class="t-sub">${pp.email || ''}${pp.joined ? ' · joined ' + fdate(pp.joined) : ''}${pp.identity_verified ? ' · ID verified' : ''}</div></div></div>`;
+    return html`<button type="button" class="lk-acct ${tone || ''}" data-open="${pp.id}">
+      <span class="lk-role">${role}</span>
+      <span class="cell">${face(pp, 40)}<span class="lk-who"><span class="t-main">${pp.name || 'Member'} ${tick(pp.badge)} ${pp.restricted ? html`<span class="pill p-bad">Restricted</span>` : ''}</span>
+        <span class="t-sub lk-mail">${pp.email || 'No email'}</span>
+        <span class="t-sub">${pp.joined ? 'Joined ' + fdate(pp.joined) : ''}${pp.holds_verification ? ' · ' : ''}${pp.holds_verification ? html`<span class="pill p-ok">${icon('check')}ID verified</span>` : ''}</span></span></span></button>`;
   }
-  function linksView(items) {
-    if (!items.length) return html`<div class="card">${CX.empty('No linked accounts to review', 'When the same person appears behind two accounts, it shows up here. Shared phones and devices alone never do.', 'users', true)}</div>`;
-    return html`<div style="display:grid;gap:12px">${items.map(function (g) {
-      return html`<div class="card"><div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px">
-          <div>${g.severity === 'critical' ? html`<span class="pill p-bad">${icon('alert')}Possible return of a restricted member</span>` : g.status === 'move_requested' ? html`<span class="pill p-info">Member asked to move their verification</span>` : html`<span class="pill p-warn">Same person, two accounts?</span>`}
-            <span class="t-sub" style="margin-left:6px">${g.reasons.map(function (r) { return REASON[r] || human(r); }).join(' · ')} · ${ago(g.detected_at)}</span></div>
-          <div class="t-act">
-            <button class="btn btn-sm btn-ok" data-lk="${g.id}" data-d="allow" title="Both accounts may keep a verified identity">Allow both</button>
-            <button class="btn btn-sm btn-g" data-lk="${g.id}" data-d="same_person" title="Record that this is one person; nothing changes for them">Same person, noted</button>
-            <button class="btn btn-sm btn-q" data-lk="${g.id}" data-d="dismiss" title="Not the same person">Not related</button></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <button class="link-btn" data-open="${g.a.id}" style="text-align:left">${person(g.a)}</button>
-          <button class="link-btn" data-open="${g.b.id}" style="text-align:left">${person(g.b)}</button></div>
-        <div class="t-sub" style="margin-top:10px;white-space:normal">Allow both re-runs any identity check this link was holding back. To act on an account (ban, suspend), open it from Members.</div></div>`;
+  function linksView(items, resolved) {
+    var sub = html`<div class="chips lk-chips"><button class="btn btn-sm ${resolved ? 'btn-g' : 'btn-p'}" data-lscope="open">Needs a decision</button><button class="btn btn-sm ${resolved ? 'btn-p' : 'btn-g'}" data-lscope="resolved">Resolved</button></div>`;
+    if (!items.length) return html`${sub}<div class="card">${resolved ? CX.empty('Nothing resolved yet', 'Decisions you make on linked accounts are kept here.', 'users', false) : CX.empty('No linked accounts to review', 'When the same person appears behind two accounts, it shows up here. Shared phones and devices alone never do.', 'users', true)}</div>`;
+    return html`${sub}<div class="lk-list">${items.map(function (g) {
+      var mv = g.move, pending = mv && mv.status === 'pending';
+      // Which account holds the verification today, and which is asking for it?
+      var from = g.a.holds_verification && !g.b.holds_verification ? g.a : g.b.holds_verification && !g.a.holds_verification ? g.b : null;
+      var to = from ? (from === g.a ? g.b : g.a) : null;
+      if (mv && mv.status === 'pending') { from = mv.from === g.a.id ? g.a : g.b; to = from === g.a ? g.b : g.a; }
+      var head, tone;
+      if (resolved) { head = g.status === 'moved' ? 'Verification moved' : g.status === 'allowed' ? 'Both accounts kept their verification' : g.status === 'same_person' ? 'Recorded as the same person' : 'Marked as not related'; tone = 'p-mute'; }
+      else if (g.severity === 'critical') { head = 'Possible return of a restricted member'; tone = 'p-bad'; }
+      else if (pending) { head = 'A member wants to move their verification'; tone = 'p-info'; }
+      else { head = 'Same person, two accounts?'; tone = 'p-warn'; }
+      var state = resolved ? (g.reviewed_at ? 'Decided ' + ago(g.reviewed_at) : '') :
+        pending ? (mv.requested_at ? 'Asked ' + ago(mv.requested_at) + '. The owner of ' + (from && from.email || 'the verified account') + ' has been emailed and can approve it themselves.' : '') :
+        mv && mv.status === 'declined' ? 'The owner of the verified account declined the move' + (mv.decided_via === 'owner' ? '' : '') + '.' :
+        'No move has been requested yet.';
+      var reasons = g.reasons.map(function (r) { return REASON[r] || human(r); }).join(' · ');
+      return html`<div class="card lk-card" data-link="${g.id}">
+        <div class="lk-head"><span class="pill ${tone}">${head}</span><span class="t-sub">${reasons} · ${ago(g.detected_at)}</span></div>
+        ${state ? html`<p class="lk-state">${state}</p>` : ''}
+        <div class="lk-pair">
+          ${acct(from || g.a, from ? 'Holds the verification' : 'Account A', 'lk-from')}
+          <span class="lk-arrow" aria-hidden="true">${icon('arrowR')}</span>
+          ${acct(to || g.b, to ? 'Wants it moved here' : 'Account B', 'lk-to')}
+        </div>
+        ${resolved ? '' : html`<div class="lk-acts">
+          ${from && to ? html`<button class="btn btn-sm btn-p" data-lk="${g.id}" data-d="move" data-to="${to.id}" data-fromname="${from.email || ''}" data-toname="${to.email || ''}">${icon('check')}Move verification to ${to.email || 'the new account'}</button>` : html`<button class="btn btn-sm btn-g" data-lk="${g.id}" data-d="move" data-to="${g.b.id}">Move to ${g.b.email || 'account B'}</button><button class="btn btn-sm btn-g" data-lk="${g.id}" data-d="move" data-to="${g.a.id}">Move to ${g.a.email || 'account A'}</button>`}
+          ${pending ? html`<button class="btn btn-sm btn-d" data-lk="${g.id}" data-d="decline_move">Decline the move</button>` : ''}
+          <details class="lk-more"><summary class="btn btn-sm btn-q">Other decisions</summary><div class="lk-more-body">
+            <button class="btn btn-sm btn-g" data-lk="${g.id}" data-d="allow">Keep both verified</button><span class="t-sub">Both accounts may hold a verified ID. Use only when you are sure.</span>
+            <button class="btn btn-sm btn-g" data-lk="${g.id}" data-d="same_person">Same person, noted</button><span class="t-sub">Only records it. Nothing changes for either account.</span>
+            <button class="btn btn-sm btn-q" data-lk="${g.id}" data-d="dismiss">Not related</button><span class="t-sub">Different people. The link is closed.</span></div></details></div>
+        <p class="t-sub lk-foot">Moving takes the purple tick off the verified account and gives it to the other. To ban or suspend an account, open it from Members.</p>`}
+      </div>`;
     })}</div>`;
   }
   function verified(items) {
@@ -144,7 +171,7 @@
         ${(x.links || []).length ? html`<div class="dr-sec-t" style="margin-top:12px">Linked accounts</div>${x.links.map(function (l) {
           return html`<div class="kv"><span><button class="link-btn" data-open-person="${l.other}">${l.person.name}</button> ${l.restricted ? html`<span class="pill p-bad">Restricted</span>` : ''}${l.identity_verified ? html` <span class="pill p-ok">ID verified</span>` : ''}
             <div class="t-sub">${l.email || ''} · ${l.reasons.map(function (r) { var k = r.split(':')[0]; return REASON[k] || human(k); }).join(', ')}</div></span>
-            <span>${l.status === 'open' || l.status === 'move_requested' ? html`<button class="btn btn-sm btn-ok" data-plk="${l.link_id}" data-d="allow">Allow</button> <button class="btn btn-sm btn-g" data-plk="${l.link_id}" data-d="dismiss">Not related</button>` : CX.pill(l.status)}</span></div>`;
+            <span>${l.status === 'open' || l.status === 'move_requested' ? html`<button class="btn btn-sm btn-ok" data-plk="${l.link_id}" data-d="allow">Keep both</button> <button class="btn btn-sm btn-g" data-plk="${l.link_id}" data-d="dismiss">Not related</button>` : CX.pill(l.status)}</span></div>`;
         })}` : ''}`);
       box.querySelectorAll('[data-plk]').forEach(function (b) { b.addEventListener('click', function () { CX.busy(b, function () { return linkDecide(b.getAttribute('data-plk'), b.getAttribute('data-d')).then(function () { toast('Saved', 'ok'); CX.identityPanel(root, id); box.remove(); }); }); }); });
       box.querySelectorAll('[data-open-person]').forEach(function (b) { b.addEventListener('click', function () { location.hash = '#/people/' + b.getAttribute('data-open-person'); }); });
@@ -152,7 +179,7 @@
   };
 
   function decide(body) { return api('op=admin-decide', body); }
-  function linkDecide(id, d) { return api('op=admin-link', { id: id, decision: d }); }
+  function linkDecide(id, d, body) { return api('op=admin-link', body || { id: id, decision: d }); }
   function wire(v) {
     on(v.el, '[data-ph]', 'click', function (el) {
       var id = el.getAttribute('data-ph'), d = el.getAttribute('data-d');
@@ -162,8 +189,19 @@
         onConfirm: function (f) { return decide({ kind: 'photo', id: id, decision: 'reject', note: f.reason }).then(function () { toast('Rejected', 'ok'); CX.pulseNow(true); v.refresh(); }); } });
     });
     on(v.el, '[data-lk]', 'click', function (el) {
-      var id = el.getAttribute('data-lk'), d = el.getAttribute('data-d');
-      CX.busy(el, function () { return linkDecide(id, d).then(function (r) { toast({ allow: 'Allowed' + (r.rechecked ? ' · identity re-checked' : ''), same_person: 'Noted as the same person', dismiss: 'Marked as not related' }[d], 'ok'); CX.pulseNow(true); v.refresh(); }); });
+      var id = el.getAttribute('data-lk'), d = el.getAttribute('data-d'), to = el.getAttribute('data-to');
+      var done = function (r) {
+        var msg = { move: 'Verification moved. Both members have been told.', decline_move: 'Move declined. The member has been told.', allow: 'Both accounts kept' + (r.rechecked ? ' · identity re-checked' : ''), same_person: 'Noted as the same person', dismiss: 'Marked as not related' }[d];
+        toast(msg, 'ok'); CX.pulseNow(true); v.refresh();
+      };
+      var body = { id: id, decision: d }; if (to) body.to = to;
+      if (d === 'move') return confirm({ title: 'Move the verification?', confirm: 'Move verification', icon: 'check',
+        body: 'The purple tick and ID check move to ' + (el.getAttribute('data-toname') || 'the new account') + '. The older account' + (el.getAttribute('data-fromname') ? ' (' + el.getAttribute('data-fromname') + ')' : '') + ' loses it. Only do this if you are confident they are the same person. Normally the owner of the older account approves this themselves from their email.',
+        onConfirm: function () { return linkDecide(id, d, body).then(done); } });
+      if (d === 'decline_move') return confirm({ title: 'Decline this move?', tone: 'danger', confirm: 'Decline', icon: 'x', body: 'The verification stays where it is. The member is told it was not moved.',
+        reason: { label: 'Note to the member (optional)', required: false, placeholder: 'We could not confirm this was you. Please contact support.' },
+        onConfirm: function (f) { body.note = f.reason; return linkDecide(id, d, body).then(done); } });
+      CX.busy(el, function () { return linkDecide(id, d, body).then(done); });
     });
     on(v.el, '[data-doc]', 'click', function (el) {
       CX.busy(el, function () { return api('op=admin-file&kind=org&id=' + el.getAttribute('data-doc')).then(function (r) { global.open(r.url, '_blank', 'noopener'); }); });

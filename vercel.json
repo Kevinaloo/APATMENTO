@@ -570,6 +570,10 @@
       "destination": "/events"
     },
     {
+      "source": "/s/:id([A-Za-z0-9_-]{6,64})",
+      "destination": "/api/utilities?action=listing-share&id=:id"
+    },
+    {
       "source": "/u/:handle([A-Za-z0-9._]{3,24})",
       "destination": "/person?handle=:handle"
     }

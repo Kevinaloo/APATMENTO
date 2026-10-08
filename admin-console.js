@@ -1208,7 +1208,8 @@
       form.classList.add('hide'); who.classList.remove('hide');
       set(who, html`<div class="gate-who">${avatar(o.signedInAs, 'sm')}<div class="grow"><div class="strong">${o.signedInAs}</div><div class="muted" style="font-size:12px">is signed in, but not on the operator roster</div></div></div>
         <button class="btn btn-g" id="gate-switch" type="button">${icon('logout')}Use a different account</button>
-        <a class="btn btn-q" href="/" style="margin-top:8px">Back to Cabana</a>`);
+        <a class="btn btn-q" href="/profile" style="margin-top:8px">Go to my Cabana profile</a>
+        <p class="muted" style="font-size:12px;line-height:1.5;margin-top:14px">This is the operations office. If you came here from an email about moving your verification, that request is answered from your <a href="/profile#verification">profile</a> while signed in to the account that holds the verification.</p>`);
       $('#gate-switch').onclick = function () { sb.auth.signOut().finally(function () { showGate({}); }); };
     } else {
       form.classList.remove('hide'); who.classList.add('hide');
