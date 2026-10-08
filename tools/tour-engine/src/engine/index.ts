@@ -404,8 +404,9 @@ function startTour(host: HTMLElement, def: TourDefinition, cb: TourCallbacks, re
     const spec = governor.spec;
     if (rig) { rig.setShadowSize(spec.shadow); shadowsDirty = true; }
     mirror?.setResolution(spec.mirror);
-    if (!spec.ao && refiner) { refiner.dispose(); refiner = null; }
-    if (refiner) ensureRefiner();
+    // Below the AO tiers keep the (tiny) refiner so its compiled programs survive for the next step up.
+    if (!spec.ao && refiner) refiner.setSize(WARM_SIZE, WARM_SIZE);
+    else if (refiner) ensureRefiner();
     reportQuality();
     markDirty();
   }
@@ -860,7 +861,7 @@ function startTour(host: HTMLElement, def: TourDefinition, cb: TourCallbacks, re
     persp.aspect = w / h;
     persp.updateProjectionMatrix();
     updatePlanFrustum();
-    if (refiner) ensureRefiner();
+    if (refiner && governor.spec.ao) ensureRefiner();
     if (mode === 'plan' && !flight.active) planOrbit.update();
     markDirty();
   }
@@ -1045,8 +1046,9 @@ function startTour(host: HTMLElement, def: TourDefinition, cb: TourCallbacks, re
       renderer.setClearColor(rig!.background, 1);
       renderer.render(scene, persp);
       await nextTask();
-      if (governor.spec.ao) {
-        // Only the programs matter here, not the pixels. Occlusion at canvas size is the most expensive pass
+      {
+        // Warmed whatever the starting tier: phones start on balanced and the governor steps them up to high
+        // mid-walk, which would otherwise compile the AO/composite programs in front of the guest. Only the programs matter here, not the pixels. Occlusion at canvas size is the most expensive pass
         // the engine has (seconds under software GL) and would hold the loading bar for nothing; the first
         // refined frame grows the buffers to the canvas, which is a reallocation, not a recompile.
         if (!refiner) refiner = new Refiner(scene, persp, WARM_SIZE, WARM_SIZE, { samples: 2, ao: true });

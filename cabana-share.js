@@ -733,7 +733,11 @@
     D.body.appendChild(dialog);
 
     var canvas = dialog.querySelector('canvas');
-    try { qr.draw(canvas, o.url, { size: 132 }); } catch (e) { dialog.querySelector('.cshare-qr').remove(); }
+    /* draw() returns null when the link is too long for a code (~213 bytes),
+       and a blank panel with a dead Save button is worse than none. */
+    var qrOk = false;
+    try { qrOk = !!qr.draw(canvas, o.url, { size: 132 }); } catch (e) {}
+    if (!qrOk) dialog.querySelector('.cshare-qr').remove();
 
     S = { dialog: dialog, opts: o, overflow: D.body.style.overflow, returnFocus: D.activeElement };
     D.body.style.overflow = 'hidden';
@@ -840,7 +844,11 @@
         var c = e.target && e.target.closest && e.target.closest('[data-cbn-share]');
         if (!c) return;
         e.preventDefault(); e.stopPropagation();   // a share button on a card must not open the card
-        open({ id: c.getAttribute('data-share-id'), title: c.getAttribute('data-share-title'), url: c.getAttribute('data-share-url') || undefined });
+        open({
+          id: c.getAttribute('data-share-id'), title: c.getAttribute('data-share-title'), url: c.getAttribute('data-share-url') || undefined,
+          image: c.getAttribute('data-share-image') || '', text: c.getAttribute('data-share-text') || '',
+          subtitle: c.getAttribute('data-share-sub') || '', heading: c.getAttribute('data-share-heading') || ''
+        });
         return;
       }
       e.preventDefault();
@@ -867,6 +875,7 @@
       title: o.title || 'Cabana',
       text: o.text || (o.title ? o.title + ' on Cabana' : 'Have a look at this on Cabana'),
       imageUrl: o.image || '',
+      subtitle: o.subtitle,
       heading: o.heading || 'Share this place'
     });
   }

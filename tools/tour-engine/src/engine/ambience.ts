@@ -113,6 +113,9 @@ export class Ambience {
       this.loop(white).connect(biquad(ctx, 'bandpass', f, 24)).connect(pulse).connect(layers.crickets);
       this.pulses.push(pulse);
     }
+    // setScene() runs before the first setOn(true), when no nodes exist yet: apply the stored mix now
+    // or every layer stays at 0 until the light next changes.
+    for (const name of LAYER_NAMES) layers[name].gain.value = this.level[name] * LAYER[name];
     const t = ctx.currentTime;
     this.nextChirp = [t + 0.2, t + 0.5];
     this.nextPhrase = t + 0.4;
