@@ -53,7 +53,7 @@ Unit tests: 959 of 959 pass (8 new). Syntax and routing preflight is clean.
 - **Live inventory is thin.** Stays offers only three areas (Syokimau, Kilimani, Obama estate; all Nairobi). Searching Mombasa autosuggests but finds nothing. Food shows no kitchens at all. This is the largest guest-experience gap, and it is supply, not code.
 - **Reserve requires an account**, with no dates asked first. This is a deliberate funnel choice, but guest checkout for stays would likely lift conversion. At minimum, collect dates before the sign-in wall.
 - Date inputs on flights and roommates use the native `mm/dd/yyyy` control, which looks out of place beside the custom Stays calendar.
-- **Unnamed controls** (no text or aria-label), by page: `/help` 33, `/tours-catalogue` 31, `/events` 6, `/tours` 5, and 1–4 on most other pages. Screen-reader and accessibility-scan impact.
+- ~~**Unnamed controls**~~ Corrected: the original count (30+ on `/help`, `/tours-catalogue`) was inflated by hidden elements. Re-measured on visible controls only, the real set was a few icon-only back links and one search button. Fixed in section 7.
 - Cold first paint is slow: `/` 3.4 s, `/apartments` 3.2 s, `/food` 3.2 s, `/rides` 3.0 s in this environment (headless, uncached).
 
 ---
@@ -85,3 +85,17 @@ The 30-second journey existed to absorb lag. It now runs on a media clock instea
 - One fly-in lands at 12.6 s, leaving about 2.4 s to look around. The area circle appears only on arrival (previously a zoom animation inflated it into a full-screen violet blob).
 - Quality governor steps the globe down if frames drop; a device that still cannot keep up gets the still arrival instead of a stuttering flight.
 - Measured: stages at 3.0 / 6.0 / 9.1 / 12.0 s, total 15.1 s; globe draw 6 ms median at full quality.
+
+## 7. Pre-merge fixes (all done, 975 of 975 tests pass)
+
+| Item from section 2/3 | Status |
+|---|---|
+| Dead `scraped_shopping` query (404 on every shopping and dashboard load) | **Fixed.** Removed from `shopping.html` and `apa-categories.js`; the dashboard UI test now uses a partner-listed product. |
+| Stacked overlays on first paint | **Fixed.** The APA greeting now waits for the shared overlay slot, claims it while visible, and releases it on dismiss, on opening support, or after 15 s. Verified order on a fresh phone visit: `/tours` Immersive banner, then credit popup, then APA (never on top of each other); `/become-partner` and `/apartments` show APA first and the credit popup after it clears. |
+| Support orb covering controls on phones | **Fixed.** On screens up to 720 px it tucks to the edge after 6 s idle (sliver stays tappable; any touch on it, or scrolling up, restores it). |
+| Unnamed controls | **Fixed.** `aria-label` added to every icon-only `.tb-back` link across 6 pages and to the shopping search button. |
+| Native `mm/dd/yyyy` date fields on flights and roommates | **Fixed.** New shared `cabana-datepick.js`: the same input and ISO `.value`/`change` contract, with a calendar sheet that matches the Stays picker (dark on flights, light on roommates), a return date that cannot precede departure, keyboard support, and live label updates when page code sets the value. Verified end to end: roommates search wrote `?from=2026-10-17`. |
+
+**Pre-existing failures found while verifying (not caused by this work, confirmed on the original base commit `b1ebe17`):** two checks in `tests/ui/dashboard-rails.test.js` (a manual browser suite, not part of `npm test`) fail on a clean checkout: the credit popup overlays a dashboard card during the test window, and `/events?open=<id>` does not open the tapped event. The second looks like a real deep-link bug worth its own fix.
+
+**Still open (need your decision, or a test account):** Reserve-requires-account funnel, listing-journey frequency, Supabase leaked-password protection, SECURITY DEFINER review, thin inventory, and the provider consoles.

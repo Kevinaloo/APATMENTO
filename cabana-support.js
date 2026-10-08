@@ -1794,6 +1794,19 @@
       for (var i = 0; i < list.length; i++) { if (!(el.root && el.root.contains(list[i].target))) { clearTimeout(t); t = setTimeout(tick, 120); return; } }
     });
     mo.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'open', 'hidden', 'aria-hidden'] });
+    /* On phones the orb sits over form controls. After a quiet moment it tucks
+       to the edge (a sliver stays tappable); touching it, or scrolling up,
+       brings it straight back. */
+    var idleT = 0;
+    function armIdle(e) {
+      if (e && e.type === 'touchstart' && el.launch && el.launch.contains(e.target) && dock.tucked) { dock.tucked = false; dockSettle(); }
+      clearTimeout(idleT);
+      idleT = setTimeout(function () {
+        if (global.innerWidth <= 720 && !open && !dock.drag) { dock.tucked = true; dockSettle(); }
+      }, 6000);
+    }
+    ['touchstart', 'scroll', 'keydown'].forEach(function (ev) { global.addEventListener(ev, armIdle, { passive: true, capture: true }); });
+    armIdle();
     setInterval(function () { if (!doc.hidden) tick(); }, 2500);   // belt and braces for bars that animate in
     doc.addEventListener('visibilitychange', function () { if (!doc.hidden) tick(); });
     dockSettle();
@@ -1849,6 +1862,8 @@
     const welcome = doc.getElementById('cbn-apa-welcome');
     if (welcome) welcome.remove();
     ls(LS_WELCOME, '1');
+    /* Hand the page's single overlay slot back so the next offer can appear. */
+    if (global.__cabanaOverlay === 'apa-welcome') global.__cabanaOverlay = null;
   }
 
   function scheduleWelcome() {
@@ -1861,7 +1876,8 @@
     function show() {
       if (ls(LS_WELCOME) || ls(LS_USED) || open) return;
       // Let arrival animations and anything the visitor opened finish first.
-      if (doc.hidden || doc.querySelector('dialog[open],.drawer.open,.gate-active,.cabana-gate-active,html.sg-lock,html.dg-lock,html.rg-lock,#cbp-splash,#apa-gate.show,body.cx-lock,#cbp-root.cbp-open') || doc.body.style.overflow === 'hidden') {
+      // One overlay at a time: wait for any other offer, banner or popup to clear.
+      if (doc.hidden || global.__cabanaOverlay || doc.querySelector('dialog[open],.drawer.open,.gate-active,.cabana-gate-active,html.sg-lock,html.dg-lock,html.rg-lock,#cbp-splash,#apa-gate.show,body.cx-lock,#cbp-root.cbp-open') || doc.body.style.overflow === 'hidden') {
         if (++attempts < 30) setTimeout(show, 2000);
         return;
       }
@@ -1874,9 +1890,12 @@
         + '<strong style="font-size:18px">Karibu! I’m APA.</strong><p style="margin:8px 0 14px">Your Cabana companion. I can help you find a stay, plan a trip, or get a hand with a booking.</p>'
         + '<button type="button" data-apa-hello style="border:0;border-radius:12px;padding:10px 15px;background:#7440cc;color:#fff;font:600 14px system-ui;cursor:pointer">Meet APA</button>';
       card.querySelector('[data-apa-dismiss]').addEventListener('click', dismissWelcome);
-      card.querySelector('[data-apa-hello]').addEventListener('click', () => openPanel());
+      card.querySelector('[data-apa-hello]').addEventListener('click', () => { dismissWelcome(); openPanel(); });
       el.root.appendChild(card);
       ls(LS_WELCOME, '1');
+      global.__cabanaOverlay = 'apa-welcome';
+      // A greeting, not a fixture: it leaves on its own so it can never sit on content.
+      setTimeout(dismissWelcome, 15000);
     }
     setTimeout(show, 2400);
   }

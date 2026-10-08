@@ -65,7 +65,6 @@ const STAYS=[
  {id:'c1',title:'Toyota RAV4',type:'carhire',service:'carhire',area:'Nairobi',price_night:9500,photos:[],status:'active',is_active:true},
  {id:'s1',title:'Kitenge Print Dress',type:'shopping',service:'shopping',area:'Nairobi',price_night:3500,photos:[],status:'active',is_active:true}
 ];
-const SHOP=[{id:'x1',name:'Kenyan AA Coffee',seller:'Dormans',market:'Outlets',city:'Nairobi',price:1200,category:'food',image_url:null,active:true,in_stock:true,hot:true}];
 
 async function stub(page){
   await page.route('**/*', route => {
@@ -79,8 +78,6 @@ async function stub(page){
       else if (u.includes('type.eq.room')) rows = STAYS.filter(r=>r.type==='room');
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(rows)});
     }
-    if (u.includes('/rest/v1/scraped_shopping'))
-      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(SHOP)});
     if (u.includes('/rest/v1/'))
       return route.fulfill({status:200,contentType:'application/json',body:'[]'});
     return route.fulfill({status:200,contentType:'text/plain',body:''});
@@ -164,10 +161,10 @@ console.log('\nSHOPPING ?open=');
 {
   const p=await ctx.newPage(); await stub(p);
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-  await p.goto(BASE + '/shopping.html?back=1&open=sx1',{waitUntil:'domcontentloaded'});
+  await p.goto(BASE + '/shopping.html?back=1&open=ls1',{waitUntil:'domcontentloaded'});
   await p.waitForTimeout(1500);
   const found=await p.$$eval('.p-card.p-card-found',c=>c.map(x=>x.dataset.pid));
-  ok('deep-linked product is ringed', found.length===1&&found[0]==='sx1', JSON.stringify(found));
+  ok('deep-linked product is ringed', found.length===1&&found[0]==='ls1', JSON.stringify(found));
   await p.waitForTimeout(3500);
   const cleared=await p.$$eval('.p-card.p-card-found',c=>c.length);
   ok('ring clears itself', cleared===0);
