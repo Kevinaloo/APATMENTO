@@ -7,7 +7,7 @@
 <meta name="description" content="View and manage bookings for your Cabana listings. Track guests, payouts and reviews. Zero commission, always."/>
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
-<script src="/apa-roles.js?v=20260917-2" defer></script>
+<script src="/apa-roles.js?v=20261008" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-trust.js"></script>
 <script src="/apa-admin-guard.js"></script>
@@ -225,6 +225,19 @@ td strong{color:var(--ink);font-weight:600;}
 <link rel="stylesheet" href="/brand.css"/>
 <style>
 .stays-card{background:rgba(255,255,255,.74);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:18px;}
+.rate-row{padding:14px 0;border-top:1px solid var(--line);transition:background .5s}
+.rate-row:first-child{border-top:0;padding-top:0}
+.rate-row.focus{background:rgba(123,47,247,.07);box-shadow:-12px 0 0 rgba(123,47,247,.07),12px 0 0 rgba(123,47,247,.07)}
+.rate-who{font-weight:650;font-size:14px;color:var(--ink-2)}
+.rate-meta{font-size:12px;color:var(--ink-faint);margin-top:2px}
+.rate-stars{display:flex;gap:4px;margin:10px 0 8px}
+.rate-star{width:36px;height:36px;border:1px solid var(--line-2);border-radius:10px;background:#fff;font-size:18px;line-height:1;color:#D5D7E3;cursor:pointer;transition:color .15s,border-color .15s,transform .1s}
+.rate-star:active{transform:scale(.92)}
+.rate-star.on{color:var(--gold);border-color:rgba(245,177,46,.45)}
+.rate-body{width:100%;box-sizing:border-box;border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;font:inherit;font-size:13px;resize:vertical;min-height:62px}
+.rate-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;flex-wrap:wrap}
+.rate-priv{font-size:11.5px;color:var(--ink-faint)}
+.rate-done{font-size:13px;color:var(--ink-soft);padding:6px 0}
 .stay-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);}
 .stay-row:last-child{border-bottom:none;}
 .stay-main{flex:1;min-width:0;}
@@ -380,6 +393,16 @@ td strong{color:var(--ink);font-weight:600;}
     </div>
   </div>
   <div id="stays-list"></div>
+</div>
+
+<div class="stays-card" id="rate-panel" style="display:none;">
+  <div class="card-hd">
+    <div>
+      <div class="card-title">Rate your recent guests</div>
+      <div class="card-sub">Private. Your guest sees it only after rating their stay, and it helps keep Cabana safe for every host. Open for 30 days after checkout.</div>
+    </div>
+  </div>
+  <div id="rate-list"></div>
 </div>
 
 <div class="card">
@@ -548,7 +571,7 @@ async function loadBookings() {
           <td><strong style="font-family:var(--font-data);font-size:12px;">#${ref}</strong></td>
           <td><strong>${hesc(bk.listing_title||'Listing')}</strong><div class="bk-guest">${hesc(bk.guest_name||'Guest')}${bk.guest_phone?' · <a href="tel:'+hesc(String(bk.guest_phone).replace(/[^+\d]/g,''))+'">'+hesc(bk.guest_phone)+'</a>':''}</div></td>
           <td>${shortDate(bk.checkin_date)}${bk.booking_kind==='day_pass'?'<div class="bk-guest">Day pass</div>':bk.booking_kind==='hotel'&&Array.isArray(bk.rooms)?'<div class="bk-guest">'+hesc(bk.rooms.map(r=>(r.qty||1)+'× '+(r.name||'room')).join(', '))+'</div>':''}</td>
-          <td>${bk.booking_kind==='day_pass'?'Same day':shortDate(bk.checkout_date)}${bk.arrival_time?'<div class="bk-guest">arrives '+hesc(bk.arrival_time)+'</div>':''}</td>
+          <td>${bk.booking_kind==='day_pass'?'Same day':shortDate(bk.checkout_date)}${bk.booking_kind==='day_pass'&&/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(bk.arrival_time||'')?'<div class="bk-guest bk-hours">here '+hesc(bk.arrival_time.replace('-','–'))+'</div>':bk.arrival_time?'<div class="bk-guest">arrives '+hesc(bk.arrival_time)+'</div>':''}</td>
           <td>${bk.num_guests||1} guest${(bk.num_guests||1)>1?'s':''}</td>
           <td><strong>KES ${fmt(Math.round(parseFloat(bk.stay_total||0)))}</strong><div class="bk-guest">your payout</div></td>
           <td><span class="badge ${badge}">${label}</span>${code}</td>
@@ -557,6 +580,7 @@ async function loadBookings() {
       }).join('');
     }
     loadStays();
+    loadGuestReviews(uid);
     focusFromHash();
   } catch(e) {
     console.warn('[host bookings]', e);
@@ -576,13 +600,15 @@ function focusFromHash(){
 }
 window.addEventListener('hashchange',focusFromHash);
 
-/* The guest shows their GUEST-XXXXXX code at the door; the host enters
-   it here. The server re-checks the payment ledger before releasing. */
+/* The guest shows their 4-digit code at the door (older bookings carry
+   GUEST-XXXXXXXX); the host enters it here. The server re-checks the
+   payment ledger before releasing, and locks the booking after six
+   wrong tries. */
 function startCheckIn(id, btn){
   const cell = btn.closest('td');
   cell.innerHTML = `<form class="bk-ci" onsubmit="submitCheckIn(event,'${hesc(id)}')">
     <label class="sr-only" for="ci-${hesc(id)}">Guest's check-in code</label>
-    <input id="ci-${hesc(id)}" class="field-select" placeholder="GUEST-XXXXXX" autocomplete="off" autocapitalize="characters" required maxlength="20"/>
+    <input id="ci-${hesc(id)}" class="field-select" placeholder="Guest's 4-digit code" inputmode="numeric" autocomplete="off" autocapitalize="characters" required maxlength="20"/>
     <button class="btn btn-sm btn-primary" type="submit">Confirm</button></form>`;
   cell.querySelector('input').focus();
 }
@@ -595,7 +621,8 @@ async function submitCheckIn(ev, id){
     const res = await authFetch('/api/verify-checkin', { table:'apartment_bookings', reference: bk.payment_reference, role:'host', code: input.value.trim() });
     const j = await res.json().catch(()=>({}));
     if(res.ok && j.ok){ toast(j.already ? 'Already checked in' : 'Checked in. Your payout is released.'); loadBookings(); return; }
-    const why = j.error==='code_mismatch' ? 'That code does not match this booking. Ask the guest to open My Bookings.'
+    const why = j.error==='code_mismatch' ? 'That code does not match this booking. Ask the guest to open My Bookings.'+(j.attempts_left>0&&j.attempts_left<=3?' '+j.attempts_left+(j.attempts_left===1?' try':' tries')+' left.':'')
+      : j.error==='code_locked' ? (j.message || 'Too many wrong codes. Check-in is paused on this booking and our team has been told.')
       : j.error==='balance_due' ? (j.message || 'The guest still has a balance to pay before check-in.')
       : j.error==='stay_ended' ? 'This stay has already ended.'
       : (j.message || 'Could not confirm check-in. Try again.');
@@ -636,6 +663,78 @@ async function loadStays() {
     .slice(0, 30)
     .map(b => Object.assign({}, b, { apartment_name: b.listing_title }));
   renderStays();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RATE YOUR GUESTS
+   The private two-way review: hosts rate the guest, guests rate the
+   stay, and each sees the other's only once both are written. The
+   database accepts a host's review from check-in until 30 days after
+   checkout; the form shows once the guest has left.
+   ══════════════════════════════════════════════════════════════ */
+let RATE_DUE = [], RATE_STARS = {};
+async function loadGuestReviews(uid) {
+  const panel = document.getElementById('rate-panel'), list = document.getElementById('rate-list');
+  const today = todayISO();
+  const oldest = new Date(new Date(today + 'T12:00:00').getTime() - 30 * 864e5).toISOString().slice(0, 10);
+  const ended = HOST_ALL.filter(b => !b.cancelled_at && b.checkout_date
+    && (b.status === 'checked_in' || b.status === 'completed' || b.checked_in_at)
+    && b.checkout_date <= today && b.checkout_date >= oldest);
+  let done = new Set();
+  if (ended.length) {
+    try {
+      const { data } = await sb.from('private_reviews').select('booking_id')
+        .eq('author_id', uid).eq('direction', 'host_to_guest').in('booking_id', ended.map(b => b.id));
+      done = new Set((data || []).map(r => r.booking_id));
+    } catch (_) { /* show the forms; the database refuses a duplicate anyway */ }
+  }
+  RATE_DUE = ended.filter(b => !done.has(b.id)).sort((a, b) => b.checkout_date.localeCompare(a.checkout_date));
+  if (!RATE_DUE.length) { panel.style.display = 'none'; reviewFromLink(done); return; }
+  panel.style.display = '';
+  list.innerHTML = RATE_DUE.map(b => `<div class="rate-row" id="rate-${hesc(b.id)}">
+      <div class="rate-who">${hesc(b.guest_name || 'Your guest')}</div>
+      <div class="rate-meta">${hesc(b.listing_title || 'Your listing')} · left ${shortDate(b.checkout_date)}</div>
+      <div class="rate-stars" role="radiogroup" aria-label="Rate ${hesc(b.guest_name || 'your guest')}">
+        ${[1, 2, 3, 4, 5].map(n => `<button type="button" class="rate-star" role="radio" aria-checked="false" aria-label="${n} star${n > 1 ? 's' : ''}" data-n="${n}" onclick="setGuestStars('${hesc(b.id)}',${n})">★</button>`).join('')}
+      </div>
+      <textarea class="rate-body" id="rate-body-${hesc(b.id)}" maxlength="2000" placeholder="Respectful of the home? Easy to reach? Would you host them again?"></textarea>
+      <div class="rate-foot">
+        <span class="rate-priv">Private · never shown publicly</span>
+        <button class="btn btn-sm btn-primary" type="button" id="rate-send-${hesc(b.id)}" disabled onclick="sendGuestReview('${hesc(b.id)}')">Submit privately</button>
+      </div>
+    </div>`).join('');
+  reviewFromLink(done);
+}
+function setGuestStars(id, n) {
+  RATE_STARS[id] = n;
+  document.querySelectorAll('#rate-' + CSS.escape(id) + ' .rate-star').forEach(s => {
+    const on = Number(s.dataset.n) <= n;
+    s.classList.toggle('on', on); s.setAttribute('aria-checked', String(Number(s.dataset.n) === n));
+  });
+  const btn = document.getElementById('rate-send-' + id); if (btn) btn.disabled = false;
+}
+async function sendGuestReview(id) {
+  const b = RATE_DUE.find(x => x.id === id), btn = document.getElementById('rate-send-' + id);
+  if (!b || !RATE_STARS[id] || !window.ApaTrust) return;
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    await ApaTrust.review.submit(b, 'host_to_guest', { rating: RATE_STARS[id], body: document.getElementById('rate-body-' + id).value.trim() });
+    document.getElementById('rate-' + id).innerHTML = `<div class="rate-who">${hesc(b.guest_name || 'Your guest')}</div><div class="rate-done">Thank you. You will see their review of your place once they have written it.</div>`;
+    RATE_DUE = RATE_DUE.filter(x => x.id !== id);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Submit privately';
+    toast(/window.*closed/i.test(e.message || '') ? 'The review window for this stay has closed.' : 'Could not send. Try again.', false);
+  }
+}
+/* Review requests link here with ?review=<booking id>. */
+function reviewFromLink(done) {
+  const id = new URLSearchParams(location.search).get('review');
+  if (!id || reviewFromLink.seen) return;
+  reviewFromLink.seen = true;
+  const row = document.getElementById('rate-' + id);
+  if (!row) { toast(done.has(id) ? 'You have already rated this guest. Thank you.' : 'This guest can no longer be rated.', done.has(id)); return; }
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.add('focus'); setTimeout(() => row.classList.remove('focus'), 2600);
 }
 
 /* Discipline, shown to the host and nobody else. Three yellows is

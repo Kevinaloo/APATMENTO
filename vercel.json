@@ -438,10 +438,6 @@
       "destination": "/tours/jets-nest/index.html"
     },
     {
-      "source": "/s/:id([A-Za-z0-9-]{1,64})",
-      "destination": "/api/utilities?action=share&id=:id"
-    },
-    {
       "source": "/api/music-search",
       "destination": "/api/utilities?action=music-search"
     },
@@ -572,6 +568,10 @@
     {
       "source": "/events/:path+",
       "destination": "/events"
+    },
+    {
+      "source": "/s/:id([A-Za-z0-9_-]{6,64})",
+      "destination": "/api/utilities?action=listing-share&id=:id"
     },
     {
       "source": "/u/:handle([A-Za-z0-9._]{3,24})",

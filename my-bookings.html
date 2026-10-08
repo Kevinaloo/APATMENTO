@@ -108,6 +108,8 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
 .ci-your-code{background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:12px;padding:14px 16px;margin-bottom:14px;}
 .ci-code-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mint-deep);margin-bottom:6px;}
 .ci-code-val{font-family:var(--font-data);font-size:26px;font-weight:700;color:var(--ink);letter-spacing:.12em;}
+.ci-digits{display:flex;gap:8px;letter-spacing:0;}
+.ci-digits i{font-style:normal;display:grid;place-items:center;width:48px;height:58px;border-radius:14px;background:#fff;border:1.5px solid rgba(45,212,191,.35);box-shadow:0 8px 18px -12px rgba(13,148,136,.55),0 2px 0 rgba(255,255,255,.9) inset;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);}
 .ci-code-hint{font-size:11px;color:var(--ink-faint);margin-top:4px;}
 
 /* host code entry */
@@ -276,7 +278,8 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--glass-2)
    lines — the guest is here to compare places, and the place has to be
    the widest thing on the line. */
 .match-tags{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex:none;}
-.rev-prompt{margin-top:14px;padding:16px;border-radius:16px;background:#fafbfc;border:1.5px solid #e8eaee;}
+.rev-prompt{margin-top:14px;padding:16px;border-radius:16px;background:#fafbfc;border:1.5px solid #e8eaee;transition:box-shadow .4s,border-color .4s;}
+.rev-focus{border-color:#7B2FF7!important;box-shadow:0 0 0 4px rgba(123,47,247,.16);}
 .rev-t{font-weight:700;font-size:14px;color:#0f1117;margin-bottom:4px;}
 .rev-s{font-size:12.5px;line-height:1.55;color:#767d88;margin-bottom:12px;}
 .rev-stars{display:flex;gap:6px;margin-bottom:12px;}
@@ -550,6 +553,7 @@ async function loadAllBookings() {
 
   await loadTrustState(uid);
   renderBookings();
+  openReviewFromLink();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -746,7 +750,7 @@ function buildBookingCard(b, i) {
     body += '<button class="issue-btn" onclick="openIssue(\'' + b.id + '\')">' + label + '</button>';
   }
 
-  if (b._type === 'apartment' && b.status === 'checked_in' && !REVIEWED.has(b.id)) {
+  if (canReview(b)) {
     body += buildReviewPanel(b);
   }
 
@@ -823,7 +827,7 @@ function buildCheckinPanel(b, lc) {
         + '<div class="ci-title">Check-in code</div>'
         + '<div class="ci-sub">Unlocks the moment this booking is paid in full.</div>'
         + '<div class="ci-your-code"><div class="ci-code-label">Your code · show to host</div>'
-        + '<div class="ci-code-val">••••••</div></div></div>';
+        + '<div class="ci-code-val ci-digits" aria-label="Locked"><i>•</i><i>•</i><i>•</i><i>•</i></div></div></div>';
     }
     return '';
   }
@@ -834,12 +838,14 @@ function buildCheckinPanel(b, lc) {
     +   'Once both are exchanged your stay is confirmed and the host is paid.</div>'
     + '<div class="ci-your-code">'
     +   '<div class="ci-code-label">Your code · show to host</div>'
-    +   '<div class="ci-code-val">' + esc(cs.code) + '</div>'
+    +   (/^\d{4}$/.test(String(cs.code))
+          ? '<div class="ci-code-val ci-digits" aria-label="Your code ' + esc(String(cs.code).split('').join(' ')) + '">' + String(cs.code).split('').map(function (d) { return '<i>' + esc(d) + '</i>'; }).join('') + '</div>'
+          : '<div class="ci-code-val">' + esc(cs.code) + '</div>')
     +   '<div class="ci-code-hint">Share this with your host when you arrive</div>'
     + '</div>'
     + '<div style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Enter host\'s code</div>'
     + '<div class="ci-enter">'
-    +   '<input class="ci-input" id="host-code-' + b.id + '" placeholder="HOST-XXXXXX" maxlength="12"/>'
+    +   '<input class="ci-input" id="host-code-' + b.id + '" placeholder="4-digit code" inputmode="numeric" autocomplete="one-time-code" maxlength="14" aria-label="Your host\'s 4-digit code"/>'
     +   '<button class="ci-submit" onclick="verifyHostCode(\'' + b._table + '\',\''
     +     esc(b.payment_reference) + '\',\'' + b.id + '\')">Confirm check-in</button>'
     + '</div></div>';
@@ -1327,6 +1333,38 @@ async function openIssue(bookingId) {
    Never published. The host sees it only once they've written theirs,
    so neither is writing a reply. It still moves the listing's rank.
    ═══════════════════════════════════════════════════════════════ */
+/* The database takes a guest's review from check-in until 30 days after
+   checkout. The form used to appear only while the stay was checked_in,
+   and the nightly sweep marks it completed the night after checkout, so
+   it disappeared before most guests thought to write one. */
+function canReview(b) {
+  if (b._type !== 'apartment' || b.cancelled_at || REVIEWED.has(b.id)) return false;
+  if (!(b.status === 'checked_in' || b.status === 'completed' || b.checked_in_at)) return false;
+  const end = CB.endDay(b);
+  return end == null || CB.today() <= end + 30;
+}
+
+/* The review request (push, email or in-app) links here with ?review=<id>:
+   open the right tab and bring the form into view. */
+function openReviewFromLink() {
+  const id = new URLSearchParams(location.search).get('review');
+  if (!id || openReviewFromLink.done) return;
+  openReviewFromLink.done = true;
+  const b = allBookings.find(x => x.id === id);
+  if (!b) return;
+  if (b._lc.bucket !== currentWhen || currentType !== 'all') {
+    currentWhen = b._lc.bucket; currentType = 'all';
+    document.querySelectorAll('#tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.when === currentWhen));
+    renderBookings();
+  }
+  const target = $('rev-' + id) || $('card-' + id);
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  target.classList.add('rev-focus');
+  setTimeout(() => target.classList.remove('rev-focus'), 2600);
+  if (!$('rev-' + id)) showToast(REVIEWED.has(id) ? 'You have already reviewed this stay. Thank you.' : 'The review window for this stay has closed.');
+}
+
 function buildReviewPanel(b) {
   return '<div class="rev-prompt" id="rev-' + b.id + '">'
     + '<div class="rev-t">How was ' + esc(CB.title(b)) + '?</div>'
@@ -1390,13 +1428,22 @@ async function authFetch(url, body) {
   });
 }
 
+/* "48 21", "4821 " and "host-1a2b3c4d" all mean what the person meant. */
+function normCode(v) {
+  const raw = String(v || '').trim().toUpperCase();
+  if (/^[\d\s-]+$/.test(raw)) return raw.replace(/\D/g, '');
+  return raw.replace(/\s+/g, '');
+}
+
 async function verifyHostCode(table, reference, bookingId) {
   const input = $('host-code-' + bookingId);
   const btn   = document.querySelector('#card-' + bookingId + ' .ci-submit');
-  const code  = input?.value?.trim().toUpperCase();
+  const code  = normCode(input?.value);
 
-  if (!code || !code.startsWith('HOST')) {
-    return showToast('Enter the HOST-XXXXXX code your host gives you');
+  /* Codes are four digits now. Older bookings carry HOST-XXXXXXXX, which
+     still verifies, so both are accepted here. */
+  if (!/^\d{4}$/.test(code) && !/^HOST-[0-9A-Z]{4,10}$/.test(code)) {
+    return showToast('Enter the 4-digit code your host gives you');
   }
   if (btn) { btn.classList.add('loading'); btn.textContent = 'Verifying…'; }
   const done = () => { if (btn) { btn.classList.remove('loading'); btn.textContent = 'Confirm check-in'; } };
@@ -1420,7 +1467,11 @@ async function verifyHostCode(table, reference, bookingId) {
       return;
     }
     if (res.status === 401 && data.error === 'code_mismatch') {
-      return showToast('That code doesn\'t match. Check with your host.', 4000);
+      const left = Number(data.attempts_left);
+      return showToast('That code doesn\'t match. Check with your host.' + (left > 0 && left <= 3 ? ' ' + left + (left === 1 ? ' try' : ' tries') + ' left.' : ''), 4500);
+    }
+    if (res.status === 423) {
+      return showToast(data.message || 'Too many wrong codes. Check-in is paused on this booking; our team has been told and will help you now.', 7000);
     }
     if (!res.ok) {
       return showToast(data.message || data.error || 'Could not verify. Try again', 4000);

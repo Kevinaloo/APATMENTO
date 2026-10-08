@@ -3,7 +3,6 @@
 <head>
 <link rel="stylesheet" href="/cabana-property-tour.css?v=3"/>
 <script defer src="/cabana-property-tour.js?v=3"></script>
-<script defer src="/cabana-share.js?v=1"></script>
 <script defer src="/cabana-gallery.js"></script>
 <link rel="stylesheet" href="/cabana-location-flight.css"/>
 <script defer src="/cabana-location-globe.js"></script>
@@ -308,6 +307,10 @@ body{font-family:var(--font-body);background:var(--glass);color:var(--ink);-webk
 .card-tag-featured svg{color:#f5d99e;}
 .card-tag svg{width:10px;height:10px;}
 
+.cbn-share-btn{display:inline-grid;place-items:center;border:0;border-radius:50%;cursor:pointer;padding:0}
+.card-share{position:absolute;top:8px;right:46px;z-index:4;width:34px;height:34px;box-shadow:none;background:rgba(10,10,20,.32);color:#fff;backdrop-filter:blur(4px)}
+.card-share svg{width:16px;height:16px}
+.drawer-share{position:absolute;top:16px;right:16px;z-index:10}
 .card-heart{
   position:absolute;top:8px;right:8px;z-index:4;
   width:34px;height:34px;border-radius:50%;border:none;padding:0;
@@ -553,7 +556,7 @@ body.lb-open #agent-ref{display:none!important;}
 .drawer-close:hover{transform:scale(1.08);}
 /* Beside the close button: the gallery's slideshow toggle owns the
    top-right corner. */
-.drawer-share{position:absolute;top:16px;left:64px;z-index:10;}
+.drawer-share{position:absolute;top:16px;left:64px;right:auto;z-index:10;}
 
 /* ── Scrollable body ── */
 .dl-body{padding:24px 22px 120px;}
@@ -720,11 +723,26 @@ body.map-open .split-map{display:block;}
 .dl-cta-note{font-size:11px;color:var(--mint-deep);font-weight:600;margin-top:3px;}
 .dl-book-btn{flex-shrink:0;padding:14px 28px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:700;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 8px 24px rgba(123,47,247,.3);white-space:nowrap;}
 .dl-daypass-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;padding:13px 16px;border-radius:14px;background:linear-gradient(180deg,#FFF6E0,#FFE6B0);color:#7A4A00;border:1px solid rgba(214,150,30,.35);font-family:var(--font-body);font-weight:700;font-size:14px;cursor:pointer;transition:transform .3s,box-shadow .3s;white-space:nowrap;}
+.dl-dp-price{font-weight:800;margin-left:2px;padding-left:8px;border-left:1px solid rgba(122,74,0,.25);font-variant-numeric:tabular-nums;}
+.card-dp{position:absolute;left:12px;bottom:22px;z-index:3;display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:999px;background:linear-gradient(180deg,#FFF6E0,#FFE6B0);color:#7A4A00;border:1px solid rgba(214,150,30,.45);font:800 11.5px/1 var(--font-body,Inter,system-ui,sans-serif);letter-spacing:.01em;box-shadow:0 6px 16px -8px rgba(122,74,0,.5);pointer-events:none;}
+.card-dp i{width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#FFC23D 45%,#FF9F1C);box-shadow:0 0 0 3px rgba(255,194,61,.28);}
 .dl-daypass-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(214,150,30,.28);}
 .dl-dp-sun{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#FFC23D 45%,rgba(255,194,61,0) 46%),conic-gradient(from 0deg,#FFB000 0 8%,transparent 8% 17%,#FFB000 17% 25%,transparent 25% 33%,#FFB000 33% 42%,transparent 42% 50%,#FFB000 50% 58%,transparent 58% 67%,#FFB000 67% 75%,transparent 75% 83%,#FFB000 83% 92%,transparent 92%);animation:dlDpSpin 9s linear infinite;}
 @keyframes dlDpSpin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.dl-dp-sun{animation:none}}
 @media (max-width:420px){.dl-daypass-btn{padding:13px 12px}.dl-book-btn{padding:14px 18px}}
+/* A stay with a day pass has three actions. On a phone they cannot share one row with the price,
+   so the price keeps its own line (with the save button) and the two booking choices split the next. */
+@media (max-width:560px){
+  .dl-cta{padding:12px 16px max(12px,env(safe-area-inset-bottom));gap:10px}
+  .dl-cta-val{font-size:20px}
+  .dl-cta.has-dp{flex-direction:column;align-items:stretch;gap:10px}
+  .dl-cta.has-dp .dl-cta-price{padding-right:54px}
+  .dl-cta.has-dp .dl-wishlist-btn{position:absolute;top:12px;right:16px}
+  .dl-cta.has-dp .dl-cta-actions{width:100%}
+  .dl-cta.has-dp .dl-daypass-btn{flex:1.2 1 0;justify-content:center;padding:13px 8px;min-width:0}
+  .dl-cta.has-dp .dl-book-btn{flex:1 1 0;min-width:0;padding:14px 8px}
+}
 .dl-book-btn:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(123,47,247,.42);}
 .dl-wishlist-btn{width:44px;height:44px;border-radius:13px;border:1.5px solid var(--line-2);background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;flex-shrink:0;}
 .dl-wishlist-btn svg{width:20px;height:20px;}
@@ -1990,7 +2008,7 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
 
   <!-- Compact heading row -->
   <div class="hero-compact-row">
-    <h1 class="hero-title-compact" id="hero-title">Short-stays across <em>Africa</em></h1>
+    <h1 class="hero-title-compact" id="hero-title">Short-stay apartments in <em>Kenya</em> and across Africa</h1>
     <div class="hero-sub-compact">Verified stays &middot; Book direct with local hosts &middot; Zero commission</div>
   </div>
 
@@ -2006,7 +2024,7 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
         <span class="sc-mode-dot" aria-hidden="true"></span>
         <span class="sc-mode-txt">
           <span class="sc-mode-name">Get Matched with Cabana</span>
-          <span class="sc-mode-cred">Hosts come to you &middot; World's first</span>
+          <span class="sc-mode-cred">Hosts come to you &middot; Cabana Match</span>
         </span>
       </button>
       <button type="button" class="sc-mode" id="sc-mode-search" role="tab" aria-selected="false" aria-controls="search-console" onclick="setSearchMode('search')">
@@ -2482,6 +2500,7 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
 <script src="/cabana-fx.js?v=1"></script>
 <script src="/cabana-range.js?v=1" defer></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-fees.js"></script>
 <script src="/apa-chrome.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
@@ -2665,13 +2684,16 @@ async function loadNativeListings() {
        is_active from before the decision. Only an active status is
        bookable (stay_quote refuses anything else), so only that shows. */
     const isLive = l => !l.status || l.status === 'active';
+    /* A verified host ranks above an unverified one with the same
+       record: the listing form tells hosts this, so it must be true.
+       host_verified is server-owned (synced from the identity check). */
+    const rank = l => (Number(l.internal_score) || 0) + (l.host_verified === true ? 12 : 0);
     const stays = data.filter(l => isStay(l) && isLive(l))
-      .sort((a, b) => (b.featured === true) - (a.featured === true)
-        || (Number(b.internal_score) || 0) - (Number(a.internal_score) || 0))
+      .sort((a, b) => (b.featured === true) - (a.featured === true) || rank(b) - rank(a))
       .slice(0, 120);
 
     console.log('[listings] Loaded', data.length, 'rows →', stays.length, 'stays');
-    return stays.map(l => ({
+    const mapStay = l => ({
       id: `n_${l.id}`,
       _dbId: l.id,
       name: l.title || 'Untitled',
@@ -2726,12 +2748,36 @@ async function loadNativeListings() {
         days: Array.isArray(l.day_pass_days) ? l.day_pass_days : [],
         maxGuests: Number(l.day_pass_max_guests) || l.max_guests || 2,
       } : null,
-    }));
+    });
+    window.__mapStayRow = mapStay;
+    return stays.map(mapStay);
   } catch(e) { console.warn('[listings] Exception:', e.message); return []; }
 }
 
 /* ── Main init ── */
 
+/* Host prices in, guest prices out. The fee comes from the server, one
+   batched question for the whole page; the host's own figure is kept as
+   basePrice for anything that needs it (nothing guest-facing does). */
+async function applyAllInPrices(list) {
+  if (!window.ApaFees || !list || !list.length) return;
+  const amounts = [];
+  list.forEach(a => {
+    if (Number(a.price) > 0 && a.basePrice == null) amounts.push(Number(a.price));
+    if (a.dayPass && Number(a.dayPass.price) > 0 && a.dayPass.basePrice == null) amounts.push(Number(a.dayPass.price));
+  });
+  if (!amounts.length) return;
+  try {
+    const m = await ApaFees.allInMany('stays', amounts);
+    list.forEach(a => {
+      const p = Number(a.price);
+      if (a.basePrice == null && m.has(p)) { a.basePrice = p; a.price = m.get(p); }
+      if (a.dayPass && a.dayPass.basePrice == null && m.has(Number(a.dayPass.price))) {
+        a.dayPass.basePrice = Number(a.dayPass.price); a.dayPass.price = m.get(Number(a.dayPass.price));
+      }
+    });
+  } catch (e) { console.warn('[all-in]', e && e.message); }
+}
 
 async function loadListings() {
   updateBanner('loading');
@@ -2742,6 +2788,12 @@ async function loadListings() {
 
   // Fetch real listings from Supabase only
   const native = await loadNativeListings();
+  /* One price for guests: every nightly and day-pass figure on this page
+     already carries Cabana's fee. A slow answer never holds the page:
+     after a moment the grid paints and the prices settle in place. */
+  const allIn = applyAllInPrices(native);
+  const settled = await Promise.race([allIn.then(() => true), new Promise(r => setTimeout(() => r(false), 2200))]);
+  if (!settled) allIn.then(() => { try { applyAndRender(); } catch (e) { /* page moved on */ } });
   // Cards must not become clickable before their deferred detail helpers exist.
   if (document.readyState === 'loading') {
     await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
@@ -2899,12 +2951,12 @@ function stayCardPrice(apt){
     const total=Number(q.grand_total);
     return `<span class="val">${conv?fxMain(total):fxKes(total)}</span> <span class="per">total · ${q.nights} night${q.nights===1?'':'s'}</span>`
       +(conv?`<span class="cb-fx-real">${fxKes(total)} · you pay in KES</span>`:'')
-      +`<span class="cb-offer-note ${q.offer?'cb-offer-applied':''}">${q.offer?'Offer applied · '+_esc(q.offer.title)+' · ':''}Includes Cabana fee${q.offer?.verified?' · Save '+fxKes(q.offer.total_saving):''}</span>`;
+      +(q.offer?`<span class="cb-offer-note cb-offer-applied">Offer applied · ${_esc(q.offer.title)}${q.offer.verified?' · Save '+fxKes(q.offer.total_saving):''}</span>`:`<span class="cb-offer-note">The price you pay. Nothing added at checkout.</span>`);
   }
   if(_searchState.dateIn&&_searchState.dateOut)return '<span class="per">Check dates for a confirmed price</span>';
   return `<span class="val">${conv?fxMain(apt.price):fxKes(apt.price)}</span> <span class="per">/ night</span>`
     +(conv?`<span class="cb-fx-real">${fxKes(apt.price)} a night · you pay in KES</span>`:'')
-    +`<span class="cb-offer-note">Choose dates for offers and total including Cabana fee</span>`;
+    +`<span class="cb-offer-note">All-in price · add dates for offers and your total</span>`;
 }
 async function loadStaySearchQuotes(){
   const s=_searchState;
@@ -2999,11 +3051,12 @@ function renderCards(list) {
       <div class="card-media${many ? ' has-many' : ''}">
         <div class="card-rail">${slides}</div>
         ${window.CabanaPropertyTour?.badge(apt) || ''}
+        ${apt.dayPass && apt.bookingModel !== 'hotel' ? `<span class="card-dp" title="Day pass ${apt.dayPass.start}–${apt.dayPass.end}"><i aria-hidden="true"></i>Day pass</span>` : ''}
         ${apt.featured ? `<span class="card-tag card-tag-featured"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.8 2.8 5.7 6.3.9-4.6 4.4 1.1 6.2L12 17.1 6.4 20l1.1-6.2L2.9 9.4l6.3-.9L12 2.8Z"/></svg>Featured</span>`
           : apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : ''}
         <button type="button" class="card-heart${isWishlisted(apt.id) ? ' on' : ''}" data-heart="${apt.id}"
           aria-label="Save this stay" aria-pressed="${isWishlisted(apt.id)}">${SVG_HEART}</button>
-        ${_cardShare(apt)}
+        ${shareButtonHTML(apt, 'card-share')}
         ${many ? `
           <button type="button" class="card-arr card-arr-prev" data-step="-1" aria-label="Previous photo" disabled>${SVG_CHEV_L}</button>
           <button type="button" class="card-arr card-arr-next" data-step="1" aria-label="Next photo">${SVG_CHEV_R}</button>
@@ -3098,32 +3151,6 @@ function _syncRail(media) {
   _hydrateSlides(media, idx + 1, 2);
 }
 
-/* ══ SHARE ═════════════════════════════════════════════════════════
-   The share glyph sits beside the heart on every card and on the
-   drawer's gallery. cabana-share.js loads deferred, so a grid painted
-   from cache before it arrives gets its buttons added in place once it
-   does, without repainting the cards (and their scrolled photo rails). */
-function _cardShare(apt) {
-  return window.CabanaShare?.button(apt, { variant: 'icon' }) || '';
-}
-window.addEventListener('cabana:share-ready', () => {
-  document.querySelectorAll('#grid .card').forEach(card => {
-    if (card.querySelector('[data-cabana-share]')) return;
-    const apt = currentListings.find(a => a.id === card.dataset.cardId);
-    const heart = card.querySelector('.card-heart');
-    if (apt && heart) heart.insertAdjacentHTML('afterend', _cardShare(apt));
-  });
-  const drawer = document.getElementById('drawer');
-  if (drawer?.classList.contains('open') && _galleryListingId) _drawerShare(_galleryListingId);
-});
-function _drawerShare(id) {
-  const apt = currentListings.find(a => a.id === id);
-  const gallery = document.querySelector('#drawer .dl-gallery');
-  if (!apt || !gallery || gallery.querySelector('[data-cabana-share]')) return;
-  gallery.insertAdjacentHTML('beforeend',
-    window.CabanaShare?.button(apt, { variant: 'glass', className: 'cshare-glass drawer-share', showLabel: true }) || '');
-}
-
 function wireCards() {
   const grid = document.getElementById('grid');
   if (!grid || grid.dataset.wired) return;
@@ -3156,9 +3183,9 @@ function wireCards() {
   }, true);   // capture: scroll does not bubble
 
   grid.addEventListener('click', e => {
-    /* Share is handled by cabana-share.js's delegated listener further
-       up the tree. Step aside so the tap does not also open the stay. */
-    if (e.target.closest('[data-cabana-share]')) return;
+    /* Share is handled by cabana-share.js's delegated listener (capture
+       phase); step aside so the tap does not also open the stay. */
+    if (e.target.closest('[data-cbn-share],[data-cabana-share]')) return;
 
     const heart = e.target.closest('[data-heart]');
     if (heart) {
@@ -3499,6 +3526,14 @@ let _galleryListingId = null;
 let _drawerAreaMap = null;
 let _drawerGeneration = 0;
 
+/* One share button for every listing. The link is cabana.africa/s/<id>:
+   it unfolds as a real card in chats and lands on this exact listing. */
+function shareButtonHTML(apt, cls) {
+  const id = apt._dbId || apt.id;
+  if (!id) return '';
+  return `<button type="button" class="cbn-share-btn ${cls || ''}" data-cbn-share data-share-id="${_esc(String(id))}" data-share-title="${_esc(apt.name)}" aria-label="Share ${_esc(apt.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg></button>`;
+}
+
 function openDrawer(id) {
   const apt = currentListings.find(a => a.id === id);
   if (!apt) return;
@@ -3517,7 +3552,7 @@ function openDrawer(id) {
   _galPhotos = apt.photos?.length ? [...apt.photos] : [];
   _galIdx    = 0;
 
-  const galleryHTML = _buildGallery(_galPhotos, apt.grad, apt.photoPositions) + (window.CabanaPropertyTour?.section(apt) || '');
+  const galleryHTML = _buildGallery(_galPhotos, apt.grad, apt.photoPositions, shareButtonHTML(apt, 'drawer-share')) + (window.CabanaPropertyTour?.section(apt) || '');
 
   /* ── amenities ── */
   const AMEN_TICK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
@@ -3643,21 +3678,19 @@ function openDrawer(id) {
     </div><!-- /dl-body -->
 
     <!-- Sticky CTA -->
-    <div class="dl-cta">
+    <div class="dl-cta${apt.dayPass && apt.bookingModel !== 'hotel' ? ' has-dp' : ''}">
       <div class="dl-cta-price">
         <div class="dl-cta-val">${stayCardPrice(apt)}</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div class="dl-cta-actions" style="display:flex;gap:8px;align-items:center;">
         <button class="dl-wishlist-btn" title="Save to wishlist" onclick="toggleWishlist('${apt.id}',this)">
           ${isWishlisted(apt.id)?'<svg viewBox="0 0 24 24" fill="#FF4D6D" stroke="#FF4D6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
         </button>
-        ${apt.dayPass && apt.bookingModel !== 'hotel' ? `<button class="dl-daypass-btn" onclick="bookNow('${apt.id}','daypass')" title="Day pass · ${apt.dayPass.start}–${apt.dayPass.end}"><span class="dl-dp-sun" aria-hidden="true"></span>Day pass</button>` : ''}
+        ${apt.dayPass && apt.bookingModel !== 'hotel' ? `<button class="dl-daypass-btn" onclick="bookNow('${apt.id}','daypass')" title="Day pass · ${apt.dayPass.start}–${apt.dayPass.end} · ${fxKes(apt.dayPass.price)}"><span class="dl-dp-sun" aria-hidden="true"></span>Day pass<span class="dl-dp-price">${fxKes(apt.dayPass.price)}</span></button>` : ''}
         <button class="dl-book-btn" onclick="bookNow('${apt.id}')">${apt.bookingModel === 'hotel' ? 'Choose a room →' : 'Reserve →'}</button>
       </div>
     </div>
   `;
-
-  _drawerShare(id);
 
   /* open */
   document.getElementById('drawer').classList.add('open');
@@ -3711,7 +3744,7 @@ function openDrawer(id) {
 }
 
 /* ── gallery builder ── */
-function _buildGallery(photos, grad, positions) {
+function _buildGallery(photos, grad, positions, extraHTML) {
   const bg = grad || 'linear-gradient(135deg,#B8A4F4,#7B2FF7)';
   const slidesHTML = photos.length
     ? photos.map((p,i) => {const pos=positions?.[i]||{};const fit=pos.fit==='contain'?'contain':'cover';const rawX=Number(pos.x);const rawY=Number(pos.y);const x=Math.max(0,Math.min(100,Number.isFinite(rawX)?rawX:50));const y=Math.max(0,Math.min(100,Number.isFinite(rawY)?rawY:30));return `<div class="dl-gallery-slide" onclick="openLightbox(${i})" role="button" tabindex="0"
@@ -3736,6 +3769,7 @@ function _buildGallery(photos, grad, positions) {
       <button class="drawer-close" onclick="closeDrawer()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
+      ${extraHTML || ''}
       <div class="dl-gallery-track" id="dl-gal-track">${slidesHTML}</div>
       ${showNav ? `
         <button class="dl-gal-arr dl-gal-prev${photos.length<=1?' hidden':''}" id="dl-gal-prev" onclick="galStep(-1)" aria-label="Previous photo">
@@ -4359,7 +4393,7 @@ function updateHeroTitle() {
   const where = place || typed;
   el.innerHTML = where
     ? 'Short-stays in <em>' + _esc(where) + '</em>'
-    : 'Short-stays across <em>Africa</em>';
+    : 'Short-stay apartments in <em>Kenya</em> and across Africa';
 }
 
 function moveModeGlider() {
@@ -6307,6 +6341,24 @@ function updateResultLabel(mode) {
 function toggleHeart(e, el) { e.stopPropagation(); el.classList.toggle('on'); }
 function sortListings() { applyAndRender(); }
 
+/* A shared or bookmarked link can point at a stay that is not among the
+   120 the page loads (or a stay outside today's search). Fetch just that
+   one, add it to the page, and open it, so every link lands on its listing. */
+async function openSharedListing(openId) {
+  try {
+    if (!sb || !window.__mapStayRow || !/^[A-Za-z0-9_-]{6,64}$/.test(openId)) return;
+    const { data } = await sb.from('listings').select('*').eq('id', openId).eq('is_active', true).is('deleted_at', null).limit(1);
+    const row = data && data[0];
+    if (!row || (row.status && row.status !== 'active')) { showToastSafe('That listing is no longer available.'); return; }
+    const apt = window.__mapStayRow(row);
+    await applyAllInPrices([apt]);
+    currentListings = [apt, ...currentListings.filter(a => a._dbId !== apt._dbId)];
+    applyAndRender();
+    openDrawer(apt.id);
+  } catch (e) { console.warn('[open]', e && e.message); }
+}
+function showToastSafe(msg) { try { (window.showToast || window.toast || (() => {}))(msg); } catch (e) { /* no toast helper on this page */ } }
+
 /* ── GO ── */
 loadListings().then(async () => {
   // Cached data can resolve before deferred gallery/tour helpers execute.
@@ -6346,7 +6398,8 @@ loadListings().then(async () => {
       }
       return;
     }
-    if (attempts > 0) setTimeout(() => tryOpen(attempts - 1), 300);
+    if (attempts > 0) { setTimeout(() => tryOpen(attempts - 1), 300); return; }
+    openSharedListing(openId);
   };
   tryOpen(10);
 });
@@ -6379,6 +6432,7 @@ loadListings().then(async () => {
    and a full-screen z-9999 curtain stayed over the site for good. */
 
 </script>
+<script src="/cabana-share.js" defer></script>
 <script src="/analytics.js" defer></script>
 <script src="/cabana-host-metrics.js" defer></script>
 <script src="/chat.js?v=41" defer></script>
@@ -6386,7 +6440,7 @@ loadListings().then(async () => {
 <script src="/apa-map.js" defer></script>
 <script src="/telemetry.js" defer></script>
 <script src="/cabana-match.js?v=3" defer></script>
-<script src="/pwa.js?v=41-match" defer></script>
+<script src="/pwa.js?v=42-play" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
@@ -6491,6 +6545,7 @@ loadListings().then(async () => {
           Call us in the app
         </a>
       </div>
+      <!-- CABANA-GETAPP --><link rel="stylesheet" href="/cabana-getapp.css"><div class="cbn-getapp"><span class="cbn-getapp-label">Get the app</span><a class="cbn-play" href="https://play.google.com/store/apps/details?id=africa.cabana.app&amp;referrer=utm_source%3Dfooter%26utm_medium%3Dweb" target="_blank" rel="noopener" data-cbn-play="footer" aria-label="Get Cabana on Google Play" onclick="window.gtag&amp;&amp;gtag('event','get_play_app',{source:'footer'})"><img src="/assets/app/google-play-badge.svg" width="162" height="48" alt="Get it on Google Play" loading="lazy" decoding="async"></a></div><!-- /CABANA-GETAPP -->
     </div>
 
     <div class="sf-nav-col">

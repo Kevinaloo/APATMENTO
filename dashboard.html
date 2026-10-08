@@ -368,7 +368,7 @@
 
   <!-- Open Graph -->
   <meta property="og:site_name" content="Cabana"/>
-  <meta property="og:title" content="Cabana: Africa's #1 Zero Commission Travel Platform"/>
+  <meta property="og:title" content="Cabana: Africa's Zero-Commission Travel Super-App"/>
   <meta property="og:description" content="Book stays, flights, tours, rides, food and more across Africa. Zero commission on every booking. Hosts set the price. You pay exactly that."/>
   <meta property="og:url" content="https://cabana.africa/dashboard"/>
   <meta property="og:type" content="website"/>
@@ -380,7 +380,7 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="Cabana: Africa's #1 Zero Commission Travel Platform"/>
+  <meta name="twitter:title" content="Cabana: Africa's Zero-Commission Travel Super-App"/>
   <meta name="twitter:description" content="Book stays, flights, tours, rides, food and more across Africa. Zero commission on every booking."/>
   <meta name="twitter:image" content="https://cabana.africa/og-home.jpg"/>
   <meta name="twitter:image:alt" content="Cabana. Africa's zero commission travel platform."/>
@@ -987,6 +987,8 @@ img,video,svg{max-width:100%;}
 .prop-thumb{height:180px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--lilac),var(--violet));display:flex;align-items:center;justify-content:center;}
 .prop-thumb img{width:100%;height:100%;object-fit:cover;object-position:center 30%;transition:transform .6s cubic-bezier(.22,1,.36,1);}
 .prop-card:hover .prop-thumb img{transform:scale(1.06);}
+.dash-share{position:absolute;top:8px;right:8px;width:34px;height:34px;background:rgba(10,10,20,.4);color:#fff;box-shadow:none;backdrop-filter:blur(4px);z-index:3}
+.cbn-share-btn{display:inline-grid;place-items:center;border:0;border-radius:50%;cursor:pointer;padding:0}
 .prop-thumb-ico{width:44px;height:44px;color:rgba(255,255,255,.85);}
 .prop-fee-tag{position:absolute;top:14px;right:14px;padding:6px 12px;border-radius:100px;background:rgba(252,252,253,.92);font-size:11px;font-weight:700;color:var(--mint-deep);letter-spacing:.02em;}
 .prop-body{padding:18px 20px;}
@@ -1816,6 +1818,7 @@ img,video,svg{max-width:100%;}
 <link rel="stylesheet" href="/brand.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/cabana-ds.css"/>
+<link rel="stylesheet" href="/cabana-getapp.css"/>
 <link rel="stylesheet" href="/cabana-match.css?v=3" media="print" onload="this.media='all';this.onload=null">
 </head>
 <body>
@@ -1920,7 +1923,7 @@ img,video,svg{max-width:100%;}
           </div>
         </div>
         <h1 class="greeting-title" id="g-title"><span id="g-greeting">Good afternoon</span><em id="g-name"></em></h1>
-        <p class="greeting-sub">#1 zero commission travel platform. Book everything in one place at fair prices.</p>
+        <p class="greeting-sub">Zero-commission travel. Book everything in one place at fair prices.</p>
 
         <!-- Live Ambient Weather & Maneuver Intelligence Micro-Capsule (0-pixel displacement) -->
         <div class="cbn-pulse-bar" id="cbn-pulse-bar" onclick="window.CabanaPulse && CabanaPulse.open('weather')" role="button" tabindex="0" aria-label="Current weather and travel conditions">
@@ -2172,6 +2175,22 @@ img,video,svg{max-width:100%;}
   </div>
 
 
+<!-- GET THE APP -->
+<section class="cbn-appband" id="get-the-app" aria-labelledby="get-the-app-h">
+  <div class="cbn-appband-in">
+    <div class="cbn-appband-txt">
+      <div class="cbn-appband-eyebrow">The Cabana app</div>
+      <h2 id="get-the-app-h">Cabana, in your pocket.</h2>
+      <p>An alert the moment a host replies or a booking lands, exact pick-up points for rides, and SOS one tap away. Free to download.</p>
+      <a class="cbn-play" href="https://play.google.com/store/apps/details?id=africa.cabana.app&amp;referrer=utm_source%3Ddashboard%26utm_medium%3Dweb" target="_blank" rel="noopener" data-cbn-play="dashboard" aria-label="Get Cabana on Google Play" onclick="window.gtag&amp;&amp;gtag('event','get_play_app',{source:'dashboard'})"><img src="/assets/app/google-play-badge.svg" width="162" height="48" alt="Get it on Google Play" loading="lazy" decoding="async"></a>
+    </div>
+    <div class="cbn-appband-qr">
+      <img src="/assets/app/cabana-play-qr.svg" width="128" height="128" alt="QR code that opens Cabana on Google Play" loading="lazy" decoding="async">
+      <span>On a computer? Scan with your phone.</span>
+    </div>
+  </div>
+</section>
+
 <footer class="site-footer">
   <div class="sf-inner">
 
@@ -2192,6 +2211,7 @@ img,video,svg{max-width:100%;}
           Call us in the app
         </a>
       </div>
+      <!-- CABANA-GETAPP --><link rel="stylesheet" href="/cabana-getapp.css"><div class="cbn-getapp"><span class="cbn-getapp-label">Get the app</span><a class="cbn-play" href="https://play.google.com/store/apps/details?id=africa.cabana.app&amp;referrer=utm_source%3Dfooter%26utm_medium%3Dweb" target="_blank" rel="noopener" data-cbn-play="footer" aria-label="Get Cabana on Google Play" onclick="window.gtag&amp;&amp;gtag('event','get_play_app',{source:'footer'})"><img src="/assets/app/google-play-badge.svg" width="162" height="48" alt="Get it on Google Play" loading="lazy" decoding="async"></a></div><!-- /CABANA-GETAPP -->
     </div>
 
     <div class="sf-nav-col">
@@ -2792,35 +2812,65 @@ function isStayRow(l){
   return !!t && STAY_TYPES.some(k => t.includes(k));
 }
 
-async function loadStays(){
+/* ── The Stays rail mirrors the Stays page, exactly ───────────────
+   Same rows (live and active only), same order (featured first, then
+   rank, with verified hosts ahead), same all-in guest price, and a tap
+   opens that very listing on /apartments. The rail never keeps a
+   private copy of what a stay costs: it asks apa-fees.js, the same
+   source the Stays page asks. It re-reads whenever the guest comes
+   back to the tab, so a host's price change shows up without a reload. */
+var _staysAt = 0, _staysBusy = false;
+function stayRank(l){ return (Number(l.internal_score)||0) + (l.host_verified === true ? 12 : 0); }
+
+async function loadStays(force){
   const grid = document.getElementById('stay-grid');
-  if(!grid) return;
+  if(!grid || _staysBusy) return;
+  _staysBusy = true;
   try{
     const SUPA_URL = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
-    /* Fetch wide, filter narrow. A server-side product filter would have
+    /* Fetch wide, filter narrow: a server-side product filter would have
        to encode the same fallback logic in a URL, and one drifted column
        there empties the rail silently. */
     const r = await fetch(
-      SUPA_URL+'/rest/v1/listings?status=eq.active&is_active=eq.true&deleted_at=is.null&select=id,title,location,area,city,price_night,price_per_night,photos,beds,max_guests,type,service,property_type,listing_type&order=internal_score.desc.nullslast&limit=48',
-      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
+      SUPA_URL+'/rest/v1/listings?select=*&is_active=eq.true&deleted_at=is.null&or=(service.eq.stays,service.is.null)&order=featured.desc.nullslast,internal_score.desc.nullslast&limit=200',
+      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}, cache:'no-store'}
     );
-    const rows = r.ok ? (await r.json()) : [];
-    const listings = (rows||[]).filter(isStayRow).slice(0,12);
+    const rows = r.ok ? (await r.json()) : null;
+    if(rows === null) throw new Error('listings '+r.status);
+    /* Only an active status is bookable, so only that shows. */
+    const live = l => !l.status || l.status === 'active';
+    const listings = rows.filter(l => isStayRow(l) && live(l))
+      .sort((a,b) => (b.featured===true)-(a.featured===true) || stayRank(b)-stayRank(a))
+      .slice(0,12);
     if(listings.length){
-      grid.innerHTML = listings.map(l=>cardHTML(
-        l.title||'Apartment',
-        l.area||(l.location?l.location.split(',')[0]:'')||l.city||'Nairobi',
-        l.price_night||l.price_per_night||0,
-        l.id,
-        (l.photos&&l.photos[0])||null,
-        l.beds||1,
-        l.max_guests||2
-      )).join('');
+      /* One all-in price, from the same place as the Stays page. */
+      let allIn = new Map();
+      try{
+        if(window.ApaFees) allIn = await ApaFees.allInMany('stays', listings.map(l => Number(l.price_night||l.price_per_night)||0).filter(n => n>0));
+      }catch(e){ console.warn('all-in:', e && e.message); }
+      grid.innerHTML = listings.map(l => {
+        const host = Number(l.price_night||l.price_per_night)||0;
+        return cardHTML(
+          l.title||'Apartment',
+          l.area||(l.location?l.location.split(',')[0]:'')||l.city||'Nairobi',
+          allIn.get(host)||host,
+          l.id,
+          (l.photos&&l.photos[0])||null,
+          parseInt(l.beds)||parseInt(l.bedrooms)||1,
+          l.max_guests||2,
+          {featured:l.featured===true, allIn:allIn.has(host)}
+        );
+      }).join('');
+      _staysAt = Date.now();
       if(window.ApaRail) ApaRail.scan();
       return;
     }
-  }catch(e){ console.warn('loadStays:',e.message); }
+    if(grid.querySelector('.prop-card')) return;   // keep what is showing rather than blanking it
+  }catch(e){
+    console.warn('loadStays:',e.message);
+    if(grid.querySelector('.prop-card')) return;   // a failed refresh must not wipe a good rail
+  } finally { _staysBusy = false; }
   /* No stays yet. The rail keeps its place here rather than vanishing,
      because "Book a Space" is the dashboard's headline shelf and an
      invitation to list converts better than a hole in the page. */
@@ -2829,29 +2879,52 @@ async function loadStays(){
   grid.innerHTML = '<div style="flex:1 1 100%;width:100%;text-align:center;padding:32px 16px;color:var(--ink-faint)"><div style="font-size:36px;margin-bottom:10px">🏠</div><div style="font-weight:700;margin-bottom:6px">Be the first to list here</div><a href="add-listing.html?type=apartment" style="font-size:13px;color:var(--violet);font-weight:700;text-decoration:none">+ List your space →</a></div>';
 }
 
-function cardHTML(name, loc, price, id, photo, beds, guests) {
-  var onClick = id
-    ? "window.location.href='apartments.html?open=" + id + "'"
-    : "navigateToService('stays')";
-  var imgHtml = photo
-    ? '<img src="' + photo + '" alt="" loading="lazy" decoding="async"'
+/* Keep the rail honest while the page stays open. */
+(function keepStaysFresh(){
+  const stale = () => !document.hidden && Date.now() - _staysAt > 45000 && document.getElementById('stay-grid') && _staysAt > 0;
+  document.addEventListener('visibilitychange', () => { if(stale()) loadStays(); });
+  window.addEventListener('online', () => { if(_staysAt) loadStays(); });
+  window.addEventListener('pageshow', e => { if(e.persisted && _staysAt) loadStays(); });
+  setInterval(() => { if(stale()) loadStays(); }, 90000);
+})();
+
+function cardHTML(name, loc, price, id, photo, beds, guests, opt) {
+  opt = opt || {};
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  /* A real link, so it opens in a new tab, can be copied, and works with
+     long-press on a phone. It lands on this exact listing. */
+  const href = id ? '/apartments?open=' + encodeURIComponent(id) : '/apartments';
+  const imgHtml = photo
+    ? '<img src="' + esc(photo) + '" alt="" loading="lazy" decoding="async"'
       + ' onerror="this.remove()"'
       + ' style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:16px 16px 0 0;">'
     : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;opacity:.4">🏠</div>';
-  var bedsHtml = beds ? '<span>' + beds + ' bed' + (beds > 1 ? 's' : '') + '</span>' : '';
-  return '<div class="prop-card" data-listing-id="' + id + '" onclick="' + onClick + '" style="cursor:pointer;">'
+  const bedsHtml = beds ? '<span>' + beds + ' bed' + (beds > 1 ? 's' : '') + '</span>' : '';
+  const share = id ? '<button type="button" class="cbn-share-btn dash-share" data-cbn-share data-share-id="' + esc(id) + '" data-share-title="' + esc(name) + '" aria-label="Share ' + esc(name) + '"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg></button>' : '';
+  return '<div class="prop-card" data-listing-id="' + esc(id) + '" style="position:relative;cursor:pointer;">'
     + '<div class="prop-thumb" style="position:relative;background:linear-gradient(135deg,#4361FF44,#7B2FF744);overflow:hidden;border-radius:16px 16px 0 0;">'
     + imgHtml
     + '<div style="position:absolute;bottom:8px;left:8px;background:rgba(10,10,20,.55);backdrop-filter:blur(6px);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;color:#fff;letter-spacing:.04em;">STAY</div>'
+    + (opt.featured ? '<div style="position:absolute;top:8px;left:8px;background:linear-gradient(125deg,#20213e,#413263);border:1px solid #dfc69399;border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;color:#fff5de;">★ Featured</div>' : '')
+    + share
     + '</div>'
     + '<div class="prop-body">'
-    + '<div class="prop-name">' + name + '</div>'
-    + '<div class="prop-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>' + loc + '</div>'
+    + '<a class="prop-name" href="' + href + '" style="color:inherit;text-decoration:none;display:block;">' + esc(name) + '</a>'
+    + '<div class="prop-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(loc) + '</div>'
     + '<div class="prop-foot">'
-    + '<div class="prop-price">KES ' + Number(price).toLocaleString() + '<span>/night</span></div>'
+    + '<div class="prop-price">KES ' + Number(price).toLocaleString('en-KE') + '<span>/night</span></div>'
     + '<div class="prop-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></div>'
     + '</div></div></div>';
 }
+
+/* The whole card opens the listing; the share button and the title link keep their own jobs. */
+document.addEventListener('click', function(e){
+  const card = e.target.closest && e.target.closest('#stay-grid .prop-card');
+  if(!card || e.target.closest('[data-cbn-share]') || e.target.closest('a')) return;
+  if(e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return;
+  const id = card.getAttribute('data-listing-id');
+  window.location.href = id && id !== 'null' ? '/apartments?open=' + encodeURIComponent(id) : '/apartments';
+});
 
 /* ── Listing detail modal (dashboard cards) ──────────────────────
    Shows a full-screen listing sheet before checkout.
@@ -3520,13 +3593,15 @@ function hideAddSheet(){
 <div data-showcase="window"></div>
 <!-- Session core must resolve before any consumer script runs. -->
 <script src="/apa-chrome.js?v=2-living" defer></script>
+<script src="/apa-fees.js" defer></script>
+<script src="/cabana-share.js" defer></script>
 <script src="/cabana-people.js?v=2-living" defer></script>
 <script src="/apa-rail.js" defer></script>
 <script src="/apa-categories.js" defer></script>
 <script src="/analytics.js" defer></script>
 <script src="/chat.js?v=41" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=41-match" defer></script>
+<script src="/pwa.js?v=42-play" defer></script>
 <script src="/apa-push.js" defer></script>
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-location.js" defer></script>
@@ -3534,7 +3609,7 @@ function hideAddSheet(){
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-ownership.js" defer></script>
-<script src="/apa-roles.js?v=20260917-2" defer></script>
+<script src="/apa-roles.js?v=20261008" defer></script>
 <script src="/cabana-credit.js" defer></script>
 <script src="/apa-ad-registry.js?v=2026.09.26" defer></script>
 <script src="/showcase.js?v=4" defer></script>

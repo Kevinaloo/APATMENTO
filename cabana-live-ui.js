@@ -242,7 +242,7 @@
         '<span class="lv-card-in">' +
           '<span class="lv-card-t">' + esc(e.title) + '</span>' +
           '<span class="lv-card-s">' + esc([e.venue, e.city].filter(Boolean).join(' · ') || 'Venue to be announced') + '</span>' +
-          '<span class="lv-ev-price"><b class="' + (free ? 'free' : '') + '">' + (free ? 'Free entry' : 'From ' + esc(u.money(e.price_from, e.currency))) + '</b>' +
+          '<span class="lv-ev-price"><b class="' + (free ? 'free' : '') + '">' + (free ? 'Free entry' : 'From ' + esc(u.money(L.allIn ? L.allIn(e.price_from) : e.price_from, e.currency))) + '</b>' +
             (left != null && left > 0 && left <= 25 ? '<span class="lv-low">' + left + ' left</span>' :
              '<span class="lv-ev-cd" data-cd="' + esc(e.starts_at) + '" data-cd-end="' + esc(e.ends_at || '') + '"><i></i><span>' + esc(t.label) + '</span></span>') +
           '</span>' +

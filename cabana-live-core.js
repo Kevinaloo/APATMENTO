@@ -272,9 +272,26 @@
       D.events = r[0];
       D.titles = r[1].map(normTitle);
       D.billboard = r[2];
-      D.loaded.core = true;
-      L.emit('data', 'core');
+      /* Ticket prices are shown all-in (Cabana's fee inside). Warm the
+         answers before painting, but never hold the page for them. */
+      var prices = [];
+      D.events.forEach(function (e) {
+        if (Number(e.price_from) > 0) prices.push(Number(e.price_from));
+        arr(e.tiers || e.ticket_tiers).forEach(function (x) { if (Number(x.price_kes) > 0) prices.push(Number(x.price_kes)); });
+      });
+      var warm = prices.length && window.ApaFees ? window.ApaFees.allInMany('events', prices) : Promise.resolve();
+      return Promise.race([warm, new Promise(function (res) { setTimeout(res, 1500); })]).then(function () {
+        D.loaded.core = true;
+        L.emit('data', 'core');
+        Promise.resolve(warm).then(function () { if (D._allInPainted !== true) { D._allInPainted = true; L.emit('data', 'core'); } });
+      });
     });
+  };
+  /* The price a guest sees for one ticket at this face value. */
+  L.allIn = function (price) {
+    var p = Number(price) || 0;
+    var r = p > 0 && window.ApaFees && window.ApaFees.allInSync ? window.ApaFees.allInSync('events', p) : null;
+    return r ? r.total : p;
   };
 
   function normTitle(t) {

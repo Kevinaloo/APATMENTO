@@ -410,7 +410,7 @@ function shareWA() {
 }
 
 function shareTwitter() {
-  const msg = encodeURIComponent(`Discovered the best travel app in Kenya 🇰🇪, @Cabana. Zero commission, hosts keep 100%. Sign up with my link: ${SITE_URL}?ref=${_myCode}`);
+  const msg = encodeURIComponent(`Found Cabana 🇰🇪, the zero-commission travel app. Zero commission, hosts keep 100%. Sign up with my link: ${SITE_URL}?ref=${_myCode}`);
   window.open(`https://twitter.com/intent/tweet?text=${msg}`, '_blank');
 }
 

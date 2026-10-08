@@ -1573,6 +1573,11 @@
     var off = list && nightly && nightly < list ? Math.round((1 - nightly / list) * 100) : 0;
     var total = num(o.stay_total) || (nightly ? nightly * nights : null);
     var fee = num(o.service_fee) || 0;
+    /* One price: the nightly figure a guest sees already carries Cabana's
+       share, so nights × nightly is the total they pay. */
+    var feeNight = fee && nights ? fee / nights : 0;
+    if (nightly) nightly = Math.round(nightly + feeNight);
+    if (list) list = Math.round(list + feeNight);
     var meta = [];
     if (o.area || o.city) meta.push('<span>' + svg('pin') + esc(o.area || o.city) + (o.distance_km != null ? ' · ' + fmtKm(o.distance_km) : '') + '</span>');
     if (o.beds != null) meta.push('<span>' + svg('bed') + (o.beds === 0 ? 'Studio' : plural(o.beds, 'bed')) + '</span>');

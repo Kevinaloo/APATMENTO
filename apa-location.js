@@ -306,6 +306,19 @@
     });
   }
 
+  /* The Android app is a Trusted Web Activity: Chrome in standalone mode.
+     The referrer names the app only on the first page, so remember it. */
+  function inCabanaApp() {
+    var app = !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches)
+      || !!(global.navigator && global.navigator.standalone === true)
+      || (document.referrer || '').indexOf('android-app://africa.cabana.app') === 0;
+    try {
+      if (app) sessionStorage.setItem('cabana_in_app', '1');
+      else if (sessionStorage.getItem('cabana_in_app') === '1') app = true;
+    } catch (e) {}
+    return app;
+  }
+
   /* ── the branded gate ────────────────────────────────────────────── */
   function gateCSS() {
     if (document.getElementById('apa-loc-css')) return;
@@ -381,6 +394,11 @@
       try { if (sessionStorage.getItem(SS_SKIP)) return Promise.resolve(false); } catch (e) {}
     }
     if (_gatePromise) return _gatePromise;
+    /* One permission surface at a time. cabana-permit.js owns alerts and
+       location for signed-in members; two overlays asking for the same
+       thing at once is what left the app waiting on a prompt that never
+       came. It asks for location itself, so there is nothing to add. */
+    if (document.querySelector('.cp')) return Promise.resolve(false);
 
     _gatePromise = ready().then(function (state) {
       if (state === 'granted') { start(); return true; }
@@ -389,9 +407,7 @@
       if (document.getElementById('apa-loc-gate')) return resolve(false);
 
       var denied = state === 'denied';
-      var installedApp = !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches)
-        || !!(global.navigator && global.navigator.standalone === true)
-        || (document.referrer || '').indexOf('android-app://africa.cabana.app') === 0;
+      var installedApp = inCabanaApp();
       var g = document.createElement('div');
       g.className = 'apa-loc';
       g.id = 'apa-loc-gate';
@@ -428,6 +444,16 @@
         closeGate(g, true);
         resolve(false);
       }
+      /* Coming back from Settings is when the answer has changed. */
+      function backFromSettings() {
+        if (document.visibilityState !== 'visible') return;
+        if (!document.getElementById('apa-loc-gate')) {
+          document.removeEventListener('visibilitychange', backFromSettings);
+          return;
+        }
+        if (go && !go.disabled && go.textContent === 'Try again') go.click();
+      }
+      document.addEventListener('visibilitychange', backFromSettings);
       var close = g.querySelector('.apa-loc-x');
       if (close) close.addEventListener('click', dismiss);
       var secondary = g.querySelector('.apa-loc-btn2');
@@ -448,11 +474,34 @@
             resolve(true);
           },
           function (err) {
-            if (err && err.code === 1) global.__apaLocPerm = 'denied';
-            g.querySelector('.apa-loc-h').textContent = err && err.code === 1 ? 'Location is blocked' : 'Location is unavailable';
-            g.querySelector('.apa-loc-p').textContent = err && err.code === 1
-              ? 'Allow location in your browser settings, then reload this page.'
-              : 'We could not get a reliable position. Check that location is enabled on your device and try again.';
+            var code = err && err.code;
+            if (code === 1) global.__apaLocPerm = 'denied';
+            var h = g.querySelector('.apa-loc-h');
+            var p = g.querySelector('.apa-loc-p');
+            var n = g.querySelector('.apa-loc-note');
+            if (code === 1) {
+              h.textContent = 'Location is blocked';
+              p.textContent = installedApp
+                ? 'Android is blocking location for Cabana. Allow it in Settings, then come back.'
+                : 'Allow location in your browser settings, then reload this page.';
+              n.textContent = installedApp
+                ? 'Settings → Apps → Cabana → Permissions → Location → Allow.'
+                : 'Tap the lock icon in the address bar → Site settings → Location → Allow, then reload.';
+            } else if (code === 2) {
+              /* POSITION_UNAVAILABLE. In the app this is the phone's
+                 location switch, or Android permission for Cabana that
+                 was never granted, which Chrome reports the same way. */
+              h.textContent = 'Location is unavailable';
+              p.textContent = installedApp
+                ? 'Cabana could not read your position. Switch Location on (swipe down from the top of the screen), and check that Cabana is allowed to use it.'
+                : 'We could not get a reliable position. Check that location is enabled on your device and try again.';
+              n.textContent = installedApp
+                ? 'Settings → Apps → Cabana → Permissions → Location → Allow. Then come back and tap Try again.'
+                : n.textContent;
+            } else {
+              h.textContent = 'Still looking for you';
+              p.textContent = 'Your phone is taking longer than usual to find you. Step near a window or outside, then try again.';
+            }
             go.disabled = false;
             go.textContent = 'Try again';
           },

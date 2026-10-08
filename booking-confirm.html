@@ -60,6 +60,15 @@ body.cx{min-height:100vh;}
 .rv-day[aria-pressed="true"]{border-color:var(--cx-accent);background:color-mix(in srgb,var(--cx-accent) 10%,#fff);box-shadow:0 0 0 4px color-mix(in srgb,var(--cx-accent) 12%,transparent);}
 .rv-day[disabled]{opacity:.38;cursor:not-allowed;}
 .rv-window{display:flex;justify-content:space-between;font:600 12px var(--cx-num);color:var(--cx-ink-2);margin-top:-2px;}
+.rv-hours{margin-top:18px;padding:14px;border-radius:18px;border:1.5px solid var(--cx-line-2);background:color-mix(in srgb,var(--cx-accent) 4%,#fff);}
+.rv-hours-row{display:flex;align-items:flex-end;gap:10px;margin-top:6px;}
+.rv-hours-f{flex:1;min-width:0;display:block;}
+.rv-hours-f>span{display:block;font:700 11px var(--cx-num);letter-spacing:.1em;text-transform:uppercase;color:var(--cx-ink-3);margin-bottom:5px;}
+.rv-hours-f select{width:100%;font-size:16px;}
+.rv-hours-arrow{padding-bottom:13px;color:var(--cx-ink-3);font-weight:700;}
+.rv-hours-bar{position:relative;height:8px;margin:14px 0 8px;border-radius:999px;background:var(--cx-line);}
+.rv-hours-bar i{position:absolute;top:0;bottom:0;border-radius:999px;background:color-mix(in srgb,var(--cx-accent) 22%,#fff);}
+.rv-hours-bar b{position:absolute;top:-2px;bottom:-2px;border-radius:999px;background:var(--cx-accent);box-shadow:0 4px 10px -4px var(--cx-accent);transition:left .25s,width .25s;}
 .rv-custom{display:flex;align-items:center;gap:0;border:1.5px solid var(--cx-line-2);border-radius:14px;overflow:hidden;background:#fff;margin-top:10px;}
 .rv-custom span{padding:0 12px;font:600 13px var(--cx-num);color:var(--cx-ink-3);}
 .rv-custom input{flex:1;border:0;outline:0;padding:13px 12px 13px 0;font:600 15px var(--cx-num);}
@@ -132,6 +141,18 @@ body.cx{min-height:100vh;}
           <div class="rv-days" id="rv-days" role="group" aria-label="Day pass date"></div>
           <div class="cx-sun" id="rv-sun" aria-hidden="true"></div>
           <div class="rv-window"><span id="rv-win-a">10:00</span><span id="rv-win-h">7 hours</span><span id="rv-win-b">17:00</span></div>
+          <!-- The guest's own hours, inside the host's window. The host sees
+               them on the booking, so they know when to expect someone. -->
+          <div class="rv-hours" id="rv-hours">
+            <span class="cx-label">The hours you'll be there</span>
+            <div class="rv-hours-row">
+              <label class="rv-hours-f"><span>Arrive</span><select class="cx-select" id="dp-arrive" aria-label="Arrival time"></select></label>
+              <span class="rv-hours-arrow" aria-hidden="true">→</span>
+              <label class="rv-hours-f"><span>Leave</span><select class="cx-select" id="dp-leave" aria-label="Leaving time"></select></label>
+            </div>
+            <div class="rv-hours-bar" aria-hidden="true"><i id="dp-hours-win"></i><b id="dp-hours-you"></b></div>
+            <div class="cx-hint" id="dp-hours-hint">Your host sees these hours. The price is the same for any hours inside the window.</div>
+          </div>
         </div>
       </div>
 
@@ -235,6 +256,7 @@ body.cx{min-height:100vh;}
 <script src="/cabana-credit.js"></script>
 <script src="/cabana-pay.js"></script>
 <script src="/cabana-checkout.js"></script>
+<script src="/apa-fees.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    CABANA · RESERVE
@@ -302,6 +324,8 @@ function roomPayload() {
   });
 }
 let DAY_DATE = /^\d{4}-\d{2}-\d{2}$/.test(params.get('date') || '') ? params.get('date') : null;
+/* The hours this guest will actually be there, inside the host's window. */
+let DAY_HOURS = null;
 
 /* ══ THE QUOTE ═════════════════════════════════════════════════════════ */
 let STAY_QUOTE = null;
@@ -384,19 +408,27 @@ function renderStayQuote() {
   CREDIT_APPLIED = creditFor(total);
   const due = total - CREDIT_APPLIED;
 
+  /* One price. Cabana's fee is already inside every figure a guest sees,
+     so the lines below are all-in and add up to the total exactly. There
+     is no fee line, on purpose. */
   let lines = '';
   if (k === 'hotel') {
-    (q.lines || []).forEach(function (l) {
+    const ls = q.lines || [];
+    const base = ls.reduce(function (a, l) { return a + Number(l.line_total || 0); }, 0) || 1;
+    let given = 0;
+    ls.forEach(function (l, i) {
+      const share = i === ls.length - 1 ? fee - given : Math.round(fee * Number(l.line_total || 0) / base);
+      given += share;
       lines += lineHtml(safeText((l.qty > 1 ? l.qty + ' × ' : '') + l.name),
-        kes(l.line_total),
+        kes(Number(l.line_total || 0) + share),
         safeText(PLAN_LABEL[l.plan] + ' · ' + l.nights + (l.nights > 1 ? ' nights' : ' night') + (l.refundable ? '' : ' · non-refundable rate')));
     });
   } else if (k === 'day_pass') {
-    lines += lineHtml('Day pass · ' + safeText(q.start + '–' + q.end), kes(subtotal), safeText(q.hours + ' hours · up to ' + q.guests + (q.guests > 1 ? ' guests' : ' guest')));
+    lines += lineHtml('Day pass · ' + safeText((DAY_HOURS ? DAY_HOURS.a + '–' + DAY_HOURS.b : q.start + '–' + q.end)), kes(total), safeText((DAY_HOURS ? DAY_HOURS.h : q.hours) + ' hours · up to ' + q.guests + (q.guests > 1 ? ' guests' : ' guest')));
   } else {
-    lines += lineHtml(q.nights + ' night' + (q.nights > 1 ? 's' : '') + ' × ' + kes(apt.price), kes(subtotal));
+    const n = Number(q.nights) || 1;
+    lines += lineHtml(n + ' night' + (n > 1 ? 's' : ''), kes(total), safeText(kes(Math.round(total / n)) + ' a night'));
   }
-  if (fee > 0) lines += lineHtml('Cabana facilitation', kes(fee), null, 'is-muted');
   document.getElementById('sum-lines').innerHTML = lines;
 
   const creditRow = document.getElementById('sum-credit-row');
@@ -411,10 +443,10 @@ function renderStayQuote() {
   }
   document.getElementById('sum-note').textContent = k === 'day_pass'
     ? 'Paid in full today. Your code opens the door for your window, and the host receives the full rate.'
-    : 'The host receives the full price of the stay. Your total is shown in full here before you pay, and nothing is added afterwards.';
+    : 'This is the whole price. Nothing is added at checkout or afterwards.';
   const offer=q.offer,offerEl=document.getElementById('sum-offer');
   offerEl.hidden=!offer;
-  if(offer){offerEl.textContent=offer.title+' applied automatically.'+(offer.verified?' You save KES '+Number(offer.total_saving).toLocaleString()+' against the protected 30-day reference, including fees.':' Your offer price is included above.');}
+  if(offer){offerEl.textContent=offer.title+' applied automatically.'+(offer.verified?' You save KES '+Number(offer.total_saving).toLocaleString()+' against the protected 30-day reference.':' Your offer price is included above.');}
   document.getElementById('pay-btn').disabled=false;
   refreshPayModeAmounts();
 }
@@ -632,17 +664,75 @@ function paintDays() {
       '<b>' + d.getDate() + '</b><span>' + d.toLocaleDateString('en-KE', { month: 'short' }) + '</span></button>');
   }
   box.innerHTML = out.join('');
+  /* The chosen day may be a week out: bring it into view, not off the edge. */
+  const on = box.querySelector('[aria-pressed="true"]');
+  if (on) box.scrollLeft = Math.max(0, on.offsetLeft - box.offsetLeft - 8);
   const a = String(L.day_pass_start || '10:00').slice(0, 5), b = String(L.day_pass_end || '17:00').slice(0, 5);
   document.getElementById('rv-win-a').textContent = a;
   document.getElementById('rv-win-b').textContent = b;
   const hrs = (Number(b.slice(0, 2)) * 60 + Number(b.slice(3, 5)) - Number(a.slice(0, 2)) * 60 - Number(a.slice(3, 5))) / 60;
   document.getElementById('rv-win-h').textContent = (Math.round(hrs * 10) / 10) + ' hours';
+  paintHours(a, b);
   document.getElementById('rv-sun').innerHTML =
     '<svg viewBox="0 0 400 128" fill="none"><path d="M24 116 Q200 -20 376 116" style="stroke:var(--cx-line-2)" stroke-width="1.6" stroke-dasharray="4 6"/>' +
     '<path d="M24 116 Q200 -20 376 116" style="stroke:var(--cx-accent-2)" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"><animate attributeName="stroke-dashoffset" from="100" to="0" dur="1.6s" fill="freeze" calcMode="spline" keySplines=".16 1 .3 1"/></path>' +
     '<circle r="11" style="fill:var(--cx-accent-2)"><animateMotion dur="1.6s" fill="freeze" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".16 1 .3 1" path="M24 116 Q200 -20 376 116"/></circle>' +
     '<path d="M8 120h384" style="stroke:var(--cx-line)" stroke-width="1.2"/></svg>';
 }
+/* The guest's hours. Half-hour steps inside the window, at least two
+   hours, and never a time that has already passed today. */
+const toMin = function (t) { const m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+const toHHMM = function (m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+const DP_MIN_STAY = 120;
+function paintHours(a, b) {
+  const lo = toMin(a), hi = toMin(b);
+  const arrive = document.getElementById('dp-arrive'), leave = document.getElementById('dp-leave');
+  if (lo == null || hi == null || !arrive || !leave) return;
+  let first = lo;
+  if (DAY_DATE && DAY_DATE === isoLocal(today)) {
+    const n = new Date(); const now = n.getHours() * 60 + n.getMinutes();
+    first = Math.max(lo, Math.ceil(now / 30) * 30);
+  }
+  const lastArrive = Math.max(lo, hi - Math.min(DP_MIN_STAY, hi - lo));
+  const keepA = DAY_HOURS && toMin(DAY_HOURS.a), keepB = DAY_HOURS && toMin(DAY_HOURS.b);
+  let opts = '';
+  for (let m = first; m <= lastArrive; m += 30) opts += '<option value="' + toHHMM(m) + '">' + toHHMM(m) + '</option>';
+  if (!opts) opts = '<option value="' + toHHMM(lastArrive) + '">' + toHHMM(lastArrive) + '</option>';
+  arrive.innerHTML = opts;
+  const aSel = keepA != null && keepA >= first && keepA <= lastArrive ? keepA : Math.min(Math.max(first, lo), lastArrive);
+  arrive.value = toHHMM(aSel);
+  fillLeave(aSel, hi, keepB);
+  window._dpWin = { lo: lo, hi: hi };
+  syncHours();
+}
+function fillLeave(aMin, hi, keep) {
+  const leave = document.getElementById('dp-leave');
+  const min = Math.min(aMin + DP_MIN_STAY, hi);
+  let opts = '';
+  for (let m = min; m <= hi; m += 30) opts += '<option value="' + toHHMM(m) + '">' + toHHMM(m) + '</option>';
+  if (toMin(toHHMM(hi)) % 30 && opts.indexOf(toHHMM(hi)) < 0) opts += '<option value="' + toHHMM(hi) + '">' + toHHMM(hi) + '</option>';
+  leave.innerHTML = opts;
+  leave.value = toHHMM(keep != null && keep >= min && keep <= hi ? keep : hi);
+}
+function syncHours() {
+  const a = document.getElementById('dp-arrive').value, b = document.getElementById('dp-leave').value;
+  const am = toMin(a), bm = toMin(b), w = window._dpWin;
+  if (am == null || bm == null || !w) return;
+  DAY_HOURS = { a: a, b: b, h: Math.round((bm - am) / 6) / 10 };
+  const span = Math.max(1, w.hi - w.lo);
+  const you = document.getElementById('dp-hours-you'), win = document.getElementById('dp-hours-win');
+  if (win) { win.style.left = '0%'; win.style.width = '100%'; }
+  if (you) { you.style.left = ((am - w.lo) / span * 100) + '%'; you.style.width = ((bm - am) / span * 100) + '%'; }
+  const hint = document.getElementById('dp-hours-hint');
+  if (hint) hint.textContent = DAY_HOURS.h + ' hours, ' + a + '–' + b + '. Your host sees these hours. The price is the same for any hours inside the window.';
+}
+document.getElementById('dp-arrive').addEventListener('change', function () {
+  const w = window._dpWin; if (!w) return;
+  fillLeave(toMin(this.value), w.hi, DAY_HOURS && toMin(DAY_HOURS.b));
+  syncHours(); paintTrip(); updateSummary();
+});
+document.getElementById('dp-leave').addEventListener('change', function () { syncHours(); paintTrip(); updateSummary(); });
+
 document.getElementById('rv-days').addEventListener('click', function (e) {
   const b = e.target.closest('[data-day]'); if (!b || b.disabled) return;
   DAY_DATE = b.dataset.day; paintDays(); paintTrip(); updateSummary();
@@ -656,7 +746,7 @@ function paintTrip() {
   let chips = [];
   if (BOOKING_KIND === 'day_pass') {
     if (DAY_DATE) chips.push(I('sun') + fmt(DAY_DATE));
-    chips.push(I('clock') + (document.getElementById('rv-win-a').textContent + '–' + document.getElementById('rv-win-b').textContent));
+    chips.push(I('clock') + (DAY_HOURS ? DAY_HOURS.a + '–' + DAY_HOURS.b : document.getElementById('rv-win-a').textContent + '–' + document.getElementById('rv-win-b').textContent));
     chips.push(guestCount + (guestCount > 1 ? ' guests' : ' guest'));
   } else {
     chips.push(I('key') + fmt(ci) + ' → ' + fmt(co));
@@ -703,7 +793,17 @@ function paintModes() {
   const stayUrl = '?' + base.toString(), dayUrl = '?' + base.toString() + '&kind=daypass';
   nav.hidden = false;
   nav.innerHTML = '<a href="' + stayUrl + '" aria-current="' + (BOOKING_KIND === 'stay') + '">Nights</a>' +
-                  '<a href="' + dayUrl + '" aria-current="' + (BOOKING_KIND === 'day_pass') + '">Day pass · KES ' + Number(L.day_pass_price || 0).toLocaleString() + '</a>';
+                  '<a href="' + dayUrl + '" aria-current="' + (BOOKING_KIND === 'day_pass') + '">Day pass<span class="rv-mode-p"></span></a>';
+  /* The listing row holds the host's rate; a guest only ever sees the
+     all-in price, so the figure waits for it rather than showing the
+     host's number first. */
+  const rate = Number(L.day_pass_price) || 0;
+  if (rate > 0 && window.ApaFees) {
+    ApaFees.guestPrice('day_pass', rate).then(function (p) {
+      const el = nav.querySelector('.rv-mode-p');
+      if (el && p > rate) el.textContent = ' · KES ' + Math.round(p).toLocaleString();
+    }, function () {});
+  }
 }
 
 /* ══ PAY ═══════════════════════════════════════════════════════════════ */
@@ -759,7 +859,8 @@ async function startPayment() {
       checkout_date:     BOOKING_KIND === 'day_pass' ? null : document.getElementById('checkout-date').value,
       num_guests:        BOOKING_KIND === 'hotel' ? null : guestCount,
       rooms:             BOOKING_KIND === 'hotel' ? roomPayload() : null,
-      arrival_time:      BOOKING_KIND === 'hotel' ? (document.getElementById('arrival-time').value || null) : null,
+      arrival_time:      BOOKING_KIND === 'hotel' ? (document.getElementById('arrival-time').value || null)
+                         : BOOKING_KIND === 'day_pass' && DAY_HOURS ? (DAY_HOURS.a + '-' + DAY_HOURS.b) : null,
       special_requests:  BOOKING_KIND === 'hotel' ? (document.getElementById('special-requests').value.trim() || null) : null,
       guest_name:        name,
       guest_phone:       phone,
@@ -771,7 +872,7 @@ async function startPayment() {
 
     const svc = BOOKING_KIND === 'hotel' ? 'hotel' : BOOKING_KIND === 'day_pass' ? 'daypass' : 'stays';
     const when = BOOKING_KIND === 'day_pass'
-      ? (CabanaCheckout.day(saved.checkin_date) + ' · ' + document.getElementById('rv-win-a').textContent + '–' + document.getElementById('rv-win-b').textContent)
+      ? (CabanaCheckout.day(saved.checkin_date) + ' · ' + (DAY_HOURS ? DAY_HOURS.a + '–' + DAY_HOURS.b : document.getElementById('rv-win-a').textContent + '–' + document.getElementById('rv-win-b').textContent))
       : null;
 
     CabanaPay.start({

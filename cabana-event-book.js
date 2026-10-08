@@ -94,7 +94,7 @@
             '<span class="cx-tick"></span>' +
             '<span class="cx-option-t"><b>' + esc(t.name) + '</b>' +
               '<small>' + esc(gone ? 'Sold out' : [t.note, t.left != null && t.left <= 10 ? t.left + ' left' : ''].filter(Boolean).join(' · ')) + '</small></span>' +
-            '<span class="cx-option-v">' + (t.price === 0 ? 'Free' : CX.money(t.price)) + '</span></label>';
+            '<span class="cx-option-v" data-allin="' + t.price + '">' + (t.price === 0 ? 'Free' : CX.money(allInSync(t.price))) + '</span></label>';
         }).join('') + '</div></div>' +
       '<div class="cx-stepper"><div><b>Tickets</b><small id="ceb-cap">Up to ' + ceiling() + ' per order</small></div>' +
         '<div class="cx-stepper-ctl"><button type="button" id="ceb-minus" aria-label="One fewer">−</button><output id="ceb-q">1</output><button type="button" id="ceb-plus" aria-label="One more">+</button></div></div>' +
@@ -141,6 +141,17 @@
       quote(CX, root);
     }
     setQty(1);
+    /* Tier prices are shown all-in: what one ticket costs the guest. */
+    if (window.ApaFees) ApaFees.allInMany('events', ts.map(function (t) { return t.price; })).then(function () {
+      Array.prototype.forEach.call(root.querySelectorAll('.cx-option-v[data-allin]'), function (el) {
+        var p = Number(el.getAttribute('data-allin')); if (p > 0) el.textContent = CX.money(allInSync(p));
+      });
+    });
+  }
+
+  function allInSync(price) {
+    var r = window.ApaFees && ApaFees.allInSync ? ApaFees.allInSync('events', price) : null;
+    return r ? r.total : price;
   }
 
   function subtotal() { var t = tiersOf(ev)[tierIdx]; return t.price * q; }
@@ -152,7 +163,9 @@
     var sub = subtotal(), seq = ++feeSeq;
     if (sub <= 0) { fee = 0; paint(CX, root); return; }
     fee = null; paint(CX, root);
-    CX.feeQuote(client(), 'events', sub).then(function (f) {
+    var t = tiersOf(ev)[tierIdx];
+    var ask = window.ApaFees && ApaFees.bookingFee ? ApaFees.bookingFee('events', t.price, q) : CX.feeQuote(client(), 'events', sub);
+    Promise.resolve(ask).then(function (f) {
       if (seq !== feeSeq) return;
       fee = f; paint(CX, root);
     });
@@ -163,8 +176,7 @@
     var lines = root.querySelector('#ceb-lines');
     lines.innerHTML = free
       ? '<div class="cx-line is-good"><span>' + CX.esc(t.name) + ' × ' + q + '</span><b>Free</b></div>'
-      : '<div class="cx-line"><span>' + CX.esc(t.name) + ' × ' + q + '<small>' + CX.money(t.price) + ' each</small></span><b>' + CX.money(sub) + '</b></div>' +
-        '<div class="cx-line is-muted"><span>Cabana facilitation</span><b>' + (fee == null ? '…' : CX.money(fee)) + '</b></div>';
+      : '<div class="cx-line"><span>' + CX.esc(t.name) + ' × ' + q + '<small>' + (fee == null ? '…' : CX.money(Math.round((sub + fee) / q))) + ' each</small></span><b>' + (fee == null ? '…' : CX.money(sub + fee)) + '</b></div>';
     var tot = root.querySelector('#ceb-total');
     if (free) { tot.innerHTML = 'Free'; }
     else if (fee == null) { tot.innerHTML = '<span class="cx-cur">KES</span>…'; }

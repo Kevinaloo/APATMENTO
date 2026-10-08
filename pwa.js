@@ -79,7 +79,7 @@ let swRegistration = null;
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    swRegistration = await navigator.serviceWorker.register('/sw.js?v=41-match', {
+    swRegistration = await navigator.serviceWorker.register('/sw.js?v=42-play', {
       scope: '/',
       updateViaCache: 'none',
     });
@@ -530,15 +530,56 @@ async function initOpenInApp() {
   showOpenAppBar({ autoHide: !installed });
 }
 
+/* ── 7. GET IT ON GOOGLE PLAY ──────────────────────────────────────
+   On Android the Cabana app is the Play Store app. Installing from
+   Chrome instead creates a second, separate "Cabana" (a WebAPK) with
+   its own sign-in, its own notification channel and no Play updates.
+   So every "Get the app" on Android goes to the Play listing. The
+   market:// intent opens the Play Store app directly and leaves this
+   page where it was; browsers that cannot hand off an intent (in-app
+   browsers) get the https listing in a new tab instead. */
+const PLAY_URL = 'https://play.google.com/store/apps/details?id=' + ANDROID_PKG;
+
+function playStoreUrl(source) {
+  return PLAY_URL + '&referrer=' + encodeURIComponent('utm_source=' + (source || 'site') + '&utm_medium=web');
+}
+
+function openPlayStore(source) {
+  const web = playStoreUrl(source);
+  if (window.gtag) { try { gtag('event', 'get_play_app', { source: source || 'site' }); } catch (e) {} }
+  if (/Android/i.test(navigator.userAgent) && !inHostedBrowser()) {
+    window.location.href = 'intent://details?id=' + ANDROID_PKG
+      + '&referrer=' + encodeURIComponent('utm_source=' + (source || 'site') + '&utm_medium=web')
+      + '#Intent;scheme=market;package=com.android.vending'
+      + ';S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+    return;
+  }
+  // window.open returns null whenever "noopener" is passed, so cut the
+  // opener by hand to keep the null check meaning "popup blocked".
+  const w = window.open(web, '_blank');
+  if (w) { try { w.opener = null; } catch (e) {} }
+  else window.location.href = web;
+}
+
 /* ── REQUIRED APP PERMISSIONS ──────────────────────────────────────
-   A verified Trusted Web Activity is the installed Cabana app. Keep the
-   browser site usable without a surprise OS prompt, but make the app ask
-   for the two permissions it needs on first launch. The native permission
-   dialogs still have to be started by a user gesture; the branded gates
-   provide that gesture and explain why each permission is needed. */
+   A verified Trusted Web Activity is the installed Cabana app. The app
+   itself asks Android for notifications and location before this page
+   opens (android/LauncherActivity.java), so by the time the website
+   loads, both are normally already on.
+
+   What is left for the website is the member's own gate: cabana-permit.js
+   keeps a signed-in member on one card until both are on, and says
+   exactly which switch is off. It is the only surface that asks. A second
+   gate used to start here as well, and the two stood on top of each other
+   asking Android for the same permission at the same time. */
 function runningCabanaApp() {
-  return runningStandalone()
+  var app = runningStandalone()
     || (document.referrer || '').indexOf('android-app://africa.cabana.app') === 0;
+  try {
+    if (app) sessionStorage.setItem('cabana_in_app', '1');
+    else if (sessionStorage.getItem('cabana_in_app') === '1') app = true;
+  } catch (e) {}
+  return app;
 }
 
 function initRequiredAppPermissions() {
@@ -547,13 +588,10 @@ function initRequiredAppPermissions() {
 
   var tries = 0;
   var wait = setInterval(function () {
-    var loc = window.ApaLocation;
     var push = window.ApaPush;
-    if (loc && push && typeof loc.prime === 'function' && typeof push.requireNotifications === 'function') {
+    if (push && typeof push.requireNotifications === 'function') {
       clearInterval(wait);
-      Promise.resolve(loc.prime({ reason: 'default', required: true }))
-        .then(function () { return push.requireNotifications(); })
-        .catch(function () {});
+      Promise.resolve(push.requireNotifications()).catch(function () {});
     } else if (++tries > 100) {
       clearInterval(wait);
     }
@@ -591,7 +629,13 @@ window.ApatmentoPWA = {
   hasNativeApp: nativeAppInstalled,
   inNativeApp: runningStandalone,
   showOpenAppBar: showOpenAppBar,
+  /* Google Play: the Android home of the app. */
+  playStoreUrl: playStoreUrl,
+  openPlayStore: openPlayStore,
 };
 window.CabanaApp = window.ApatmentoPWA;
+/* The hero button and the sign-up install step call CabanaPWA. It was
+   never defined, so neither could ever reach the one-tap install. */
+window.CabanaPWA = window.ApatmentoPWA;
 
 })();

@@ -659,14 +659,36 @@
     if (!S.profile) return null;
     try { return E.grade(v, S.profile, S.start || new Date()); } catch (e) { return null; }
   }
+  /* Guests see one price per day: the operator's rate with Cabana's
+     facilitation inside it (KES hires only; the fee is charged per day).
+     Answers come from apa-fees.js's cache; a miss asks once and repaints. */
+  var _allInAsked = {};
+  function allInMajor(amount, cur) {
+    var a = Math.round(Number(amount) || 0);
+    if (!(a > 0) || String(cur || 'KES').toUpperCase() !== 'KES' || !global.ApaFees || !global.ApaFees.allInSync) return a;
+    var r = global.ApaFees.allInSync('carhire', a);
+    if (r) return r.total;
+    if (!_allInAsked[a]) {
+      _allInAsked[a] = 1;
+      clearTimeout(allInMajor.t);
+      allInMajor.t = setTimeout(function () {
+        var want = Object.keys(_allInAsked).map(Number);
+        global.ApaFees.allInMany('carhire', want).then(function () { try { renderGrid(); paintQuote(); } catch (e) { /* not mounted */ } });
+      }, 30);
+    }
+    return a;
+  }
   function estimateMinor(v) {
     var days = hireDays(S.start, S.end) || 1;
+    var cur = v.currency || 'KES';
     var rate = Number(v.day_rate || 0) * 100;
     var total = rate * days;
     if (days >= 28 && v.monthly_discount_pct > 0) total -= Math.round(total * v.monthly_discount_pct / 100);
     else if (days >= 7 && v.weekly_discount_pct > 0) total -= Math.round(total * v.weekly_discount_pct / 100);
     if (S.driver === 'chauffeur' && v.chauffeur_metro > 0) total += Math.round(v.chauffeur_metro * 100) * days;
-    return { rate: rate, total: total, days: days };
+    var perDay = Math.round(total / days / 100);
+    var allDay = allInMajor(perDay, cur);
+    return { rate: allInMajor(rate / 100, cur) * 100, total: total + (allDay - perDay) * days * 100, days: days };
   }
   function visibleFleet() {
     var list = S.fleet.filter(function (v) {
@@ -979,9 +1001,25 @@
     var warn = q.available === false ? '<div class="dv-fit is-blocked" style="margin:0 0 8px">' + icon('warn') + '<div><b>Booked for part of these dates</b>Try other dates, or request a similar car.</div></div>' : '';
     var err = S.quoteErr ? '<div class="dv-fit is-caution" style="margin:0 0 8px">' + icon('warn') + '<div><b>' + esc(S.quoteErr) + '</b></div></div>' : '';
     var fac = Number(q.facilitation) || 0;
+    if (!fac && q.local && String(cur).toUpperCase() === 'KES' && q.days > 0) {
+      var perDay = Math.round(q.total / q.days / 100);
+      fac = (allInMajor(perDay, cur) - perDay) * q.days * 100;
+    }
+    /* One price. The hire's first line carries Cabana's share, so the
+       lines add up to the total the guest sees; how it is paid (part by
+       M-Pesa to secure the car, the rest at pickup) is a schedule, not a
+       fee line. */
+    if (fac > 0 && q.lines && q.lines.length) {
+      var at = 0; for (var k = 0; k < q.lines.length; k++) if (q.lines[k].amount > 0) { at = k; break; }
+      lines = q.lines.map(function (l, n) {
+        var amt = n === at ? l.amount + fac : l.amount;
+        return '<div class="dv-q-line' + (l.good ? ' is-good' : '') + '"><span>' + esc(l.label) + (l.detail && n !== at ? '<small>' + esc(l.detail) + '</small>' : '') + '</span><b>' + (amt < 0 ? '−' : '') + esc(money(Math.abs(amt), cur)) + '</b></div>';
+      }).join('');
+    }
+    var all = q.total + fac;
     return warn + err + lines +
-      '<div class="dv-q-total"><span>' + q.days + (q.days === 1 ? ' day' : ' days') + ' hire, paid to the operator</span><b>' + moneyHTML(q.total, cur) + '</b></div>' +
-      (fac > 0 ? '<div class="dv-q-line dv-q-secure"><span>Secure it with Cabana<small>Paid by M-Pesa once the operator confirms. It locks the car and unlocks your handover code.</small></span><b>' + esc(money(fac, 'KES')) + '</b></div>' : '') +
+      '<div class="dv-q-total"><span>' + q.days + (q.days === 1 ? ' day' : ' days') + ', all in</span><b>' + moneyHTML(all, cur) + '</b></div>' +
+      (fac > 0 ? '<div class="dv-q-line dv-q-secure"><span>How you pay<small>' + esc(money(fac, 'KES')) + ' by M-Pesa once the operator confirms, to lock the car and unlock your handover code. ' + esc(money(q.total, cur)) + ' to the operator at pickup.</small></span><b></b></div>' : '') +
       '<div class="dv-q-note">+ refundable deposit ' + esc(money(q.deposit || 0, cur)) + ', held by the operator' + (q.local ? '. Estimate; the operator’s system confirms the exact figure when you book.' : '.') + '</div>';
   }
   function paintQuote() {
@@ -1197,7 +1235,7 @@
   function bookingHTML(t) {
     var cur = t.currency || 'KES', copy = statusCopy(t), op = t.operator || {}, v = t.vehicle || {};
     var unsecured = t.facilitation && t.facilitation.due;
-    if (unsecured && t.status === 'confirmed') copy = ['Confirmed. Secure it to keep it.', 'The operator said yes. Pay the Cabana facilitation to lock the car for ' + fmtDate(new Date(t.pickup_at), true) + '.'];
+    if (unsecured && t.status === 'confirmed') copy = ['Confirmed. Secure it to keep it.', 'The operator said yes. Pay the first part now to lock the car for ' + fmtDate(new Date(t.pickup_at), true) + '.'];
     var steps = ['requested', 'confirmed', 'active', 'completed'], i = steps.indexOf(t.status);
     var tl = i > -1 ? '<div class="dv-timeline">' + steps.map(function (s, n) { return '<i class="' + (n < i || t.status === 'completed' ? 'is-done' : n === i ? 'is-now' : '') + '"></i>'; }).join('') + '</div>' +
       '<div class="dv-tl-labels"><span>Sent</span><span>Confirmed</span><span>On the road</span><span>Returned</span></div>' : '';

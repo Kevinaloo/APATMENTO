@@ -2,7 +2,7 @@
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow | music-search
            | reconcile-payments | geocode | atlas | sos-alert | carhire-terrain
-           | route | karaoke | fx | share
+           | route | karaoke | fx | review-requests
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 60 };
@@ -49,7 +49,7 @@ import musicSearchHandler from './lib/_music-search.js';
 import karaokeHandler from './lib/_karaoke.js';
 import weatherHandler from './lib/_weather.js';
 import fxHandler from './lib/_fx.js';
-import shareHandler from './lib/_share.js';
+import listingShareHandler from './lib/_listing-share.js';
 import scrapeHandler from './lib/_scrape.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
@@ -60,6 +60,8 @@ import { settleView }  from './lib/_poll-payment.js';
 import { createOrder, captureOrder, fetchOrder, kesToUsd }
   from './lib/_paypal.js';
 import { expireStaleMatchOffers } from './lib/_match-guest.js';
+import { sendReviewRequests } from './lib/_review-requests.js';
+import { notify } from './lib/_notify.js';
 
 const SWEEPABLE = {
   apartment_bookings: 'checkin_date',
@@ -149,6 +151,30 @@ async function handleCloseBookings(req, res) {
   }
 
   return res.status(200).json({ ok: true, ran_at: new Date().toISOString(), ...out });
+}
+
+/* After a stay, ask both sides for their private review. Daily from
+   pg_cron at 18:00 Nairobi; idempotent, so a re-run sends nothing new. */
+async function handleReviewRequests(req, res) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) return res.status(500).json({ error: 'supabase_not_configured' });
+  if (!maintenanceAuthorized(req)) return res.status(403).json({ error: 'forbidden' });
+
+  const db = async path => {
+    const r = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+    });
+    if (!r.ok) throw new Error(`${path.split('?')[0]} ${r.status}: ${await r.text()}`);
+    return r.json();
+  };
+  try {
+    const out = await sendReviewRequests({ db, notify });
+    return res.status(200).json({ ok: true, ran_at: new Date().toISOString(), ...out });
+  } catch (e) {
+    console.error('[review-requests]', e.message);
+    return res.status(500).json({ error: 'review_requests_failed' });
+  }
 }
 
 /* Columns added by schema-bookings-lifecycle.sql. If that migration
@@ -843,19 +869,21 @@ export default async function handler(req, res) {
 
   /* Display-only exchange rates for the price you see beside the real
      one. Public and edge-cached; nothing anyone pays is converted. */
+  /* /s/:id, the link people share. Real preview card, then the exact listing. */
+  if (action === 'listing-share') {
+    return listingShareHandler(req, res);
+  }
+
   if (action === 'fx') {
     return fxHandler(req, res);
   }
 
-  /* Link previews for /s/<listing id>: the listing's own photo, price
-     and area for WhatsApp and friends, then on to the real page. Public
-     and edge-cached. Lives here for the twelve-function reason. */
-  if (action === 'share') {
-    return shareHandler(req, res);
-  }
-
   if (action === 'close-bookings') {
     return handleCloseBookings(req, res);
+  }
+
+  if (action === 'review-requests') {
+    return handleReviewRequests(req, res);
   }
 
   if (action === 'welcome-email') {
@@ -887,8 +915,8 @@ export default async function handler(req, res) {
   }
 
   return res.status(400).json({
-    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, route, weather, fx, share, music-search, karaoke, '
-         + 'scrape, close-bookings, welcome-email, indexnow, reconcile-payments, expire-match-offers, paypal-create-order, '
+    error: 'Unknown action. Available: subscribe, geocode, atlas, sos-alert, carhire-terrain, route, weather, fx, music-search, karaoke, '
+         + 'scrape, close-bookings, review-requests, welcome-email, indexnow, reconcile-payments, expire-match-offers, paypal-create-order, '
          + 'paypal-capture, paypal-webhook',
   });
 }

@@ -402,7 +402,12 @@ def inject(src, g):
 
 
 def main():
-    for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
+    # Named pages only (`inject_schema.py index.html rides.html`): refresh the
+    # graph for pages you just edited without re-running the whole site.
+    only = [a for a in sys.argv[1:] if a.endswith(".html")]
+    paths = [os.path.join(ROOT, os.path.basename(a)) for a in only] if only \
+        else sorted(glob.glob(os.path.join(ROOT, "*.html")))
+    for path in paths:
         fname = os.path.basename(path)
         src = open(path, encoding="utf-8").read()
         # Generator-authored pages already carry a purpose-built graph that is

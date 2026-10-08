@@ -281,6 +281,8 @@ a{color:inherit;}
 .c-price{font-family:var(--fd);font-weight:600;font-size:21px;letter-spacing:-.025em;line-height:1.1;}
 .c-price small{font-size:12px;font-weight:500;color:var(--ink-3);letter-spacing:0;}
 .c-per{font-size:11px;color:var(--ink-3);margin-top:2px;}
+.c-share{width:38px;height:38px;margin-left:auto;margin-right:8px;background:var(--bg-soft,#f3f0fb);color:var(--ink);box-shadow:none;flex:none}
+.c-share svg{width:16px;height:16px}
 .c-open{padding:10px 16px;border-radius:100px;background:var(--ink);color:#fff;font-weight:700;font-size:12.5px;
   display:inline-flex;align-items:center;gap:6px;transition:.24s;flex-shrink:0;}
 .c-open:hover{background:linear-gradient(120deg,#7B2FF7,#3D5AFE);transform:translateX(2px);}
@@ -1375,6 +1377,7 @@ function cardHtml(r){
     + '<div class="c-price num">'+(r.price ? esc(money(r.price, r.currency)) : '<small>Rent on request</small>')+'</div>'
     + '<div class="c-per">'+(r.price ? 'per month' : 'ask the host')
     + (r.deposit ? ' · ' + esc(shortMoney(r.deposit, r.currency)) + ' deposit' : '') + '</div></div>'
+    + '<button type="button" class="c-share cbn-share-btn" data-cbn-share data-share-id="'+attr(r.id)+'" data-share-title="'+attr(r.title)+'" data-share-url="https://cabana.africa/roommates?room='+encodeURIComponent(r.id)+'" aria-label="Share this room">'+svg('share',16)+'</button>'
     + '<button type="button" class="c-open" data-open="'+attr(r.id)+'">View room'+svg('arrow',14)+'</button>'
     + '</div></div></article>';
 }
@@ -2116,7 +2119,7 @@ window.showToast = toast;
 <script src="/chat.js?v=41" defer></script>
 <script src="/analytics.js" defer></script>
 <script src="/telemetry.js" defer></script>
-<script src="/pwa.js?v=41-match" defer></script>
+<script src="/pwa.js?v=42-play" defer></script>
 <script src="/referral.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-ad-registry.js?v=2026.09.26" defer></script>
@@ -2148,6 +2151,7 @@ window.showToast = toast;
           Call us in the app
         </a>
       </div>
+      <!-- CABANA-GETAPP --><link rel="stylesheet" href="/cabana-getapp.css"><div class="cbn-getapp"><span class="cbn-getapp-label">Get the app</span><a class="cbn-play" href="https://play.google.com/store/apps/details?id=africa.cabana.app&amp;referrer=utm_source%3Dfooter%26utm_medium%3Dweb" target="_blank" rel="noopener" data-cbn-play="footer" aria-label="Get Cabana on Google Play" onclick="window.gtag&amp;&amp;gtag('event','get_play_app',{source:'footer'})"><img src="/assets/app/google-play-badge.svg" width="162" height="48" alt="Get it on Google Play" loading="lazy" decoding="async"></a></div><!-- /CABANA-GETAPP -->
     </div>
 
     <div class="sf-nav-col">
@@ -2231,11 +2235,10 @@ window.showToast = toast;
 .sf-bottom-right a:hover{color:rgba(255,255,255,.6);}
 </style>
 <script src="/cabana-call.js" defer></script>
-<script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
+<script src="/cabana-share.js" defer></script><script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
 <script src="/cabana-identity.js" defer></script>
 <script src="/cabana-pay.js" defer></script>
 <script src="/cabana-rooms-pass.js" defer></script>
-<script src="/cabana-share.js?v=1" defer></script>
 </body>
 </html>

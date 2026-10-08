@@ -11,7 +11,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Send your food order to the kitchen on Cabana, watch it get accepted and cooked, and pay the kitchen on handover. Zero commission, nothing added."/>
-<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"/>
+<meta name="robots" content="noindex, nofollow"/>
 <meta name="theme-color" content="#0D0704"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -479,8 +479,7 @@ function ticket(g,n){
     h+='<div class="sum"><span>Delivery, paid to the kitchen</span><b'+(Number(g.delivery_fee)===0?' class="free"':'')+'>'
       +(Number(g.delivery_fee)===0?'Free':esc(money(g.delivery_fee,g.currency)))+'</b></div>';
   }
-  h+='<div class="sum"><span>Cabana fee</span><b class="free">'+esc((g.currency||'KES')+' 0')+'</b></div>'
-    +'<div class="sum big"><span>You pay '+esc(g.name||'the kitchen')+'</span><b>'+esc(money(c.total,g.currency))+'</b></div></div>';
+  h+='<div class="sum big"><span>You pay '+esc(g.name||'the kitchen')+'</span><b>'+esc(money(c.total,g.currency))+'</b></div></div>';
 
   if(block) h+='<div class="flag bad">'+mk('info',1.6)+'<span>'+esc(block)+' Remove it to send the rest.</span></div>';
   if(fail) h+='<div class="flag bad">'+mk('info',1.6)+'<span><b>Not sent.</b> '+esc(fail)+'</span></div>';
@@ -539,8 +538,6 @@ function docket(groups){
       +(g.mode==='delivery'?' &middot; delivery':g.mode==='pickup'?' &middot; collect':' &middot; eat in')+'</small></span>'
       +'<span class="led-v">'+esc(money(c.total,g.currency))+'</span></div>';
   });
-  h+='<div class="led keep"><span class="led-k">Cabana fee<small>No commission, no markup, no service charge</small></span>'
-    +'<span class="led-v">'+esc((t.currency||'KES')+' 0')+'</span></div>';
   h+='<div class="led grand"><span class="led-k">You pay on handover</span><span class="led-v">'+esc(money(t.total,t.currency))+'</span></div>';
   h+='<div class="docket-foot">'
     +'<button class="btn btn-fire btn-lg btn-wide" type="button" id="sendBtn">'

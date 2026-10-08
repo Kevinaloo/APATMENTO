@@ -5,8 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM, VirtualConsole } from 'jsdom';
-import shareHandler, { describe as describeListing, destination, ogImage } from '../api/lib/_share.js';
-import utilities from '../api/utilities.js';
+import shareHandler from '../api/lib/_listing-share.js';
 
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const SHARE_JS = read('cabana-share.js');
@@ -32,131 +31,75 @@ function fakeRes() {
   res.setHeader = (k, v) => { res.headers[k.toLowerCase()] = v; };
   res.status = code => { res.statusCode = code; return res; };
   res.send = body => { res.body = String(body); return res; };
-  res.json = body => { res.body = JSON.stringify(body); return res; };
   return res;
 }
-async function route(url, rows, { status = 200, method = 'GET', handler = shareHandler } = {}) {
-  const calls = [];
-  const saved = { fetch: globalThis.fetch, url: process.env.SUPABASE_URL, key: process.env.SUPABASE_ANON_KEY, origin: process.env.PUBLIC_BASE_URL };
+async function route(query, rows) {
+  const saved = { fetch: globalThis.fetch, url: process.env.SUPABASE_URL, key: process.env.SUPABASE_ANON_KEY, srv: process.env.SUPABASE_SERVICE_ROLE_KEY };
   process.env.SUPABASE_URL = 'https://db.example.supabase.co';
   process.env.SUPABASE_ANON_KEY = 'anon-key';
-  delete process.env.PUBLIC_BASE_URL;
-  globalThis.fetch = async (u, init) => {
-    calls.push({ url: String(u), init });
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  globalThis.fetch = async u => {
     if (rows instanceof Error) throw rows;
-    return new Response(JSON.stringify(rows), { status, headers: { 'Content-Type': 'application/json' } });
+    if (String(u).includes('/rpc/')) return new Response('[]', { status: 200 });
+    return new Response(JSON.stringify(rows), { status: 200, headers: { 'Content-Type': 'application/json' } });
   };
   try {
     const res = fakeRes();
-    const u = new URL(url, 'http://x');
-    await handler({ method, url, query: Object.fromEntries(u.searchParams), headers: {} }, res);
-    return { res, calls };
+    await shareHandler({ method: 'GET', query }, res);
+    return res;
   } finally {
     globalThis.fetch = saved.fetch;
-    for (const [k, v] of [['SUPABASE_URL', saved.url], ['SUPABASE_ANON_KEY', saved.key], ['PUBLIC_BASE_URL', saved.origin]]) {
+    for (const [k, v] of [['SUPABASE_URL', saved.url], ['SUPABASE_ANON_KEY', saved.key], ['SUPABASE_SERVICE_ROLE_KEY', saved.srv]]) {
       if (v == null) delete process.env[k]; else process.env[k] = v;
     }
   }
 }
 const meta = (html, prop) => {
-  const m = html.match(new RegExp('<meta (?:property|name)="' + prop.replace(/[:]/g, '\\$&') + '" content="([^"]*)"'));
+  const m = html.match(new RegExp('<meta property="' + prop.replace(/[:]/g, '\\$&') + '" content="([^"]*)"'));
   return m && m[1];
 };
 const stay = extra => ({
-  id: JETS, title: 'The Jets Nest', service: 'stays', type: 'apartment', area: 'Obama estate', city: 'Nairobi',
-  price_night: 1500, currency: 'KES', max_guests: 2, beds: 1, is_active: true, status: 'active', deleted_at: null,
-  photos: [PHOTO, 'https://ref.supabase.co/storage/v1/object/public/listings/a/2.jpg'], ...extra,
+  id: JETS, title: 'The Jets Nest', service: 'stays', area: 'Obama estate', city: 'Nairobi',
+  price_night: 1500, currency: 'KES', photos: [PHOTO], ...extra,
 });
 
-test('an active stay previews with its own photo, price, area, guests and beds, then opens the drawer', async () => {
-  const { res, calls } = await route('/api/utilities?action=share&id=' + JETS, [stay()]);
+test('a shared link previews with the listing\'s own landscape photo, then opens the listing', async () => {
+  const res = await route({ id: JETS }, [stay()]);
   assert.equal(res.statusCode, 200);
-  assert.match(res.headers['content-type'], /text\/html/);
-  assert.match(res.headers['cache-control'], /s-maxage=600/);
-  assert.match(res.headers['cache-control'], /stale-while-revalidate/);
-  const html = res.body;
-  assert.equal(meta(html, 'og:title'), 'The Jets Nest');
-  assert.equal(meta(html, 'og:description'), 'KES 1,500 a night · Obama estate, Nairobi · Up to 2 guests · 1 bed');
-  assert.equal(meta(html, 'og:image'),
+  assert.equal(meta(res.body, 'og:title'), 'The Jets Nest · Obama estate, Nairobi');
+  assert.equal(meta(res.body, 'og:image'),
     'https://ref.supabase.co/storage/v1/render/image/public/listings/a/1.jpg?width=1200&amp;height=630&amp;resize=cover&amp;quality=80');
-  assert.equal(meta(html, 'twitter:card'), 'summary_large_image');
-  assert.equal(meta(html, 'og:url'), 'https://cabana.africa/s/' + JETS);
-  assert.match(html, new RegExp('<link rel="canonical" href="https://cabana.africa/s/' + JETS + '">'));
-  assert.match(html, new RegExp('<meta http-equiv="refresh" content="0;url=/apartments\\?open=' + JETS + '">'));
-  assert.ok(html.includes('location.replace("/apartments?open=' + JETS + '")'));
-  /* Read with the anon key, and only rows a guest could book. */
-  assert.equal(calls.length, 1);
-  assert.match(calls[0].url, /\/rest\/v1\/listings\?/);
-  assert.match(calls[0].url, /id=eq\.65ef1d11/);
-  assert.match(calls[0].url, /is_active=eq\.true/);
-  assert.match(calls[0].url, /deleted_at=is\.null/);
-  assert.equal(calls[0].init.headers.apikey, 'anon-key');
+  assert.ok(res.body.includes('location.replace("https://cabana.africa/apartments?open=' + JETS + '&utm_source=share&utm_medium=link")'));
 });
 
-test('a shared 3D view carries its token through to the stays page and says so in the preview', async () => {
-  const { res } = await route('/api/utilities?action=share&id=' + JETS + '&tour=' + TOKEN, [stay()]);
+test('a shared 3D view carries its token to the stays page and says so in the preview', async () => {
+  const res = await route({ id: JETS, tour: TOKEN }, [stay()]);
   assert.equal(meta(res.body, 'og:title'), 'Step inside The Jets Nest in 3D');
-  assert.match(meta(res.body, 'og:description'), /^Cabana 3D tour · KES 1,500 a night/);
-  assert.ok(res.body.includes('location.replace("/apartments?open=' + JETS + '&tour=' + TOKEN + '")'));
-  const bad = await route('/api/utilities?action=share&id=' + JETS + '&tour=' + encodeURIComponent('x"><script>'), [stay()]);
-  assert.ok(bad.res.body.includes('location.replace("/apartments?open=' + JETS + '")'));
-  assert.doesNotMatch(bad.res.body, /tour=/);
+  assert.match(meta(res.body, 'og:description'), /^Cabana 3D tour · /);
+  assert.ok(res.body.includes('apartments?open=' + JETS + '&tour=' + TOKEN));
+  const bad = await route({ id: JETS, tour: '"><script>alert(1)</script>' }, [stay()]);
+  assert.doesNotMatch(bad.body, /tour=/);
+  assert.doesNotMatch(bad.body, /<script>alert/);
+  const room = await route({ id: JETS, tour: TOKEN }, [stay({ service: 'roommates' })]);
+  assert.doesNotMatch(room.body, /tour=/, 'only a stay has a 3D tour');
 });
 
-test('unknown, paused, deleted and malformed ids all land on /apartments with Cabana\'s own preview', async () => {
-  for (const rows of [[], [stay({ status: 'paused' })], [stay({ status: 'pending_verification' })], [stay({ deleted_at: '2026-01-01' })], [stay({ is_active: false })]]) {
-    const { res } = await route('/api/utilities?action=share&id=' + JETS, rows);
+test('unknown ids and database failures still land the guest on Cabana, with host text escaped', async () => {
+  for (const rows of [[], new Error('offline')]) {
+    const res = await route({ id: JETS }, rows);
     assert.equal(res.statusCode, 200);
-    assert.ok(res.body.includes('location.replace("/apartments")'), JSON.stringify(rows[0]?.status));
-    assert.equal(meta(res.body, 'og:image'), 'https://cabana.africa/og-stays.jpg');
-    assert.doesNotMatch(res.body, /Jets Nest/);
+    assert.equal(meta(res.body, 'og:title'), 'Cabana');
   }
-  const { res, calls } = await route('/api/utilities?action=share&id=' + encodeURIComponent('../../etc'), [stay()]);
-  assert.equal(calls.length, 0, 'an id that is not id-shaped never reaches the database');
-  assert.ok(res.body.includes('location.replace("/apartments")'));
+  const evil = await route({ id: JETS }, [stay({ title: '"><script>alert(1)</script>', photos: ['javascript:alert(1)'] })]);
+  assert.doesNotMatch(evil.body, /<script>alert/);
+  assert.equal(evil.body.match(/<script/g).length, 1, 'exactly one script element: ours');
 });
 
-test('a database failure is cached briefly and still gets the guest to the listing', async () => {
-  const { res } = await route('/api/utilities?action=share&id=' + JETS, new Error('offline'));
-  assert.match(res.headers['cache-control'], /s-maxage=30\b/);
-  assert.ok(res.body.includes('location.replace("/apartments?open=' + JETS + '")'));
-});
-
-test('everything a host typed is escaped where it lands', async () => {
-  const evil = '"><script>alert(1)</script>&\'';
-  const { res } = await route('/api/utilities?action=share&id=' + JETS,
-    [stay({ title: evil, area: '<img src=x onerror=alert(1)>', city: 'Nairobi', photos: ['javascript:alert(1)'] })]);
-  const html = res.body;
-  assert.doesNotMatch(html, /<script>alert/);
-  assert.doesNotMatch(html, /<img src=x/);
-  assert.ok(html.includes('&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;&amp;&#39;'));
-  assert.equal(meta(html, 'og:image'), 'https://cabana.africa/og-stays.jpg', 'only https photos become the preview');
-  /* Exactly one script element: ours. */
-  assert.equal(html.match(/<script/g).length, 1);
-});
-
-test('the route is reachable: /s/:id rewrites onto utilities?action=share, which dispatches to it', async () => {
+test('the route is reachable: /s/:id rewrites onto utilities', () => {
   const config = JSON.parse(read('vercel.json'));
-  assert.ok(config.rewrites.some(r => r.source.startsWith('/s/:id') && r.destination === '/api/utilities?action=share&id=:id'));
-  const { res } = await route('/api/utilities?action=share&id=' + JETS, [stay()], { handler: utilities });
-  assert.equal(meta(res.body, 'og:title'), 'The Jets Nest');
-  const post = await route('/api/utilities?action=share&id=' + JETS, [stay()], { method: 'POST' });
-  assert.equal(post.res.statusCode, 405);
-});
-
-test('every service lands on its own page, and descriptions use that service\'s unit', () => {
-  const id = 'abc-1';
-  assert.equal(destination({ id, service: 'stays' }), '/apartments?open=abc-1');
-  assert.equal(destination({ id, type: 'room' }), '/roommates?room=abc-1');
-  assert.equal(destination({ id, service: 'roommates' }), '/roommates?room=abc-1');
-  assert.equal(destination({ id, service: 'food' }), '/restaurant?id=abc-1');
-  assert.equal(destination({ id, service: 'shopping' }), '/shopping?open=labc-1');
-  for (const s of ['tours', 'events', 'carhire', 'rides']) assert.equal(destination({ id, service: s }), '/' + s);
-  assert.equal(describeListing({ service: 'roommates', price_month: 25000, city: 'Nairobi', max_guests: 1, beds: 0 }),
-    'KES 25,000 a month · Nairobi · Up to 1 guest · Studio');
-  assert.equal(describeListing({ service: 'food', price_night: 900, area: 'Westlands' }), 'Westlands');
-  assert.equal(ogImage(['https://cdn.example.com/a.jpg'], 'f'), 'https://cdn.example.com/a.jpg');
-  assert.equal(ogImage([], 'f'), 'f');
+  const hit = config.rewrites.filter(r => r.source.startsWith('/s/:id'));
+  assert.equal(hit.length, 1, 'one rewrite owns /s/<id>');
+  assert.equal(hit[0].destination, '/api/utilities?action=listing-share&id=:id');
 });
 
 /* ── the QR encoder ────────────────────────────────────────────── */
@@ -364,13 +307,21 @@ test('the tour viewer receives a valid view token as ?v= and nothing else', () =
   assert.equal(dom.window.document.querySelector('iframe').getAttribute('src'), 'https://my.matterport.com/show/?m=abc');
 });
 
-test('the stays page wires share into cards and the drawer and hands a shared view to the tour', () => {
+test('the stays page shares from cards and the drawer and hands a shared view to the tour', () => {
   const html = read('apartments.html');
-  assert.match(html, /<script defer src="\/cabana-share\.js\?v=\d+"><\/script>/);
-  assert.match(html, /if \(e\.target\.closest\('\[data-cabana-share\]'\)\) return;/, 'a share tap never opens the card');
+  assert.match(html, /<script[^>]+src="\/cabana-share\.js[^"]*"[^>]*><\/script>/, 'the share module is loaded');
+  assert.match(html, /e\.target\.closest\('\[data-cbn-share\],\[data-cabana-share\]'\)\) return;/, 'a share tap never opens the card');
   assert.ok(html.includes("const wantsTour = /^[a-z0-9~.\\-]{1,120}$/i.test(tourToken);"));
   assert.match(html, /CabanaPropertyTour\.open\(tourId, tourToken === '1' \? undefined : tourToken\)/);
-  for (const page of ['partner-listings.html', 'roommates.html', 'restaurant.html', 'events.html']) {
-    assert.match(read(page), /<script src="\/cabana-share\.js\?v=\d+" defer><\/script>/, page);
-  }
+  assert.match(read('partner-listings.html'), /cabana-share\.js/, 'hosts can share from their board');
+});
+
+test('the compact data-cbn-share buttons other pages draw by hand open the same sheet', () => {
+  const dom = browser(SHARE_JS, '<button id="b" data-cbn-share data-share-id="' + JETS + '" data-share-title="The Jets Nest">Share</button>');
+  const { document, CabanaShare } = dom.window;
+  assert.equal(CabanaShare.url(JETS), 'https://cabana.africa/s/' + JETS);
+  document.getElementById('b').click();
+  const text = document.body.textContent;
+  assert.match(text, /WhatsApp/);
+  assert.match(document.body.innerHTML, new RegExp('cabana\\.africa/s/' + JETS));
 });

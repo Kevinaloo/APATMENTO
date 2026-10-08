@@ -114,14 +114,10 @@ app.get(/^\/k\/([A-Za-z0-9]{6})$/, (req, res) => {
   res.redirect(302, `/events/karaoke/room/${req.params[0].toUpperCase()}`);
 });
 
-/* Listing share links with their own link preview. Mirrors the
-   vercel.json rewrite /s/:id; the caller's ?tour= rides along. */
-app.get(/^\/s\/([A-Za-z0-9-]{1,64})$/, (req, res) => {
-  const url = new URL(req.url, 'http://cabana.local');
-  url.searchParams.set('action', 'share');
-  url.searchParams.set('id', req.params[0]);
-  req.url = `/api/utilities${url.search}`;
-  return handleApi('utilities', req, res);
+/* Shared listing links. Mirrors the vercel.json rewrite /s/:id. */
+app.get(/^\/s\/([A-Za-z0-9_-]{6,64})$/, async (req, res) => {
+  const { default: share } = await import('./api/lib/_listing-share.js');
+  return share({ query: { id: req.params[0], tour: req.query.tour } }, res);
 });
 
 /* Public profile links. Mirrors the vercel.json rewrite /u/:handle. */

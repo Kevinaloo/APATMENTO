@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Cabana Partner: Rooms &amp; Rates</title>
 <script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
+<script src="/apa-session.js"></script><script src="/apa-fees.js" defer></script>
 <link rel="stylesheet" href="/cabana-checkout.css"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -203,7 +203,7 @@ table.g{border-collapse:separate;border-spacing:0;min-width:100%}
 <div class="dock" id="dock" role="region" aria-label="Edit selected nights">
   <div class="dock-h"><div><small id="d-type"></small><br><b id="d-range"></b></div><button class="x" id="d-x" aria-label="Clear selection" style="background:transparent;color:#F4ECDD;border-color:rgba(244,236,221,.25)">×</button></div>
   <div class="dock-f">
-    <label>Rate<input id="d-rate" type="number" min="1" inputmode="numeric" placeholder="Standing"/></label>
+    <label>Rate<input id="d-rate" type="number" min="1" inputmode="numeric" placeholder="Standing" data-apa-fee="stays" data-apa-fee-unit="night" data-apa-fee-compact/></label>
     <label>Rooms to sell<input id="d-units" type="number" min="0" inputmode="numeric" placeholder="All"/></label>
     <label>Min nights<input id="d-min" type="number" min="1" max="30" inputmode="numeric" placeholder="Default"/></label>
     <label>Days<select id="d-days"><option value="all">Every day</option><option value="we">Fri &amp; Sat</option><option value="wd">Sun – Thu</option></select></label>
@@ -238,8 +238,8 @@ table.g{border-collapse:separate;border-spacing:0;min-width:100%}
     </div>
     <div class="sec"><div class="sec-t">Standing rates, per room per night</div>
       <div class="r3">
-        <div class="f"><label for="r-base">Weeknight</label><input id="r-base" type="number" min="1" inputmode="numeric"/></div>
-        <div class="f"><label for="r-we">Fri &amp; Sat <span style="color:var(--soft)">(opt.)</span></label><input id="r-we" type="number" min="1" inputmode="numeric"/></div>
+        <div class="f"><label for="r-base">Weeknight</label><input id="r-base" type="number" min="1" inputmode="numeric" data-apa-fee="stays" data-apa-fee-unit="night"/></div>
+        <div class="f"><label for="r-we">Fri &amp; Sat <span style="color:var(--soft)">(opt.)</span></label><input id="r-we" type="number" min="1" inputmode="numeric" data-apa-fee="stays" data-apa-fee-unit="night" data-apa-fee-compact/></div>
         <div class="f"><label for="r-min">Min nights</label><input id="r-min" type="number" min="1" max="30" value="1"/></div>
       </div>
       <div class="f"><label for="r-nr">Non-refundable discount (%)</label><input id="r-nr" type="number" min="0" max="50" value="0"/><small>Guests can pick a cheaper rate in exchange for no refund. 0 hides the option.</small></div>

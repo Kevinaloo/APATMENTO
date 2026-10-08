@@ -151,13 +151,83 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     2 · LIVE CAMERA CAPTURE
+     2 · LIVE CAMERA CAPTURE · PHOTO AND VIDEO
      An uploaded photo proves nothing. It may be six months old and
-     of another building. We open the rear camera, take the frame in
-     the app, and stamp it with time and coordinates.
+     of another building. We open the rear camera, take the frame or
+     a short clip in the app, and stamp it with time and coordinates.
+
+     Video is the honest answer to most arrival problems: a dripping
+     ceiling, a door that will not open, noise through a wall. Up to
+     30 seconds, recorded here, never picked from a gallery.
+
+     When the browser cannot open the camera (permission refused, an
+     old WebView) the phone's own camera app is offered instead, via a
+     capture input. That still takes a fresh picture; it is marked as
+     not-in-app so the adjudicator weighs it accordingly.
      ═══════════════════════════════════════════════════════════════ */
+  var MAX_CLIP_S = 30;
+  function clipMime() {
+    var R = global.MediaRecorder;
+    if (!R || !R.isTypeSupported) return '';
+    var list = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+    for (var i = 0; i < list.length; i++) if (R.isTypeSupported(list[i])) return list[i];
+    return '';
+  }
+  function canRecord() { return !!(global.MediaRecorder && clipMime()); }
+
+  function stampGeo() {
+    return new Promise(function (resolve) {
+      var geo = { lat: null, lng: null };
+      if (window.ApaLocation && ApaLocation.ensure) {
+        ApaLocation.ensure({ reason: 'default', timeout: 4000, maxAge: 15000, requireLive: true }).then(
+          function (fix) { if (fix) { geo.lat = fix.latitude; geo.lng = fix.longitude; } resolve(geo); },
+          function () { resolve(geo); }
+        );
+      } else if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (p) { geo.lat = p.coords.latitude; geo.lng = p.coords.longitude; resolve(geo); },
+          function () { resolve(geo); }, { timeout: 4000, enableHighAccuracy: true }
+        );
+      } else resolve(geo);
+    });
+  }
+
+  /* The phone's own camera app, for when the in-app camera cannot open. */
+  function captureFallback(kind) {
+    return new Promise(function (resolve, reject) {
+      var inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = kind === 'video' ? 'video/*' : 'image/*';
+      inp.setAttribute('capture', 'environment');
+      inp.style.cssText = 'position:fixed;left:-9999px;opacity:0';
+      document.body.appendChild(inp);
+      var done = false;
+      inp.onchange = function () {
+        done = true;
+        var f = inp.files && inp.files[0];
+        inp.remove();
+        if (!f) return reject(new Error('cancelled'));
+        if (kind === 'video' && f.size > 60 * 1024 * 1024) return reject(new Error('too_big'));
+        stampGeo().then(function (geo) {
+          var shot = { blob: f, kind: kind, mime: f.type || (kind === 'video' ? 'video/mp4' : 'image/jpeg'),
+                       takenAt: new Date().toISOString(), live: false, lat: geo.lat, lng: geo.lng };
+          if (kind === 'video') { shot.url = URL.createObjectURL(f); resolve(shot); }
+          else {
+            var r = new FileReader();
+            r.onload = function () { shot.dataUrl = r.result; resolve(shot); };
+            r.onerror = function () { resolve(shot); };
+            r.readAsDataURL(f);
+          }
+        });
+      };
+      setTimeout(function () { if (!done && inp.isConnected) { /* still waiting for the camera app */ } }, 0);
+      inp.click();
+    });
+  }
+
   function captureLive(opts) {
     opts = opts || {};
+    var mode = opts.mode === 'video' && canRecord() ? 'video' : 'photo';
     return new Promise(function (resolve, reject) {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         return reject(new Error('camera_unavailable'));
@@ -165,72 +235,139 @@
 
       var ov = document.createElement('div');
       ov.className = 'apa-cam';
+      ov.setAttribute('role', 'dialog');
+      ov.setAttribute('aria-modal', 'true');
+      ov.setAttribute('aria-label', 'Camera');
       ov.innerHTML =
         '<div class="apa-cam-frame">' +
           '<video autoplay playsinline muted></video>' +
-          '<div class="apa-cam-hud"><span class="apa-cam-dot"></span> Live · not from your gallery</div>' +
+          '<div class="apa-cam-hud"><span class="apa-cam-dot"></span><span class="apa-cam-hud-t">Live · not from your gallery</span></div>' +
+          '<button class="apa-cam-flip" type="button" aria-label="Switch camera">' +
+            '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>' +
+          '</button>' +
         '</div>' +
-        '<div class="apa-cam-hint">' + (opts.hint || 'Point at the problem and take one clear photo.') + '</div>' +
+        '<div class="apa-cam-hint">' + (opts.hint || 'Point at the problem.') + '</div>' +
+        (canRecord() ? '<div class="apa-cam-modes" role="radiogroup" aria-label="Photo or video">' +
+          '<button type="button" role="radio" data-mode="photo">Photo</button>' +
+          '<button type="button" role="radio" data-mode="video">Video</button></div>' : '') +
         '<div class="apa-cam-bar">' +
           '<button class="apa-cam-x" type="button">Cancel</button>' +
-          '<button class="apa-cam-shot" type="button" aria-label="Take photo"></button>' +
-          '<span style="width:64px"></span>' +
+          '<button class="apa-cam-shot" type="button" aria-label="Take photo"><i></i></button>' +
+          '<span class="apa-cam-time" aria-live="polite"></span>' +
         '</div>';
       document.body.appendChild(ov);
-      requestAnimationFrame(function(){ ov.classList.add('open'); });
+      requestAnimationFrame(function () { ov.classList.add('open'); });
 
       var video = ov.querySelector('video');
-      var stream = null;
+      var shotBtn = ov.querySelector('.apa-cam-shot');
+      var timeEl = ov.querySelector('.apa-cam-time');
+      var stream = null, rec = null, chunks = [], recT = 0, recStart = 0, facing = 'environment', finished = false;
 
+      function paintMode() {
+        ov.classList.toggle('is-video', mode === 'video');
+        shotBtn.setAttribute('aria-label', mode === 'video' ? (rec ? 'Stop recording' : 'Start recording') : 'Take photo');
+        ov.querySelectorAll('[data-mode]').forEach(function (b) { b.setAttribute('aria-checked', String(b.dataset.mode === mode)); });
+        timeEl.textContent = mode === 'video' && !rec ? 'Up to ' + MAX_CLIP_S + 's' : '';
+      }
+      function stopStream() { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
       function cleanup() {
-        if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+        clearInterval(recT);
+        stopStream();
         ov.classList.remove('open');
-        setTimeout(function(){ ov.remove(); }, 220);
+        setTimeout(function () { ov.remove(); }, 220);
+      }
+      function finish(result, err) {
+        if (finished) return; finished = true;
+        cleanup();
+        if (err) reject(err); else resolve(result);
+      }
+      function open() {
+        stopStream();
+        navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: mode === 'video'
+        }).catch(function (e) {
+          /* No microphone, or it was refused: a silent clip is still evidence. */
+          if (mode === 'video') return navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing } }, audio: false });
+          throw e;
+        }).then(function (s) {
+          stream = s; video.srcObject = s;
+          var p = video.play && video.play(); if (p && p.catch) p.catch(function () {});
+        }).catch(function (e) { finish(null, e); });
       }
 
-      navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1440 } }, audio: false
-      }).then(function (s) {
-        stream = s; video.srcObject = s;
-      }).catch(function (e) { cleanup(); reject(e); });
+      ov.querySelectorAll('[data-mode]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          if (rec || b.dataset.mode === mode) return;
+          mode = b.dataset.mode; paintMode(); open();
+        });
+      });
+      ov.querySelector('.apa-cam-flip').addEventListener('click', function () {
+        if (rec) return;
+        facing = facing === 'environment' ? 'user' : 'environment'; open();
+      });
+      ov.querySelector('.apa-cam-x').onclick = function () {
+        if (rec) { try { rec.onstop = null; rec.stop(); } catch (e) {} rec = null; }
+        finish(null, new Error('cancelled'));
+      };
+      document.addEventListener('keydown', function esc(e) {
+        if (e.key === 'Escape' && ov.isConnected) { document.removeEventListener('keydown', esc); ov.querySelector('.apa-cam-x').click(); }
+      });
 
-      ov.querySelector('.apa-cam-x').onclick = function () { cleanup(); reject(new Error('cancelled')); };
-
-      ov.querySelector('.apa-cam-shot').onclick = function () {
+      function takePhoto() {
         if (!video.videoWidth) return;
         var cv = document.createElement('canvas');
         cv.width = video.videoWidth; cv.height = video.videoHeight;
         cv.getContext('2d').drawImage(video, 0, 0);
-
-        var geo = { lat: null, lng: null };
-        var done = function () {
+        shotBtn.disabled = true;
+        stampGeo().then(function (geo) {
           cv.toBlob(function (blob) {
-            cleanup();
-            resolve({
-              blob: blob,
-              dataUrl: cv.toDataURL('image/jpeg', 0.86),
-              takenAt: new Date().toISOString(),
-              live: true,
-              lat: geo.lat, lng: geo.lng
-            });
+            finish({ blob: blob, kind: 'photo', mime: 'image/jpeg', dataUrl: cv.toDataURL('image/jpeg', 0.86),
+                     takenAt: new Date().toISOString(), live: true, lat: geo.lat, lng: geo.lng });
           }, 'image/jpeg', 0.86);
+        });
+      }
+      function startClip() {
+        if (!stream) return;
+        var mime = clipMime();
+        try { rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 1500000 }); }
+        catch (e) { try { rec = new MediaRecorder(stream); } catch (x) { rec = null; return; } }
+        chunks = [];
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+        rec.onstop = function () {
+          var secs = Math.round((Date.now() - recStart) / 100) / 10;
+          var type = (rec && rec.mimeType) || mime || 'video/webm';
+          var blob = new Blob(chunks, { type: type.split(';')[0] });
+          rec = null;
+          stampGeo().then(function (geo) {
+            finish({ blob: blob, kind: 'video', mime: type.split(';')[0], url: URL.createObjectURL(blob), seconds: secs,
+                     takenAt: new Date(recStart).toISOString(), live: true, lat: geo.lat, lng: geo.lng });
+          });
         };
-
-        if (window.ApaLocation && ApaLocation.ensure) {
-          ApaLocation.ensure({ reason: 'default', timeout: 4000, maxAge: 15000, requireLive: true }).then(
-            function (fix) { if (fix) { geo.lat = fix.latitude; geo.lng = fix.longitude; } done(); },
-            done
-          );
-        } else if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            function (p) { geo.lat = p.coords.latitude; geo.lng = p.coords.longitude; done(); },
-            done, { timeout: 4000, enableHighAccuracy: true }
-          );
-        } else done();
+        rec.start(1000);
+        recStart = Date.now();
+        ov.classList.add('is-rec');
+        paintMode();
+        recT = setInterval(function () {
+          var s = Math.floor((Date.now() - recStart) / 1000);
+          timeEl.textContent = '0:' + String(s).padStart(2, '0') + ' / 0:' + MAX_CLIP_S;
+          if (s >= MAX_CLIP_S) stopClip();
+        }, 250);
+      }
+      function stopClip() {
+        clearInterval(recT);
+        ov.classList.remove('is-rec');
+        if (rec && rec.state !== 'inactive') { shotBtn.disabled = true; timeEl.textContent = 'Saving…'; rec.stop(); }
+      }
+      shotBtn.onclick = function () {
+        if (mode === 'photo') return takePhoto();
+        if (rec) stopClip(); else startClip();
       };
+
+      paintMode();
+      open();
     });
   }
-
   function haversineKm(a, b, c, d) {
     if ([a,b,c,d].some(function(v){ return v == null; })) return null;
     var R = 6371, r = Math.PI / 180;
@@ -240,15 +377,20 @@
     return Number((2 * R * Math.asin(Math.sqrt(s))).toFixed(2));
   }
 
-  async function uploadEvidence(client, bookingId, shot) {
-    var path = 'issues/' + bookingId + '/' + Date.now() + '.jpg';
+  /* The evidence bucket is private and owner-foldered: a file must sit
+     under <uid>/ or storage refuses it. The old path (issues/<booking>/)
+     was refused every time, so no issue photo ever reached the team.
+     The stored value is the object path; the team reads it with a
+     signed URL. */
+  async function uploadEvidence(client, bookingId, shot, uid) {
+    var ext = shot.kind === 'video' ? (/mp4/.test(shot.mime || '') ? 'mp4' : 'webm') : 'jpg';
+    var path = uid + '/issues/' + bookingId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.' + ext;
     try {
       var up = await client.storage.from('evidence').upload(path, shot.blob, {
-        contentType: 'image/jpeg', upsert: false
+        contentType: shot.mime || (shot.kind === 'video' ? 'video/webm' : 'image/jpeg'), upsert: false
       });
       if (up.error) throw up.error;
-      var pub = client.storage.from('evidence').getPublicUrl(path);
-      return pub.data.publicUrl;
+      return path;
     } catch (e) {
       console.warn('[trust:upload]', e.message);
       return null;   // never block a distressed guest on a storage hiccup
@@ -533,8 +675,9 @@
       var h   = hoursTo(booking.checkin_date);
       var ph  = phaseOf(h);
 
-      var shot = null;
+      var media = [];          // { kind, blob, dataUrl|url, live, ... } · up to 4 photos and 1 clip
       var picked = null;
+      var MAX_PHOTOS = 4;
 
       var relevant = tax.filter(function (t) {
         if (ph === 'pre_24h' || ph === 'within_24h') return t.category !== 'access' || t.code === 'no_access';
@@ -565,10 +708,18 @@
               }).join('') +
             '</div>' +
             '<div class="apa-issue-photo" hidden>' +
-              '<div class="apa-issue-lbl">Live photo required</div>' +
+              '<div class="apa-issue-lbl apa-issue-ev-t">Show us</div>' +
               '<div class="apa-issue-photo-sub">Taken now, in the app. Gallery uploads aren\'t accepted as evidence.</div>' +
-              '<button class="apa-issue-cam" type="button">Open camera</button>' +
-              '<img class="apa-issue-thumb" hidden alt="Evidence"/>' +
+              '<div class="apa-issue-ev-btns">' +
+                '<button class="apa-issue-cam" type="button" data-kind="photo">' +
+                  '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>' +
+                  '<span class="apa-issue-cam-t"><span>Take a photo</span><small>Live, in the app</small></span></button>' +
+                '<button class="apa-issue-cam" type="button" data-kind="video">' +
+                  '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="m16 10 5-3v10l-5-3z"/></svg>' +
+                  '<span class="apa-issue-cam-t"><span>Record a video</span><small>Up to ' + MAX_CLIP_S + ' seconds</small></span></button>' +
+              '</div>' +
+              '<div class="apa-issue-ev-alt" hidden></div>' +
+              '<div class="apa-issue-ev" aria-live="polite"></div>' +
             '</div>' +
             /* Only shown once a host-fault, auto-redirect issue is
                picked — the one case where we would otherwise move them
@@ -592,13 +743,23 @@
       requestAnimationFrame(function(){ sheet.classList.add('open'); });
 
       var $ = function (s) { return sheet.querySelector(s); };
-      var close = function () { sheet.classList.remove('open'); setTimeout(function(){ sheet.remove(); }, 240); };
+      var close = function () {
+        sheet.classList.remove('open');
+        media.forEach(function (m) { if (m.url) try { URL.revokeObjectURL(m.url); } catch (e) {} });
+        setTimeout(function(){ sheet.remove(); }, 240);
+      };
       $('.apa-issue-x').onclick = close;
       $('.apa-issue-cancel').onclick = close;
 
       function refresh() {
-        var needPhoto = picked && picked.requires_photo;
-        $('.apa-issue-photo').hidden = !needPhoto;
+        var needPhoto = !!(picked && picked.requires_photo);
+        /* Evidence is offered for every issue and required where the
+           taxonomy says so. Even where it is optional, a clip or photo
+           is what lets us decide in minutes rather than hours. */
+        $('.apa-issue-photo').hidden = !picked;
+        $('.apa-issue-photo').classList.toggle('is-required', needPhoto);
+        $('.apa-issue-ev-t').textContent = needPhoto ? 'A live photo or video is needed' : 'Add a photo or video · optional';
+        paintEvidence();
 
         /* The choice only makes sense where it would otherwise change
            anything: a host-fault issue we would auto-redirect, and
@@ -610,7 +771,7 @@
         prefEl.hidden = !showPref;
         if (!showPref) $('.apa-issue-refund-cb').checked = false;
 
-        $('.apa-issue-go').disabled = !picked || (needPhoto && !shot);
+        $('.apa-issue-go').disabled = !picked || (needPhoto && !media.length);
 
         if (!picked) { $('.apa-issue-outcome').hidden = true; return; }
 
@@ -634,7 +795,8 @@
           lines.push(['Inside 24 hours the host keeps half of one night.', '', 'note']);
         } else {
           lines.push(['Held for review', money(s.paid), '']);
-          lines.push(['We\'ll look at your photo and decide within the hour.', '', 'note']);
+          lines.push([media.some(function (m) { return m.kind === 'video'; }) ? 'We\'ll look at your video and decide within the hour.'
+            : 'We\'ll look at what you\'ve shown us and decide within the hour.', '', 'note']);
         }
 
         $('.apa-issue-outcome').hidden = false;
@@ -684,23 +846,96 @@
         }, 220);
       };
 
-      $('.apa-issue-cam').onclick = async function () {
-        try {
-          shot = await captureLive({ hint: picked ? picked.label : 'Show us the problem.' });
-          var img = $('.apa-issue-thumb');
-          img.src = shot.dataUrl; img.hidden = false;
-          $('.apa-issue-cam').textContent = 'Retake';
-          refresh();
-        } catch (e) {
-          if (e.message !== 'cancelled') toast('We need camera access to record what you\'re seeing.');
+      /* ── evidence: photos and one clip ─────────────────────────── */
+      function photos() { return media.filter(function (m) { return m.kind === 'photo'; }); }
+      function clip() { return media.filter(function (m) { return m.kind === 'video'; })[0] || null; }
+      function addShot(shotIn) {
+        if (shotIn.kind === 'video') {
+          var old = clip(); if (old) { drop(media.indexOf(old)); }
+        } else if (photos().length >= MAX_PHOTOS) {
+          drop(media.indexOf(photos()[0]));
         }
-      };
+        media.push(shotIn);
+        $('.apa-issue-ev-alt').hidden = true;
+        refresh();
+      }
+      function drop(i) {
+        var m = media[i]; if (!m) return;
+        if (m.url) try { URL.revokeObjectURL(m.url); } catch (e) {}
+        media.splice(i, 1);
+      }
+      function paintEvidence() {
+        var box = $('.apa-issue-ev');
+        var p = photos().length, v = clip();
+        sheet.querySelector('.apa-issue-cam[data-kind="photo"] .apa-issue-cam-t span').textContent = p ? (p >= MAX_PHOTOS ? 'Replace a photo' : 'Another photo') : 'Take a photo';
+        sheet.querySelector('.apa-issue-cam[data-kind="photo"] small').textContent = p ? p + ' of ' + MAX_PHOTOS + ' taken' : 'Live, in the app';
+        sheet.querySelector('.apa-issue-cam[data-kind="video"] .apa-issue-cam-t span').textContent = v ? 'Record again' : 'Record a video';
+        sheet.querySelector('.apa-issue-cam[data-kind="video"] small').textContent = v ? 'Replaces this clip' : 'Up to ' + MAX_CLIP_S + ' seconds';
+        box.innerHTML = media.map(function (m, i) {
+          var tag = m.live ? 'Live' : 'Phone camera';
+          return '<figure class="apa-issue-ev-item' + (m.kind === 'video' ? ' is-video' : '') + '">' +
+            (m.kind === 'video'
+              ? '<video src="' + m.url + '" muted playsinline preload="metadata"></video>' +
+                '<button type="button" class="apa-issue-ev-play" aria-label="Play this video"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></button>' +
+                (m.seconds ? '<span class="apa-issue-ev-dur">' + Math.max(1, Math.round(m.seconds)) + 's</span>' : '')
+              : '<img src="' + (m.dataUrl || '') + '" alt="Photo ' + (i + 1) + '"/>') +
+            '<figcaption>' + tag + '</figcaption>' +
+            '<button type="button" class="apa-issue-ev-x" data-i="' + i + '" aria-label="Remove this ' + (m.kind === 'video' ? 'video' : 'photo') + '">&times;</button>' +
+          '</figure>';
+        }).join('');
+        box.querySelectorAll('.apa-issue-ev-x').forEach(function (b) {
+          b.onclick = function () { drop(+b.dataset.i); refresh(); };
+        });
+        /* A quick look back at the clip before sending it, with sound. */
+        box.querySelectorAll('.apa-issue-ev-play').forEach(function (b) {
+          var fig = b.parentNode, vid = fig.querySelector('video');
+          function paint() { fig.classList.toggle('is-playing', !vid.paused); b.setAttribute('aria-label', vid.paused ? 'Play this video' : 'Pause this video'); }
+          b.onclick = function () {
+            if (vid.paused) { vid.muted = false; var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); } else vid.pause();
+          };
+          vid.onplay = vid.onpause = vid.onended = paint;
+        });
+      }
+      /* The in-app camera could not open (permission refused, an older
+         WebView, no camera on this device). Offer the phone's own camera
+         app, on a fresh tap so the browser allows it to open. */
+      function offerFallback(kind, err) {
+        var alt = $('.apa-issue-ev-alt');
+        var denied = err && /NotAllowed|Permission|denied/i.test((err.name || '') + ' ' + (err.message || ''));
+        alt.hidden = false;
+        alt.innerHTML = '<span>' + (denied ? 'Camera access is off for this site.' : 'We couldn\'t open the camera here.') +
+          ' Use your phone\'s camera instead.</span>' +
+          '<button type="button" class="apa-issue-ev-alt-go">' + (kind === 'video' ? 'Open video camera' : 'Open camera') + '</button>';
+        alt.querySelector('.apa-issue-ev-alt-go').onclick = function () {
+          captureFallback(kind).then(addShot, function (e) {
+            if (e && e.message === 'too_big') toast('That clip is too long. Keep it under ' + MAX_CLIP_S + ' seconds.');
+          });
+        };
+      }
+      sheet.querySelectorAll('.apa-issue-cam').forEach(function (b) {
+        b.onclick = async function () {
+          var kind = b.dataset.kind;
+          var hint = picked ? picked.label + (kind === 'video' ? ' · show it as it happens.' : '') : 'Show us the problem.';
+          /* No recorder in this browser: the phone's camera app records instead. */
+          if (kind === 'video' && !canRecord()) {
+            try { addShot(await captureFallback('video')); }
+            catch (e) { if (e && e.message === 'too_big') toast('That clip is too long. Keep it under ' + MAX_CLIP_S + ' seconds.'); }
+            return;
+          }
+          try {
+            addShot(await captureLive({ mode: kind, hint: hint }));
+          } catch (e) {
+            if (e && e.message === 'cancelled') return;
+            offerFallback(kind, e);
+          }
+        };
+      });
 
       $('.apa-issue-go').onclick = async function () {
         var btn = this; btn.disabled = true; btn.textContent = 'Working…';
         try {
           var r = await Issue.submit(booking, {
-            code: picked.code, freeText: ta.value.trim(), shot: shot,
+            code: picked.code, freeText: ta.value.trim(), media: media.slice(),
             inferred: classify(ta.value, tax).slice(0, 3),
             preferRefund: !$('.apa-issue-refund-pref').hidden && $('.apa-issue-refund-cb').checked
           });
@@ -729,7 +964,7 @@
     _outcomeToast: function (r) {
       if (r.redirect)   return toast('We\'re arranging alternative accommodation. Our team will contact you shortly.');
       if (r.refunded)   return toast('Refunded ' + money(r.refund_amount) + '. It\'s on its way back to you.');
-      if (r.held)       return toast('Received. We\'re reviewing your photo now.');
+      if (r.held)       return toast('Received. We\'re reviewing what you sent now.');
       toast('Reported. We\'ll be in touch shortly.');
     },
 
@@ -737,22 +972,39 @@
     async submit(booking, payload) {
       var c = sb(); if (!c) throw new Error('offline');
 
-      var url = null, lat = null, lng = null, dist = null, takenAt = null;
-      if (payload.shot) {
-        url     = await uploadEvidence(c, booking.id, payload.shot);
-        lat     = payload.shot.lat; lng = payload.shot.lng;
-        takenAt = payload.shot.takenAt;
+      var items = (payload.media || (payload.shot ? [payload.shot] : [])).filter(function (m) { return m && m.blob; });
+      var uid = null;
+      if (items.length) {
+        try { uid = ((await c.auth.getUser()).data.user || {}).id || null; } catch (e) { uid = null; }
       }
+      var stored = [];
+      if (uid) {
+        /* In parallel: a 30-second clip and three photos on a weak signal
+           should not take four round trips in a row. */
+        var paths = await Promise.all(items.map(function (m) { return uploadEvidence(c, booking.id, m, uid); }));
+        items.forEach(function (m, i) {
+          if (paths[i]) stored.push({ kind: m.kind, path: paths[i], live: !!m.live, taken_at: m.takenAt || null,
+                                      seconds: m.seconds || null, lat: m.lat, lng: m.lng });
+        });
+      }
+      var firstPhoto = stored.filter(function (m) { return m.kind === 'photo'; })[0] || null;
+      var theClip = stored.filter(function (m) { return m.kind === 'video'; })[0] || null;
+      var located = items.filter(function (m) { return m.lat != null && m.lng != null; })[0] || {};
+      var lat = located.lat == null ? null : located.lat;
+      var lng = located.lng == null ? null : located.lng;
+      var takenAt = (firstPhoto && firstPhoto.taken_at) || (theClip && theClip.taken_at) || null;
+      var dist = null;
 
-      var listing = (await c.from('listings').select('lat,lng,host_id')
+      var listing = (await c.from('listings').select('latitude,longitude,lat,lng,host_id')
                        .eq('id', booking.apartment_id).maybeSingle()).data;
-      if (listing) dist = haversineKm(lat, lng, listing.lat, listing.lng);
+      if (listing) dist = haversineKm(lat, lng, listing.latitude != null ? listing.latitude : listing.lat,
+                                      listing.longitude != null ? listing.longitude : listing.lng);
 
       var h = hoursTo(booking.checkin_date);
       var tax = await loadTaxonomy();
       var row = tax.find(function (t) { return t.code === payload.code; }) || {};
 
-      var ins = await c.from('checkin_issues').insert({
+      var row0 = {
         booking_id: booking.id,
         guest_id: booking.guest_id,
         host_id: booking.host_id || (listing && listing.host_id) || null,
@@ -761,8 +1013,8 @@
         free_text: payload.freeText || null,
         inferred_codes: payload.inferred || [],
         confidence: (payload.inferred && payload.inferred[0]) ? payload.inferred[0].confidence : 0,
-        photo_url: url,
-        photo_live: !!(payload.shot && payload.shot.live),
+        photo_url: firstPhoto ? firstPhoto.path : null,
+        photo_live: !!(firstPhoto && stored.filter(function (m) { return m.kind === 'photo'; }).every(function (m) { return m.live; })),
         photo_taken_at: takenAt,
         geo_lat: lat, geo_lng: lng, geo_distance_m: dist == null ? null : dist * 1000,
         window_phase: phaseOf(h),
@@ -773,8 +1025,21 @@
            changes nothing about fault or about what a guest at fault
            owes — it only tells the adjudicator not to auto-redirect
            THIS guest if the host turns out to be the one who caused it. */
-        prefer_refund: !!payload.preferRefund
-      }).select().single();
+        prefer_refund: !!payload.preferRefund,
+        video_url: theClip ? theClip.path : null,
+        video_live: !!(theClip && theClip.live),
+        video_seconds: theClip ? theClip.seconds : null,
+        media: stored
+      };
+      var ins = await c.from('checkin_issues').insert(row0).select().single();
+      /* Before the video columns exist the report must still go through:
+         the first photo is kept, the clip waits in storage for the team. */
+      if (ins.error && /PGRST204|42703/.test(String(ins.error.code || '') + ' ' + String(ins.error.message || ''))) {
+        var row1 = Object.assign({}, row0);
+        delete row1.video_url; delete row1.video_live; delete row1.video_seconds; delete row1.media;
+        if (!row1.photo_url && theClip) { row1.photo_url = theClip.path; row1.photo_live = !!theClip.live; }
+        ins = await c.from('checkin_issues').insert(row1).select().single();
+      }
       if (ins.error) throw ins.error;
 
       // Server adjudicates: refunds, cards, redirect, rescue ride, float.
@@ -827,8 +1092,9 @@
       var c = sb(); if (!c) return [];
       var b = await c.from('apartment_bookings').select('*')
                 .or('guest_id.eq.' + userId + ',host_id.eq.' + userId)
-                .eq('status', 'checked_in')
-                .gte('checkout_date', new Date(Date.now() - 14 * 864e5).toISOString().slice(0,10));
+                .in('status', ['checked_in', 'completed'])
+                .is('cancelled_at', null)
+                .gte('checkout_date', new Date(Date.now() - 30 * 864e5).toISOString().slice(0,10));
       var rows = b.data || [];
       if (!rows.length) return [];
       var ids = rows.map(function (x) { return x.id; });
@@ -870,7 +1136,24 @@
     '.apa-cam-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px calc(24px + env(safe-area-inset-bottom))}',
     '.apa-cam-x{background:none;border:0;color:#9aa0ab;font:500 15px system-ui;width:64px;text-align:left;cursor:pointer}',
     '.apa-cam-shot{width:70px;height:70px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,.28);',
-      'background-clip:padding-box;cursor:pointer;transition:transform .1s}.apa-cam-shot:active{transform:scale(.92)}',
+      'background-clip:padding-box;cursor:pointer;transition:transform .1s;display:grid;place-items:center;padding:0}',
+    '.apa-cam-shot:active{transform:scale(.92)}.apa-cam-shot:disabled{opacity:.5}',
+    '.apa-cam-shot i{display:block;width:100%;height:100%;border-radius:50%;background:#fff;transition:all .2s cubic-bezier(.22,1,.36,1)}',
+    '.apa-cam.is-video .apa-cam-shot i{background:#ff3b30;width:54px;height:54px}',
+    '.apa-cam.is-rec .apa-cam-shot i{width:26px;height:26px;border-radius:7px}',
+    '.apa-cam.is-rec .apa-cam-frame{box-shadow:inset 0 0 0 3px #ff3b30}',
+    '.apa-cam-time{width:64px;text-align:right;color:#fff;font:600 12.5px/1.2 system-ui;font-variant-numeric:tabular-nums}',
+    '.apa-cam.is-rec .apa-cam-time{color:#ff6b62}',
+    '.apa-cam-flip{position:absolute;top:12px;right:14px;width:42px;height:42px;border-radius:50%;border:0;',
+      'background:rgba(0,0,0,.5);backdrop-filter:blur(8px);color:#fff;display:grid;place-items:center;cursor:pointer}',
+    '.apa-cam.is-rec .apa-cam-flip,.apa-cam.is-rec .apa-cam-modes{opacity:.35;pointer-events:none}',
+    '.apa-cam-modes{display:flex;justify-content:center;gap:4px;margin:8px auto 0;padding:3px;border-radius:99px;',
+      'background:rgba(255,255,255,.1)}',
+    '.apa-cam-modes button{border:0;background:none;color:#c9ccd4;font:600 12.5px/1 system-ui;letter-spacing:.06em;',
+      'text-transform:uppercase;padding:8px 16px;border-radius:99px;cursor:pointer;transition:.18s}',
+    '.apa-cam-modes button[aria-checked="true"]{background:#fff;color:#0f1117}',
+    '.apa-cam.is-video .apa-cam-modes button[aria-checked="true"]{color:#c4271d}',
+    '@media(prefers-reduced-motion:reduce){.apa-cam-dot{animation:none}.apa-cam-shot i{transition:none}}',
 
     '.apa-issue{position:fixed;inset:0;z-index:960;background:rgba(12,14,20,.72);backdrop-filter:blur(7px);',
       'display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .26s}',
@@ -906,10 +1189,46 @@
     '.apa-issue-chip-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:#c9ccd4}',
     '.sev-3{background:#f0a13a}.sev-4{background:#ef6c3d}.sev-5{background:#e0473c}',
     '.apa-issue-photo{margin-top:18px;padding:15px;border:1.5px dashed #dfe2e8;border-radius:15px;background:#fcfcfd}',
+    '.apa-issue-photo.is-required{border-color:#f3c9a6;background:#fffaf5}',
+    '.apa-issue-photo .apa-issue-lbl{margin-top:2px}',
     '.apa-issue-photo-sub{font:400 12.5px/1.5 system-ui;color:#7c828e;margin:-4px 0 11px}',
-    '.apa-issue-cam{background:#0f1117;color:#fff;border:0;border-radius:11px;padding:11px 18px;',
-      'font:600 13.5px system-ui;cursor:pointer}',
-    '.apa-issue-thumb{display:block;width:100%;border-radius:11px;margin-top:12px}',
+    '.apa-issue-ev-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}',
+    '.apa-issue-cam{display:flex;align-items:center;gap:10px;background:#0f1117;text-align:left;',
+      'color:#fff;border:0;border-radius:12px;padding:11px 13px;font:600 13.5px/1.2 system-ui;cursor:pointer;',
+      'transition:transform .12s,background .15s;min-height:54px;min-width:0}',
+    '.apa-issue-cam svg{flex:0 0 auto}',
+    '.apa-issue-cam-t{display:flex;flex-direction:column;gap:3px;min-width:0}',
+    '.apa-issue-cam-t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.apa-issue-cam:hover{background:#262a33}.apa-issue-cam:active{transform:scale(.97)}',
+    '.apa-issue-cam[data-kind="video"]{background:#fff;color:#0f1117;box-shadow:inset 0 0 0 1.5px #dfe2e8}',
+    '.apa-issue-cam[data-kind="video"]:hover{box-shadow:inset 0 0 0 1.5px #0f1117}',
+    '.apa-issue-cam[data-kind="video"] svg{color:#e0473c}',
+    '.apa-issue-cam small{font:500 11px/1.2 system-ui;opacity:.62;white-space:nowrap}',
+    '@media(max-width:360px){.apa-issue-ev-btns{grid-template-columns:1fr}}',
+    '.apa-issue-ev-alt{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;',
+      'margin-top:10px;padding:10px 12px;border-radius:11px;background:#fff4ec;color:#7a3a12;font:500 12.5px/1.45 system-ui}',
+    '.apa-issue-ev-alt[hidden]{display:none}',
+    '.apa-issue-ev-alt-go{border:0;background:#b3541e;color:#fff;border-radius:9px;padding:8px 12px;font:600 12.5px system-ui;cursor:pointer}',
+    '.apa-issue-ev{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}',
+    '.apa-issue-ev:not(:empty){margin-top:12px}',
+    '.apa-issue-ev-item{position:relative;margin:0;aspect-ratio:1;border-radius:12px;overflow:hidden;background:#0f1117;',
+      'animation:apaEvIn .28s cubic-bezier(.22,1,.36,1)}',
+    '.apa-issue-ev-item.is-video{grid-column:span 2;aspect-ratio:auto;min-height:96px}',
+    '.apa-issue-ev-item img,.apa-issue-ev-item video{width:100%;height:100%;object-fit:cover;display:block}',
+    '.apa-issue-ev-item figcaption{position:absolute;left:6px;bottom:6px;pointer-events:none;background:rgba(0,0,0,.6);',
+      'color:#fff;font:600 10.5px/1 system-ui;padding:4px 7px;border-radius:99px}',
+    '.apa-issue-ev-dur{position:absolute;right:6px;bottom:6px;background:#e0473c;color:#fff;font:700 10.5px/1 system-ui;',
+      'padding:4px 7px;border-radius:99px;pointer-events:none}',
+    '.apa-issue-ev-play{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;',
+      'border:0;background:rgba(255,255,255,.92);color:#0f1117;display:grid;place-items:center;cursor:pointer;padding:0 0 0 2px;',
+      'box-shadow:0 6px 18px rgba(0,0,0,.3);transition:opacity .2s,transform .12s}',
+    '.apa-issue-ev-play:active{transform:scale(.92)}',
+    '.apa-issue-ev-item.is-playing .apa-issue-ev-play{opacity:0}',
+    '.apa-issue-ev-item.is-playing:hover .apa-issue-ev-play{opacity:.85}',
+    '.apa-issue-ev-x{position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:50%;border:0;',
+      'background:rgba(0,0,0,.62);color:#fff;font:400 18px/1 system-ui;cursor:pointer;display:grid;place-items:center;padding:0}',
+    '@keyframes apaEvIn{from{opacity:0;transform:scale(.92)}}',
+    '@media(prefers-reduced-motion:reduce){.apa-issue-ev-item{animation:none}}',
     '.apa-issue-refund-pref{display:flex;gap:10px;align-items:flex-start;margin-top:16px;',
       'padding:13px 14px;border-radius:14px;border:1.5px solid #e7e2f9;background:#faf8ff;',
       'cursor:pointer}',

@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Please provide at least a brief description of the property.' });
   }
 
-  const SYSTEM = `You are an expert property listing assistant for Cabana, Africa's top short-stay and travel super-app.
+  const SYSTEM = `You are an expert property listing assistant for Cabana, Africa's zero-commission short-stay and travel super-app.
 Extract or infer structured listing data from the text provided.
 Always respond with valid JSON matching the schema exactly. No markdown, no explanation outside JSON.
 For missing fields use null. Infer sensibly from context (e.g. "2-bed" → bedrooms: 2).

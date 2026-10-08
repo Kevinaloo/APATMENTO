@@ -71,6 +71,18 @@ export function serviceFee(service, subtotal) {
   return bands[bands.length - 1].fee;
 }
 
+/** The fee on a booking of several units (nights, people, tickets, days):
+ *  each unit is banded on its own price, matching
+ *  cabana_private.facilitation_fee_units() (20261008100000_all_in_prices).
+ *  This is what makes an all-in unit price add up: three nights at an
+ *  all-in nightly price cost exactly three times it. */
+export function serviceFeeUnits(service, total, units) {
+  const u = Math.max(1, Math.round(Number(units) || 1));
+  const t = Number(total || 0);
+  if (!(t > 0)) return 0;
+  return u * serviceFee(service, Math.round((t / u) * 100) / 100);
+}
+
 /** Every band a service charges, for showing a human the whole ladder. */
 export function feeBands(service) {
   return (FEE_SCHEDULE[String(service || '').toLowerCase()] || NO_FEE).slice();

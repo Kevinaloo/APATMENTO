@@ -835,7 +835,14 @@
   if (D) {
     D.addEventListener('click', function (e) {
       var b = e.target && e.target.closest && e.target.closest('[data-cabana-share]');
-      if (!b) return;
+      if (!b) {
+        /* The compact form other pages draw by hand: id + title (+ url). */
+        var c = e.target && e.target.closest && e.target.closest('[data-cbn-share]');
+        if (!c) return;
+        e.preventDefault(); e.stopPropagation();   // a share button on a card must not open the card
+        open({ id: c.getAttribute('data-share-id'), title: c.getAttribute('data-share-title'), url: c.getAttribute('data-share-url') || undefined });
+        return;
+      }
       e.preventDefault();
       share({
         url: b.getAttribute('data-share-url') || undefined,
@@ -850,7 +857,23 @@
     ensureCSS();
   }
 
+  /* The short form: CabanaShare.open({id, title, text, url}). A listing id
+     becomes its /s/<id> link; a page that already has a link passes url. */
+  function open(o) {
+    o = o || {};
+    var url = o.url || (o.id ? origin() + '/s/' + encodeURIComponent(o.id) : global.location.href);
+    return share({
+      url: url,
+      title: o.title || 'Cabana',
+      text: o.text || (o.title ? o.title + ' on Cabana' : 'Have a look at this on Cabana'),
+      imageUrl: o.image || '',
+      heading: o.heading || 'Share this place'
+    });
+  }
+
   global.CabanaShare = {
+    open: open,
+    url: function (id) { return origin() + '/s/' + encodeURIComponent(id); },
     share: share,
     sheet: function (o) { return openSheet(o); },
     close: closeSheet,

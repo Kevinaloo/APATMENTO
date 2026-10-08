@@ -61,7 +61,7 @@
         '<div><label class="le-l" for="tn' + i + '">Name</label>' +
           '<input class="le-i" id="tn' + i + '" data-t="name" data-i="' + i + '" value="' + esc(t.name) + '" placeholder="Early bird"/></div>' +
         '<div><label class="le-l" for="tp' + i + '">Price <span>KES</span></label>' +
-          '<input class="le-i" id="tp' + i + '" data-t="price_kes" data-i="' + i + '" type="number" min="0" value="' + esc(t.price_kes) + '"/></div>' +
+          '<input class="le-i" id="tp' + i + '" data-t="price_kes" data-i="' + i + '" type="number" min="0" value="' + esc(t.price_kes) + '" data-apa-fee="events" data-apa-fee-unit="ticket" data-apa-fee-compact/></div>' +
         '<div><label class="le-l" for="tq' + i + '">Qty <span>blank = ∞</span></label>' +
           '<input class="le-i" id="tq' + i + '" data-t="qty" data-i="' + i + '" type="number" min="1" value="' + esc(t.qty == null ? '' : t.qty) + '"/></div>' +
         (tiers.length > 1

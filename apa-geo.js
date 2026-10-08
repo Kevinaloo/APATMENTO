@@ -1160,6 +1160,7 @@
     '.apa-geo-opt:hover,.apa-geo-opt[aria-selected="true"]{background:#F3F4FB;}',
     '.apa-geo-ico{flex:0 0 auto;font-size:15px;line-height:1.3;width:20px;text-align:center;}',
     '.apa-geo-txt{min-width:0;flex:1;}',
+    '.apa-geo-name,.apa-geo-sub{display:block;}',
     '.apa-geo-name{font-size:13.5px;font-weight:600;line-height:1.35;',
     'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
     '.apa-geo-name b{font-weight:800;color:#4361FF;}',
@@ -1170,12 +1171,26 @@
     'text-transform:uppercase;color:#8E90AD;background:#FAFAFD;}',
     '.apa-geo-msg{padding:13px;font-size:12.5px;color:#8E90AD;text-align:center;}',
     '.apa-geo-me{color:#4361FF;font-weight:650;}',
+    '.apa-geo-head{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;',
+    'gap:8px;padding:7px 8px 7px 13px;background:rgba(250,250,253,.97);border-bottom:1px solid rgba(10,10,20,.06);',
+    'font-size:11px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#8E90AD;}',
+    '.apa-geo-x{border:0;background:#EEF0F7;color:#3A3D58;border-radius:100px;padding:6px 11px;font:inherit;',
+    'font-size:11.5px;font-weight:700;letter-spacing:0;text-transform:none;cursor:pointer;min-height:30px;}',
+    '.apa-geo-x:hover{background:#E2E5F2;}',
+    '.apa-geo-foot{position:sticky;bottom:0;display:flex;flex-wrap:wrap;gap:6px;padding:9px 10px;',
+    'background:rgba(250,250,253,.98);border-top:1px solid rgba(10,10,20,.07);}',
+    '.apa-geo-act{flex:1 1 140px;display:inline-flex;align-items:center;justify-content:center;gap:7px;',
+    'min-height:38px;padding:8px 12px;border-radius:11px;border:1px solid rgba(10,10,20,.1);background:#fff;',
+    'color:#1A1B2E;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}',
+    '.apa-geo-act:hover{border-color:#4361FF;color:#4361FF;}',
+    '.apa-geo-act .apa-geo-ico{width:auto;font-size:14px;}',
     '@media (max-width:640px){.apa-geo-pop{max-height:60vh;}}',
     '@media (prefers-color-scheme:dark){',
-    '.apa-geo-pop{background:#181926;border-color:rgba(255,255,255,.12);}',
-    '.apa-geo-opt{color:#EDEEF5;border-bottom-color:rgba(255,255,255,.06);}',
-    '.apa-geo-opt:hover,.apa-geo-opt[aria-selected="true"]{background:#22243450;}',
-    '.apa-geo-note{background:#14151F;}}'
+    '.apa-geo-pop:not(.apa-geo-light){background:#181926;border-color:rgba(255,255,255,.12);}',
+    '.apa-geo-pop:not(.apa-geo-light) .apa-geo-opt{color:#EDEEF5;border-bottom-color:rgba(255,255,255,.06);}',
+    '.apa-geo-pop:not(.apa-geo-light) .apa-geo-opt:hover,.apa-geo-pop:not(.apa-geo-light) .apa-geo-opt[aria-selected="true"]{background:#22243450;}',
+    '.apa-geo-pop:not(.apa-geo-light) .apa-geo-note,.apa-geo-pop:not(.apa-geo-light) .apa-geo-head,.apa-geo-pop:not(.apa-geo-light) .apa-geo-foot{background:#14151F;}',
+    '.apa-geo-pop:not(.apa-geo-light) .apa-geo-act{background:#22243a;color:#EDEEF5;border-color:rgba(255,255,255,.12);}}'
   ].join('');
 
   function injectCSS() {
@@ -1248,7 +1263,7 @@
     wrap.classList.add('apa-geo-wrap');
 
     var pop = document.createElement('div');
-    pop.className = 'apa-geo-pop';
+    pop.className = 'apa-geo-pop' + (o.theme === 'light' ? ' apa-geo-light' : '');
     pop.id = id + '-list';
     pop.setAttribute('role', 'listbox');
     pop.hidden = true;
@@ -1323,6 +1338,21 @@
                     ? '<span class="apa-geo-far">' + fmtKm(r.distanceKm) + '</span>' : '') +
                  '</button>';
         }).join('');
+      }
+
+      /* A way out, and a way round. On a phone the list covers the
+         form, and a person who cannot find their estate in it needs to
+         be able to close it or switch to the map without hunting for
+         somewhere to tap. Only pages that ask for these get them. */
+      if (o.dismiss || (o.footer && o.footer.length)) {
+        html = '<div class="apa-geo-head"><span>' + esc(o.dismissLabel || 'Suggestions') + '</span>' +
+               '<button type="button" class="apa-geo-x" data-geo-close>Close \u00d7</button></div>' + html;
+      }
+      if (o.footer && o.footer.length) {
+        html += '<div class="apa-geo-foot">' + o.footer.map(function (f, k) {
+          return '<button type="button" class="apa-geo-act" data-geo-act="' + k + '">' +
+                 (f.icon ? '<span class="apa-geo-ico">' + f.icon + '</span>' : '') + esc(f.label) + '</button>';
+        }).join('') + '</div>';
       }
 
       pop.innerHTML = html;
@@ -1486,10 +1516,33 @@
     /* mousedown, not click: blur fires first on a click and would close
        the list out from under the pointer. */
     pop.addEventListener('mousedown', function (e) {
-      var btn = e.target.closest ? e.target.closest('.apa-geo-opt') : null;
+      var t = e.target.closest ? e.target : null;
+      if (t && t.closest('[data-geo-close]')) { e.preventDefault(); setOpen(false); input.blur(); return; }
+      var act = t && t.closest('[data-geo-act]');
+      if (act) {
+        e.preventDefault();
+        var f = o.footer && o.footer[parseInt(act.dataset.geoAct, 10)];
+        setOpen(false);
+        if (f && f.run) f.run(input.value.trim(), handle);
+        return;
+      }
+      var btn = t ? t.closest('.apa-geo-opt') : null;
       if (!btn) return;
       e.preventDefault();
       choose(parseInt(btn.dataset.i, 10));
+    });
+    /* Keyboard users reach the footer and the close button by Tab; a
+       click (not mousedown) is what they produce. */
+    pop.addEventListener('click', function (e) {
+      if (e.detail !== 0) return;
+      var t = e.target.closest ? e.target : null;
+      if (t && t.closest('[data-geo-close]')) { setOpen(false); input.focus(); return; }
+      var act = t && t.closest('[data-geo-act]');
+      if (act) {
+        var f = o.footer && o.footer[parseInt(act.dataset.geoAct, 10)];
+        setOpen(false);
+        if (f && f.run) f.run(input.value.trim(), handle);
+      }
     });
 
     input.addEventListener('blur', function () { setTimeout(function () { setOpen(false); }, 140); });

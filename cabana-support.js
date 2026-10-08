@@ -489,6 +489,7 @@
 
       + '<div id="cbn-sup-toast" role="status" aria-live="polite"></div>';
 
+    if (ready) root.classList.add('cbn-sup--ready');
     doc.body.appendChild(root);
 
     el.root    = root;
@@ -518,14 +519,33 @@
     wire();
   }
 
+  /* The widget is built by script, so its stylesheet arrives AFTER its
+     markup. Without a guard the browser paints the unstyled panel and the
+     call overlay ("Connecting…" with two bare buttons) for a few frames on
+     every page load. The inline rule below lands synchronously and keeps
+     the whole widget out of the paint until the real stylesheet is in. */
   function ensureStyles() {
     if (doc.getElementById('cbn-sup-css')) return;
+    if (!doc.getElementById('cbn-sup-gate')) {
+      var gate = doc.createElement('style');
+      gate.id = 'cbn-sup-gate';
+      gate.textContent = '#cbn-sup-root:not(.cbn-sup--ready){display:none!important}';
+      doc.head.appendChild(gate);
+    }
     var link = doc.createElement('link');
     link.id = 'cbn-sup-css';
     link.rel = 'stylesheet';
     link.href = '/cabana-support.css';
+    var reveal = function () {
+      if (el.root) { el.root.classList.add('cbn-sup--ready'); dockSettle(); }
+      else ready = true;
+    };
+    link.addEventListener('load', reveal);
+    link.addEventListener('error', reveal);
+    setTimeout(reveal, 6000);  // a stuck stylesheet must never hide help
     doc.head.appendChild(link);
   }
+  var ready = false;
 
   /* ══════════════════════════════════════════════════════════════════
      PAINTING
@@ -687,13 +707,34 @@
   /* ══════════════════════════════════════════════════════════════════
      OPEN / CLOSE
   ══════════════════════════════════════════════════════════════════ */
+  var unmountT = 0;
+
+  /* The visual viewport is what the guest can really see. When the keyboard
+     opens it shrinks (and, on iOS, the layout viewport does not), so the
+     card is sized and lifted from these two numbers rather than from vh. */
+  function viewportSync() {
+    var vv = global.visualViewport, root = el.root;
+    if (!root) return;
+    var h = vv ? vv.height : global.innerHeight;
+    var kb = vv ? Math.max(0, Math.round(global.innerHeight - vv.height - vv.offsetTop)) : 0;
+    var typing = !!(vv && global.innerHeight - vv.height > 140);
+    root.style.setProperty('--cbn-vh', Math.round(h) + 'px');
+    root.style.setProperty('--cbn-kb', kb + 'px');
+    root.classList.toggle('cbn-sup--kb', open && typing);
+    if (open && typing) toBottom(false);
+  }
+
   function openPanel(focus) {
     if (open) return;
     open = true;
     dismissWelcome();
     ls(LS_USED, '1');
     ss(SS_OPEN, '1');
-    el.root.classList.add('cbn-sup--open', 'cbn-sup--used');
+    clearTimeout(unmountT);
+    el.root.classList.add('cbn-sup--mounted', 'cbn-sup--used');
+    void el.panel.offsetWidth;                       // lay it out once so the entrance can animate
+    el.root.classList.add('cbn-sup--open');
+    viewportSync();
     el.launch.setAttribute('aria-expanded', 'true');
     setUnread(0);
     if (!booted) boot();
@@ -706,7 +747,9 @@
     open = false;
     hushVoice();   /* nothing should still be talking to a closed panel */
     ss(SS_OPEN, null);
-    el.root.classList.remove('cbn-sup--open');
+    el.root.classList.remove('cbn-sup--open', 'cbn-sup--kb');
+    clearTimeout(unmountT);
+    unmountT = setTimeout(function () { if (!open) el.root.classList.remove('cbn-sup--mounted'); }, 480);
     el.launch.setAttribute('aria-expanded', 'false');
     clearTimeout(pollTimer);
     /* Keep polling while a human is mid-conversation: a reply arriving
@@ -1414,8 +1457,13 @@
       .catch(function () { /* state events carry the reason */ });
   }
 
+  var callBound = false, bindTries = 0;
   function bindCall() {
-    if (!global.CabanaCall) return;
+    if (callBound) return;
+    /* cabana-call.js is deferred and may land after this script. Wait for it
+       rather than silently never wiring the call screen. */
+    if (!global.CabanaCall) { if (++bindTries < 30) setTimeout(bindCall, 400); return; }
+    callBound = true;
     var C = global.CabanaCall;
 
     C.setGuestKeyProvider(guestKey);
@@ -1572,11 +1620,189 @@
     });
   }
 
+
+  /* ══════════════════════════════════════════════════════════════════
+     THE DOCK
+     APA has to stay one tap away on every page, and it must never sit on
+     top of something the guest is trying to press. Four rules, all run
+     here so no page needs its own workaround:
+
+       1. Bars lift it. Any full-width fixed bar anchored to the bottom
+          (app banner, sticky book bar, cookie notice, bottom nav) is
+          found by hit-testing, and the launcher rides above it.
+       2. Scrolling down tucks it to the edge, leaving a slim tab; scrolling
+          up, or reaching either end of the page, brings it back.
+       3. It yields to anything modal: sheets, dialogs, galleries, the
+          message composer.
+       4. It can be dragged along the edge and remembers where it was put,
+          so a guest can always move it off whatever it is covering.
+  ══════════════════════════════════════════════════════════════════ */
+  var LS_DOCK = 'cbn.support.dock';
+  var dock = { side: 'r', bottom: null, lift: 0, tucked: false, yielded: false, lastY: 0, raf: 0, drag: null, moved: false };
+
+  function dockRead() {
+    try {
+      var d = JSON.parse(ls(LS_DOCK) || 'null');
+      if (d && (d.side === 'l' || d.side === 'r')) { dock.side = d.side; dock.bottom = typeof d.bottom === 'number' ? d.bottom : null; }
+    } catch (e) { /* default corner */ }
+  }
+  function dockSave() { try { ls(LS_DOCK, JSON.stringify({ side: dock.side, bottom: dock.bottom })); } catch (e) { /* not worth failing */ } }
+
+  function dockBase() { return global.innerWidth <= 720 ? 78 : 22; }
+
+  /* Rule 1: find bottom-anchored bars by looking at what is really there. */
+  function dockBarTop() {
+    var vw = global.innerWidth, vh = global.innerHeight, top = vh;
+    var xs = [0.15, 0.5, 0.85], ys = [vh - 6, vh - 44, vh - 88, vh - 130];
+    var seen = [];
+    for (var yi = 0; yi < ys.length; yi++) {
+      for (var xi = 0; xi < xs.length; xi++) {
+        var stack = doc.elementsFromPoint ? doc.elementsFromPoint(vw * xs[xi], ys[yi]) : [];
+        for (var k = 0; k < stack.length; k++) {
+          var n = stack[k];
+          if (el.root && el.root.contains(n)) continue;
+          if (n === doc.body || n === doc.documentElement) break;
+          while (n && n !== doc.body) {
+            var cs = global.getComputedStyle(n);
+            if (cs.position === 'fixed' || cs.position === 'sticky') {
+              if (seen.indexOf(n) < 0) seen.push(n);
+              break;
+            }
+            n = n.parentElement;
+          }
+        }
+      }
+    }
+    seen.forEach(function (b) {
+      var r = b.getBoundingClientRect(), cs = global.getComputedStyle(b);
+      if (cs.visibility === 'hidden' || +cs.opacity < 0.1 || cs.pointerEvents === 'none') return;
+      if (r.width < vw * 0.55 || r.height < 36 || r.height > vh * 0.4) return;
+      if (r.bottom < vh - 4 && r.bottom < vh * 0.9) return;     // not anchored to the bottom edge
+      if (r.top < top && r.top > vh * 0.45) top = r.top;
+    });
+    return top;
+  }
+
+  /* Rule 3: anything modal wins. */
+  function dockYield() {
+    var hit = false;
+    var list = doc.querySelectorAll('dialog[open],[aria-modal="true"]');
+    for (var i = 0; i < list.length && !hit; i++) {
+      var n = list[i];
+      if (el.panel && (n === el.panel || el.panel.contains(n))) continue;
+      var cs = global.getComputedStyle(n);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.2) continue;
+      var r = n.getBoundingClientRect();
+      /* Count only what is actually on screen: a sheet parked below the fold is not open. */
+      var w = Math.min(r.right, global.innerWidth) - Math.max(r.left, 0);
+      var h = Math.min(r.bottom, global.innerHeight) - Math.max(r.top, 0);
+      if (w > global.innerWidth * 0.6 && h > global.innerHeight * 0.4) hit = true;
+    }
+    if (!hit && doc.body && doc.body.style.overflow === 'hidden' && !open) hit = true;
+    if (!hit) {
+      var t = doc.activeElement;
+      if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) && el.root && !el.root.contains(t) && global.innerWidth <= 720) hit = true; // keyboard is up
+    }
+    return hit;
+  }
+
+  function dockApply() {
+    dock.raf = 0;
+    if (!el.launch) return;
+    var vh = global.innerHeight, base = dockBase();
+    var lift = 0;
+    try { var bt = dockBarTop(); if (bt < vh) lift = Math.max(0, vh - bt + 12 - base); } catch (e) { lift = 0; }
+    dock.lift = lift;
+    var bottom = dock.bottom == null ? base + lift : Math.max(dock.bottom, base + lift);
+    bottom = Math.min(bottom, vh - 120);
+    dock.yielded = dockYield();
+    var st = el.launch.style;
+    st.bottom = 'calc(' + bottom + 'px + env(safe-area-inset-bottom, 0px))';
+    if (dock.side === 'l') { st.left = (global.innerWidth <= 720 ? 14 : 20) + 'px'; st.right = 'auto'; }
+    else { st.right = (global.innerWidth <= 720 ? 14 : 20) + 'px'; st.left = 'auto'; }
+    el.root.setAttribute('data-dock-side', dock.side);
+    el.root.classList.toggle('cbn-sup--tucked', dock.tucked && !open);
+    el.root.classList.toggle('cbn-sup--yield', dock.yielded && !open);
+  }
+  function dockSettle() { if (!dock.raf) dock.raf = global.requestAnimationFrame(dockApply); }
+
+  /* Rule 2. */
+  function dockScroll() {
+    var y = global.pageYOffset || 0, d = y - dock.lastY;
+    var max = (doc.documentElement.scrollHeight - global.innerHeight);
+    if (Math.abs(d) < 6) return;
+    if (d > 0 && y > 120 && y < max - 160) dock.tucked = true;
+    else if (d < -24 || y < 120 || y >= max - 160) dock.tucked = false;
+    dock.lastY = y;
+    dockSettle();
+  }
+
+  /* Rule 4. */
+  function dockDrag() {
+    var orb = el.launch;
+    orb.addEventListener('pointerdown', function (e) {
+      if (e.button > 0) return;
+      dock.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, b: parseFloat(orb.style.bottom.replace(/[^\d.]/g, '')) || dockBase(), side: dock.side, live: false };
+    });
+    orb.addEventListener('pointermove', function (e) {
+      var d = dock.drag; if (!d || d.id !== e.pointerId) return;
+      var dx = e.clientX - d.x, dy = e.clientY - d.y;
+      if (!d.live) {
+        if (Math.hypot(dx, dy) < 10) return;
+        d.live = true; dock.moved = true;
+        try { orb.setPointerCapture(e.pointerId); } catch (x) { /* fine */ }
+        orb.classList.add('cbn-sup--dragging');
+      }
+      var vw = global.innerWidth, vh = global.innerHeight;
+      var bottom = Math.min(vh - 90, Math.max(dockBase() - 10, d.b - dy));
+      orb.style.bottom = 'calc(' + bottom + 'px + env(safe-area-inset-bottom, 0px))';
+      var side = e.clientX < vw / 2 ? 'l' : 'r';
+      orb.style.left = side === 'l' ? (e.clientX - 30) + 'px' : 'auto';
+      orb.style.right = side === 'r' ? (vw - e.clientX - 30) + 'px' : 'auto';
+      d.side = side; d.bottom = bottom;
+      e.preventDefault();
+    });
+    function end(e) {
+      var d = dock.drag; if (!d || d.id !== e.pointerId) return;
+      dock.drag = null;
+      orb.classList.remove('cbn-sup--dragging');
+      if (d.live) { dock.side = d.side; dock.bottom = d.bottom; dockSave(); dockSettle(); setTimeout(function () { dock.moved = false; }, 60); }
+    }
+    orb.addEventListener('pointerup', end);
+    orb.addEventListener('pointercancel', end);
+    /* A drag is not a tap. */
+    orb.addEventListener('click', function (e) { if (dock.moved) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    orb.addEventListener('dblclick', function () { dock.bottom = null; dock.side = 'r'; dockSave(); dockSettle(); });
+  }
+
+  function dockInit() {
+    dockRead();
+    if (!el.launch) return;
+    dock.lastY = global.pageYOffset || 0;
+    dockDrag();
+    var tick = function () { dockSettle(); };
+    global.addEventListener('scroll', function () { dockScroll(); }, { passive: true });
+    global.addEventListener('resize', tick, { passive: true });
+    global.addEventListener('orientationchange', tick);
+    doc.addEventListener('focusin', tick); doc.addEventListener('focusout', function () { setTimeout(tick, 120); });
+    doc.addEventListener('transitionend', tick, true);
+    var t = 0;
+    var mo = new MutationObserver(function (list) {
+      for (var i = 0; i < list.length; i++) { if (!(el.root && el.root.contains(list[i].target))) { clearTimeout(t); t = setTimeout(tick, 120); return; } }
+    });
+    mo.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'open', 'hidden', 'aria-hidden'] });
+    setInterval(tick, 2500);                 // belt and braces for bars that animate in
+    dockSettle();
+  }
+
   function init() {
     if (doc.getElementById('cbn-sup-root')) return;
     ensureStyles();
     build();
     delegate();
+    dockInit();
+    if (global.visualViewport) { global.visualViewport.addEventListener('resize', viewportSync); global.visualViewport.addEventListener('scroll', viewportSync); }
+    global.addEventListener('orientationchange', function () { setTimeout(viewportSync, 250); });
     bindCall();
     watchAuth();
     scheduleWelcome();

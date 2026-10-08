@@ -90,6 +90,34 @@
 }
 @media (max-width: 720px) { #cbn-sup-launcher { right: 14px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); } }
 
+/* ── The dock (see cabana-support.js) ──────────────────────────────────
+   Position is set by script so the launcher can ride above bars, tuck
+   away while the guest scrolls and be dragged off whatever it covers. */
+#cbn-sup-launcher {
+  transition: bottom .32s var(--sup-ease), transform .38s var(--sup-spring), opacity .22s var(--sup-ease);
+  touch-action: manipulation;
+}
+#cbn-sup-launcher.cbn-sup--dragging { transition: none; touch-action: none; cursor: grabbing; }
+#cbn-sup-launcher.cbn-sup--dragging .cbn-sup-orb { transform: scale(1.08); }
+
+/* Tucked: half the mark slides off the edge and only a slim tab stays,
+   so whatever was underneath can be pressed. One tap still opens APA. */
+.cbn-sup--tucked #cbn-sup-launcher { transform: translateX(34px); }
+.cbn-sup--tucked[data-dock-side="l"] #cbn-sup-launcher { transform: translateX(-34px); }
+.cbn-sup--tucked .cbn-sup-orb { opacity: .88; box-shadow: 0 6px 18px rgba(109, 40, 255, .30); }
+.cbn-sup--tucked .cbn-sup-ring, .cbn-sup--tucked .cbn-sup-hint { display: none; }
+.cbn-sup--tucked #cbn-sup-launcher:focus-within, .cbn-sup--tucked #cbn-sup-launcher:hover { transform: none; }
+
+/* Something modal is open: step aside entirely. */
+.cbn-sup--yield #cbn-sup-launcher { opacity: 0; pointer-events: none; transform: scale(.8); }
+.cbn-sup--yield #cbn-apa-welcome { display: none; }
+
+@media (max-width: 720px) {
+  .cbn-sup-orb { width: 54px; height: 54px; }
+  .cbn-sup-orb img { width: 30px; height: 30px; }
+}
+@media print { #cbn-sup-root { display: none !important; } }
+
 /* Keep the assistant launcher clear of the host/guest message composer. */
 body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(#cbn-sup-launcher, #cbn-apa-welcome) {
   visibility: hidden;
@@ -146,7 +174,7 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(#cbn-sup-launcher, #cbn-apa-
   position: absolute; inset: 0;
   background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .42) 50%, transparent 80%);
   transform: translateX(-140%);
-  animation: cbnSweep 5.5s ease-in-out 2s infinite;
+  animation: cbnSweep 5.5s ease-in-out 2s 3;
 }
 @keyframes cbnSweep { 0% { transform: translateX(-140%); } 42%, 100% { transform: translateX(140%); } }
 
@@ -155,7 +183,7 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(#cbn-sup-launcher, #cbn-apa-
   position: absolute; inset: -5px;
   border-radius: 50%;
   border: 2px solid rgba(109, 40, 255, .40);
-  animation: cbnRing 2.9s var(--sup-ease) infinite;
+  animation: cbnRing 2.9s var(--sup-ease) 4;
   pointer-events: none;
 }
 @keyframes cbnRing {
@@ -199,25 +227,42 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(#cbn-sup-launcher, #cbn-apa-
   border-radius: 26px;
   box-shadow: var(--sup-shadow);
   overflow: hidden;
+  /* Not rendered at all while closed. A hidden-but-present panel keeps its
+     animations and compositor layers alive, and on some phones those
+     flash through the page at random. display:none cannot. */
+  display: none;
   opacity: 0;
   transform: translateY(18px) scale(.97);
   transform-origin: bottom right;
   pointer-events: none;
-  transition: opacity .3s var(--sup-ease), transform .38s var(--sup-spring);
+  visibility: hidden;
+  transition: opacity .3s var(--sup-ease), transform .38s var(--sup-spring), visibility 0s linear .38s;
 }
-.cbn-sup--open #cbn-sup-panel { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.cbn-sup--mounted #cbn-sup-panel { display: flex; }
+.cbn-sup--open #cbn-sup-panel { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; visibility: visible; transition-delay: 0s; }
 
-/* On a phone it is a sheet, not a floating card. */
+/* On a phone it is a compact assistant card that rises from the bottom,
+   sized to what is actually visible. --cbn-vh and --cbn-kb come from the
+   visual viewport (see cabana-support.js), so the on-screen keyboard
+   shrinks the card instead of covering the message being typed. */
 @media (max-width: 560px) {
   #cbn-sup-panel {
-    right: 0; left: 0; bottom: 0;
-    width: 100%; max-width: 100%;
-    height: min(86vh, 100dvh - 40px);
-    border-radius: 26px 26px 0 0;
-    transform: translateY(100%);
+    left: 8px; right: 8px;
+    bottom: calc(8px + var(--cbn-kb, 0px) + env(safe-area-inset-bottom, 0px));
+    width: auto; max-width: none;
+    height: min(560px, calc(var(--cbn-vh, 100dvh) * .7));
+    border-radius: 24px;
+    transform: translateY(28px) scale(.98);
     transform-origin: bottom center;
   }
-  .cbn-sup--open #cbn-sup-panel { transform: translateY(0); }
+  .cbn-sup--open #cbn-sup-panel { transform: translateY(0) scale(1); }
+  /* Keyboard up: use every visible pixel, keep the header slim, hide the chatter. */
+  .cbn-sup--kb #cbn-sup-panel { height: calc(var(--cbn-vh, 100dvh) - 16px); max-height: none; bottom: calc(8px + var(--cbn-kb, 0px)); }
+  .cbn-sup--kb .cbn-sup-legal, .cbn-sup--kb .cbn-sup-chips, .cbn-sup--kb .cbn-sup-talkcta { display: none; }
+  .cbn-sup-head { padding: 12px 12px 11px 14px; }
+  .cbn-sup-intro h3 { font-size: 16.5px; }
+  .cbn-sup-intro p { font-size: 13px; line-height: 1.5; }
+  .cbn-sup-body { padding-left: 14px; padding-right: 14px; }
 }
 
 /* ── Header ─────────────────────────────────────────────────────── */
@@ -595,10 +640,11 @@ body:has(#cbm-panel-wrap.open, #cbm-inbox.open) :is(#cbn-sup-launcher, #cbn-apa-
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 30px 22px;
   text-align: center;
+  display: none;
   opacity: 0; pointer-events: none;
-  transition: opacity .3s var(--sup-ease);
 }
-.cbn-call[data-on="1"] { opacity: 1; pointer-events: auto; }
+.cbn-call[data-on="1"] { display: flex; opacity: 1; pointer-events: auto; animation: cbnCallIn .3s var(--sup-ease) both; }
+@keyframes cbnCallIn { from { opacity: 0; } to { opacity: 1; } }
 
 .cbn-call-ava {
   position: relative;

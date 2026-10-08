@@ -25,10 +25,12 @@ test('the M-Pesa-only release cannot silently expose disabled gateways', () => {
   assert.match(checkout, /Review your stay and pay with M-Pesa\./);
 });
 
-test('authoritative stay prices never claim there are no fees', () => {
+test('stay prices are shown all-in, never as a price plus a fee', () => {
   const stays = read('apartments.html');
   assert.doesNotMatch(stays, /<span class="free">No fees<\/span>/);
-  assert.match(stays, /Includes Cabana fee/);
+  assert.doesNotMatch(stays, /Includes Cabana fee/, 'guests must not see a fee breakdown');
+  assert.match(stays, /applyAllInPrices\(native\)/, 'nightly prices must be converted to all-in before display');
+  assert.match(stays, /All-in price/);
 });
 
 test('Jets Nest walkthrough source, viewer, test and room photos remain present', () => {
@@ -67,5 +69,5 @@ test('dashboard notifications live behind the bell and messaging assets are vers
   assert.match(dashboard, /chat\.js\?v=41/);
   assert.match(read('apartments.html'), /chat\.js\?v=41/);
   for (const page of ['partner-bookings.html', 'my-bookings.html', 'roommates.html']) assert.match(read(page), /chat\.js\?v=41/);
-  assert.match(read('sw.js'), /cabana-v41-match/);
+  assert.match(read('sw.js'), /cabana-v42-play/);
 });

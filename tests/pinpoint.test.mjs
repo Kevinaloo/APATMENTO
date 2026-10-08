@@ -235,10 +235,12 @@ test('drift is measured in real metres', () => {
 
 /* ── Imagery and licences ──────────────────────────────────────────── */
 
-test('the picker opens on imagery, because that is the whole point', () => {
+test('the picker opens on the street map, with imagery one tap away', () => {
   const I = P._internals;
-  assert.equal(I.VIEW_ORDER[0], 'hybrid',
-    'a host must see their roof on the first frame, not a street diagram');
+  assert.equal(I.VIEW_ORDER[0], 'map',
+    'hosts navigate by streets and names first; satellite is an option, not the opening frame');
+  assert.ok(I.VIEW_ORDER.includes('hybrid') && I.VIEW_ORDER.includes('satellite'),
+    'imagery must stay available');
   assert.ok(I.VIEWS.hybrid.overlay, 'hybrid needs its labels');
   assert.ok(!I.VIEWS.satellite.overlay, 'satellite is imagery alone');
 });
