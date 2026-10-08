@@ -20,3 +20,7 @@ Only live, public listings are described; anything else lands on Cabana's home p
 ## The APA launcher
 
 `cabana-support.js` keeps APA reachable without covering anything: it rides above full-width bottom bars (found by hit-testing, so no page needs its own rule), tucks to the edge while scrolling down and returns on scroll up, steps aside for real modals and the on-screen keyboard, and can be dragged (double-click or double-tap to reset). Its stylesheet is gated so the widget never paints unstyled on load.
+
+## Why the APA widget cannot flash any more
+
+The panel and the call screen are `display: none` until they are opened or a call starts, so they have no layers or running animations to glitch on a phone. The launcher's decorative animations run a few times and rest. On phones the panel is a compact card sized from the visual viewport (`--cbn-vh`, `--cbn-kb`), so the keyboard shrinks it instead of covering what is being typed.

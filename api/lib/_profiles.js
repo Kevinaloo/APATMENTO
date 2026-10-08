@@ -211,14 +211,18 @@ export async function profiles(req, res, deps) {
       await db('verification_status?on_conflict=user_id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: {
         user_id: move.to_user, identity_state: 'approved', identity_at: src.identity_at, identity_expires: src.identity_expires, display_name: src.display_name,
         document_country: src.document_country, document_type: src.document_type, cleared_tier: src.cleared_tier, last_session_id: move.session_id || src.last_session_id, updated_at: at } });
-      await db(`verification_status?user_id=eq.${move.from_user}`, { method: 'PATCH', body: { identity_state: 'moved', cleared_tier: 0, updated_at: at } });
+      // verification_state is a Postgres enum with no "moved" value. The old account simply goes back to
+      // "not started": the database triggers then drop its tick and clearance, and it can verify again.
+      await db(`verification_status?user_id=eq.${move.from_user}`, { method: 'PATCH', body: { identity_state: 'not_started', identity_at: null, display_name: null, updated_at: at } });
     } catch (e) {
       // put everything back exactly as it was
-      await db(`verification_status?user_id=eq.${move.from_user}`, { method: 'PATCH', body: { identity_state: src.identity_state, cleared_tier: src.cleared_tier, updated_at: at } }).catch(() => {});
-      if (dst) await db(`verification_status?user_id=eq.${move.to_user}`, { method: 'PATCH', body: { identity_state: dst.identity_state, identity_at: dst.identity_at, display_name: dst.display_name, cleared_tier: dst.cleared_tier } }).catch(() => {});
+      await db(`verification_status?user_id=eq.${move.from_user}`, { method: 'PATCH', body: { identity_state: src.identity_state, identity_at: src.identity_at, display_name: src.display_name, updated_at: at } }).catch(() => {});
+      if (dst) await db(`verification_status?user_id=eq.${move.to_user}`, { method: 'PATCH', body: { identity_state: dst.identity_state, identity_at: dst.identity_at, display_name: dst.display_name } }).catch(() => {});
       else await db(`verification_status?user_id=eq.${move.to_user}`, { method: 'DELETE' }).catch(() => {});
       await db(`identity_moves?id=eq.${move.id}`, { method: 'PATCH', body: { status: 'pending', decided_by: null, decided_via: null, decided_at: null } }).catch(() => {});
-      throw err(500, 'We could not move the verification. Nothing was changed. Please try again.', { code: 'move_failed' });
+      console.error('[people] identity move failed', move.id, e.message);
+      // 409, not 500: the API hides the text of 5xx errors, and the member needs to read this one.
+      throw err(409, 'We could not move the verification just now. Nothing was changed. Please try again, or ask Cabana support.', { code: 'move_failed' });
     }
     // Secondary bookkeeping; the verification itself has already moved.
     await db(`profiles?id=eq.${move.to_user}`, { method: 'PATCH', body: { id_verification_status: 'approved' } }).catch(() => {});
