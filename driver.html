@@ -459,6 +459,9 @@ function goOnline(){
     if(window.ApaLocation && ApaLocation.on){
       D.locationListener = function(next){ D.pos = next; };
       ApaLocation.on(D.locationListener);
+      /* A live driver is the one case that holds GPS open. It is released
+         the moment they go offline. */
+      if(ApaLocation.start) ApaLocation.start({ continuous:true });
     } else {
       D.watch = navigator.geolocation.watchPosition(function(q){ D.pos = q.coords; },
         function(){}, { enableHighAccuracy:true, maximumAge:15000, timeout:20000 });
@@ -485,6 +488,7 @@ function goOffline(){
   clearInterval(D.ping); D.ping = null;
   if(D.watch != null){ navigator.geolocation.clearWatch(D.watch); D.watch = null; }
   if(D.locationListener && window.ApaLocation){ ApaLocation.off(D.locationListener); D.locationListener = null; }
+  if(window.ApaLocation && ApaLocation.stop) ApaLocation.stop();
   if(sb && D.pos){
     sb.rpc('cab_ping', { p_lat:D.pos.latitude, p_lng:D.pos.longitude,
       p_online:false, p_available:false }).catch(function(){});
@@ -860,7 +864,7 @@ window.addEventListener('beforeunload', function(){ if(D.online) goOffline(); })
 </script>
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
-<script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-calm.js" defer></script><script src="/cabana-lifecycle.js" defer></script>
 <script src="/cabana-identity.js" defer></script>
 <script src="/cabana-pay.js" defer></script>
 </body>

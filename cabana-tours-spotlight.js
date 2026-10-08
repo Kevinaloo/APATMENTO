@@ -340,13 +340,31 @@
     function seeing() { return S.visible && !doc.hidden && !blocked(); }
     function running() { return !S.userPaused && !S.hover && !S.focus && seeing(); }
     var last = 0;
+    /* The clock is a frame loop, so it must not tick when nothing can be
+       seen. Off screen or in a background tab it simply stops (the
+       observer and visibilitychange wake it); under an overlay it
+       re-checks twice a second; and while it is really animating it is
+       held to ~30 fps, which the eye cannot tell from 60 on a progress
+       bar. An always-on 60 fps loop kept phones warm for nothing. */
+    function wake() {
+      if (S.dead || S.raf || S.slow) return;
+      last = 0; S.raf = requestAnimationFrame(loop);
+    }
     function loop(now) {
+      S.raf = 0;
       if (S.dead) return;
-      S.raf = requestAnimationFrame(loop);
+      var n = S.slides.length;
+      if (!n) { S.slow = setTimeout(function () { S.slow = 0; wake(); }, 500); return; }
+      if (!seeing()) {
+        last = 0;
+        if (!doc.hidden && S.visible) { S.slow = setTimeout(function () { S.slow = 0; wake(); }, 500); }
+        return;
+      }
+      /* ~30 fps: a timer gap, then one frame. Skipping callbacks inside a
+         60 fps rAF would still wake the main thread every 16 ms. */
+      S.slow = setTimeout(function () { S.slow = 0; if (!S.dead) S.raf = requestAnimationFrame(loop); }, 20);
       var dt = last ? Math.min(100, now - last) : 16; last = now;
-      var n = S.slides.length; if (!n) return;
       var s = S.slides[S.i];
-      if (!seeing()) return;
       if (!opts.preview && s && !S.seen[s.id]) {
         S.dwell += dt;
         if (S.dwell > 1200) { S.seen[s.id] = true; if (opts.onView) try { opts.onView(s); } catch (e) {} }
@@ -410,12 +428,12 @@
         es.forEach(function (e) {
           S.visible = e.isIntersecting && e.intersectionRatio > 0.2;
           var cur = slideEl(S.i);
-          if (!S.visible) stopMedia(cur); else startMedia(cur);
+          if (!S.visible) stopMedia(cur); else { startMedia(cur); wake(); }
         });
       }, { threshold: [0, 0.2, 0.5] });
       io.observe(root); offs.push(function () { io.disconnect(); });
     }
-    listen(doc, 'visibilitychange', function () { var cur = slideEl(S.i); if (doc.hidden) stopMedia(cur); else if (S.visible) startMedia(cur); });
+    listen(doc, 'visibilitychange', function () { var cur = slideEl(S.i); if (doc.hidden) stopMedia(cur); else if (S.visible) { startMedia(cur); wake(); } });
     S.raf = requestAnimationFrame(loop);
 
     return {
@@ -426,7 +444,7 @@
       slides: function () { return S.slides.slice(); },
       current: function () { return S.slides[S.i] || null; },
       destroy: function () {
-        S.dead = true; cancelAnimationFrame(S.raf); stopMedia(slideEl(S.i)); clearTimeout(S.wasT);
+        S.dead = true; cancelAnimationFrame(S.raf); clearTimeout(S.slow); stopMedia(slideEl(S.i)); clearTimeout(S.wasT);
         offs.forEach(function (f) { try { f(); } catch (e) {} }); offs = [];
         root.innerHTML = ''; root.classList.remove('is-single', 'is-paused', 'is-preview', 'is-still');
       }

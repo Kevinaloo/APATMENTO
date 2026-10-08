@@ -674,22 +674,28 @@
     this._idleAt = Date.now() + (afterMs || 6500);
 
     var last = 0;
+    /* The drift is one sub-pixel nudge per frame, so it does not need 60
+       fps: ~12 fps looks identical and re-projects the map five times
+       less often. When it has nothing to do (a hidden tab, a globe off
+       screen, a journey, reduced motion, zoomed in, or the guest still
+       interacting) it stops asking for frames and re-checks on a timer. */
     function frame(now) {
       if (!self._idle) return;
-      self._idle.raf = window.requestAnimationFrame(frame);
-      if (Date.now() < self._idleAt) { last = now; return; }
-      /* A globe drifting in a background tab is a globe that has
-         quietly wandered off its opening frame by the time the guest
-         comes back. `last` is reset so the resumed frame does not
-         apply the whole absence as one jump. */
-      if (document.hidden || (self.opts.isVisible && !self.opts.isVisible())) {
+      var hidden = document.hidden || (self.opts.isVisible && !self.opts.isVisible());
+      if (hidden || self.reduced || self._journey || Date.now() < self._idleAt || self.map.getZoom() > 4.2) {
         last = 0;
+        self._idle.raf = 0;
+        self._idle.t = setTimeout(function () {
+          if (self._idle) self._idle.raf = window.requestAnimationFrame(frame);
+        }, hidden ? 1000 : 400);
         return;
       }
-      if (self.reduced || self._journey) return;
-      if (self.map.getZoom() > 4.2) return;
+      self._idle.raf = 0;
+      self._idle.t = setTimeout(function () {
+        if (self._idle) self._idle.raf = window.requestAnimationFrame(frame);
+      }, 70);
 
-      var dt = last ? Math.min(now - last, 48) : 16;
+      var dt = last ? Math.min(now - last, 160) : 80;
       last = now;
 
       var c = self.map.getCenter();
@@ -710,6 +716,7 @@
   Director.prototype.stopIdle = function () {
     if (this._idle) {
       window.cancelAnimationFrame(this._idle.raf);
+      clearTimeout(this._idle.t);
       this._idle = null;
     }
   };
@@ -919,16 +926,20 @@
 
   ArcLayer.prototype.start = function () {
     var self = this;
-    if (this._raf) return;
+    if (this._raf || this._tm) return;
     function frame(now) {
-      self._raf = window.requestAnimationFrame(frame);
+      /* Nobody can see the arcs (background tab, or the globe is scrolled
+         off the page): stop asking for frames entirely. _settlePaused()
+         restarts the loop when the globe comes back. */
+      if (self.paused) { self._raf = 0; return; }
       if (!self._t0) self._t0 = now;
-      /* A background tab already throttles rAF, but a globe scrolled
-         off the page does not — and on the pages that embed the map
-         mid-article that is most of the session. Painting arcs nobody
-         can see is pure battery. */
-      if (self.paused) return;
       self.draw(now - self._t0);
+      /* The pulse travels slowly; ~30 fps (a timer gap, then one frame) is
+         indistinguishable from 60 and halves the canvas work on a phone. */
+      self._tm = setTimeout(function () {
+        self._tm = 0;
+        if (self._raf !== null) self._raf = window.requestAnimationFrame(frame);
+      }, 20);
     }
     this._raf = window.requestAnimationFrame(frame);
   };
@@ -964,11 +975,12 @@
     /* Coming back from a pause, the clock has kept running — so the
        pulse would jump forward by however long the tab was away.
        Rebasing it makes the return look like a resume, not a skip. */
-    if (wasPaused && !this.paused) this._t0 = 0;
+    if (wasPaused && !this.paused) { this._t0 = 0; if (!this._raf && !this._tm) this.start(); }
   };
 
   ArcLayer.prototype.stop = function () {
     if (this._raf) window.cancelAnimationFrame(this._raf);
+    clearTimeout(this._tm); this._tm = 0;
     this._raf = null;
   };
 

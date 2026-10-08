@@ -609,9 +609,9 @@ test('the animation loops stand down when nobody is looking', () => {
      an off-screen element is not. */
   assert.match(GLOBE, /visibilitychange/, 'a backgrounded tab must pause');
   assert.match(GLOBE, /IntersectionObserver/, 'and so must a scrolled-past map');
-  assert.match(GLOBE, /if \(self\.paused\) return;/,
+  assert.match(GLOBE, /if \(self\.paused\) \{ self\._raf = 0; return; \}/,
     'the arc loop must honour the pause');
-  assert.match(GLOBE, /if \(wasPaused && !this\.paused\) this\._t0 = 0;/,
+  assert.match(GLOBE, /if \(wasPaused && !this\.paused\) \{ this\._t0 = 0;/,
     'and rebase its clock on resume, so returning looks like a resume');
   assert.match(GLOBE, /this\._io\.disconnect\(\)/,
     'the observer must be released on destroy');

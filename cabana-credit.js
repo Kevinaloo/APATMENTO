@@ -752,7 +752,8 @@
         if (bar) bar.style.transform = 'scaleX(' + Math.max(0, left / POP_LIFE_MS) + ')';
       }
       if (left <= 0) { close(false); return; }
-      requestAnimationFrame(tick);
+      /* A 5 s countdown bar does not need 60 fps. */
+      setTimeout(function () { requestAnimationFrame(tick); }, 50);
     }
 
     function close(byHand) {

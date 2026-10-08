@@ -22,8 +22,13 @@
    What this does instead
    ──────────────────────
    · Asks once, behind a branded gate, on a real user gesture.
-   · Holds a single watchPosition() with enableHighAccuracy, so fixes
-     improve over time instead of being re-requested cold.
+   · Holds a single watchPosition() only as long as someone needs it.
+     A passive watch is leased for ~40 s and released the moment a fix
+     good enough to act on (<= 100 m) arrives, so GPS is never left
+     running on a browsing guest's phone. A live driver opts in to a
+     continuous watch with start({ continuous: true }) and releases it
+     with stop(). Continuous GPS on every page was a battery and heat
+     problem; it is now strictly on demand.
    · Keeps the best recent fix in memory and localStorage, so any
      surface gets an answer on the first call rather than a spinner.
    · Never prompts again once the browser has answered. If permission
@@ -37,7 +42,7 @@
      ApaLocation.get(opts)            → Promise<fix|null>
      ApaLocation.prime(opts)          → Promise<bool>  branded gate
      ApaLocation.ensure(opts)         → Promise<fix|null> gate + fix
-     ApaLocation.start() / .stop()    continuous tracking
+     ApaLocation.start(opts) / .stop() leased watch; { continuous: true } for live drivers
      ApaLocation.permission()         → 'granted'|'denied'|'prompt'|'unsupported'
      ApaLocation.ready()              → Promise<permission state>
      ApaLocation.on(fn) / .off(fn)    subscribe to fixes
@@ -56,6 +61,11 @@
   var LS_ASK  = 'cabana_loc_asked';      // we have shown the gate before
   var SS_SKIP = 'cabana_loc_dismissed';  // dismissed this session, do not nag
 
+  /* How long a passive watch may run, and how good a fix must be before
+     it is released early. */
+  var LEASE_MS   = 40 * 1000;
+  var SETTLED_M  = 100;
+
   /* A fix older than this is stale enough to refresh in the background,
      but still worth returning immediately rather than showing nothing. */
   var STALE_MS = 90 * 1000;
@@ -67,6 +77,8 @@
   var _listeners = [];
   var _pending = [];       // resolvers waiting on the first good fix
   var _starting = false;
+  var _continuous = false;  // a live driver / trip holds the watch open
+  var _lease = null;        // timer that releases a passive watch
   var _probePromise = null;
   var _gatePromise = null;
 
@@ -169,13 +181,14 @@
     }
     _probePromise = navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
       global.__apaLocPerm = st.state;
-      if (st.state === 'granted') start();
+      /* Granted is only recorded. The watch starts when a surface asks
+         for a fix (get/ensure) or a driver goes online, never just
+         because a page loaded. */
       /* If the user flips the switch in browser settings, react without
          needing a reload. */
       st.onchange = function () {
         global.__apaLocPerm = st.state;
-        if (st.state === 'granted') start();
-        else stop();
+        if (st.state !== 'granted') stop();
       };
       return st.state;
     }, function () { return permission(); });
@@ -187,15 +200,27 @@
   }
 
   /* ── continuous tracking ─────────────────────────────────────────── */
-  function start() {
-    if (!supported() || permission() !== 'granted' || _watchId != null || _starting) return;
+  function armLease() {
+    if (_lease) { clearTimeout(_lease); _lease = null; }
+    if (_continuous) return;
+    _lease = setTimeout(function () { _lease = null; if (!_continuous) halt(); }, LEASE_MS);
+  }
+
+  function start(opts) {
+    if (opts && opts.continuous === true) _continuous = true;
+    if (!supported() || permission() !== 'granted') return;
+    armLease();
+    if (_watchId != null || _starting) return;
     _starting = true;
     try {
       _watchId = navigator.geolocation.watchPosition(
         function (pos) {
           _starting = false;
           global.__apaLocPerm = 'granted';
-          adopt(shape(pos, 'gps'));
+          var fix = shape(pos, 'gps');
+          adopt(fix);
+          /* Good enough to act on: let the radio sleep. */
+          if (!_continuous && fix.accuracy != null && fix.accuracy <= SETTLED_M) halt();
         },
         function (err) {
           _starting = false;
@@ -204,19 +229,26 @@
             stop();
           }
           /* TIMEOUT and POSITION_UNAVAILABLE are transient. watchPosition
-             keeps trying; we simply have no fix yet. */
+             keeps trying until the lease ends. */
         },
-        /* The three options that were missing everywhere before. */
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+        { enableHighAccuracy: true, maximumAge: _continuous ? 5000 : 15000, timeout: 20000 }
       );
     } catch (e) { _starting = false; }
   }
 
-  function stop() {
+  /* Release the radio but remember whether a driver still wants it. */
+  function halt() {
+    if (_lease) { clearTimeout(_lease); _lease = null; }
     if (_watchId != null) {
       try { navigator.geolocation.clearWatch(_watchId); } catch (e) {}
       _watchId = null;
     }
+    _starting = false;
+  }
+
+  function stop() {
+    _continuous = false;
+    halt();
   }
 
   /* Tracking a backgrounded tab drains a battery for nothing. Pause on
@@ -224,8 +256,8 @@
   function wireVisibility() {
     if (typeof document === 'undefined') return;
     document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'hidden') stop();
-      else if (permission() === 'granted') start();
+      if (document.visibilityState === 'hidden') halt();
+      else if (_continuous && permission() === 'granted') start({ continuous: true });
     });
   }
 
