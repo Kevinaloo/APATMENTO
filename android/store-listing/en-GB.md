@@ -71,12 +71,12 @@ Cabana was formerly called Apatmento.
 Questions? Visit cabana.africa/help or email connect@cabana.africa.
 ```
 
-## Release notes for 1.2.0 (4)
+## Release notes for 1.3.0 (5)
 
 ```
 <en-GB>
-• Fills the whole screen, edge to edge, on Android 15 and later
-• Rotates with your phone, tablet or foldable
-• Smaller and faster to start
+• Asks for notifications and location when you open the app, so alerts and pick-ups work straight away
+• Tells you exactly which setting to change if either is off
+• Fills the whole screen on Android 15 and later, and rotates on tablets and foldables
 </en-GB>
 ```

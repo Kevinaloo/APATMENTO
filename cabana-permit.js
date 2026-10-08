@@ -43,7 +43,16 @@
   var ios = /iPad|iPhone|iPod/.test(UA) || (N.platform === 'MacIntel' && N.maxTouchPoints > 1);
   var android = /Android/i.test(UA);
   var standalone = !!((global.matchMedia && global.matchMedia('(display-mode: standalone)').matches) || N.standalone === true);
+  /* The Android app is Chrome in standalone mode. The referrer names the
+     app on the first page only, so keep what it told us for the session. */
   var twa = (D.referrer || '').indexOf('android-app://africa.cabana.app') === 0 || /; wv\).*Cabana/i.test(UA);
+  try {
+    if (twa) sessionStorage.setItem('cabana_in_app', '1');
+    else if (sessionStorage.getItem('cabana_in_app') === '1' && android) twa = true;
+  } catch (e) {}
+  /* Any installed Android app runs without a browser bar; its switches are
+     under Settings → Apps → Cabana, whichever way it was installed. */
+  if (android && standalone) twa = true;
   var inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|TikTok|musical_ly|Bytedance|Twitter|Snapchat|LinkedInApp|Pinterest|GSA\/|MicroMessenger|WhatsApp/i.test(UA) ||
     (android && /; wv\)/.test(UA) && !twa);
   var firefox = /Firefox\//.test(UA);
@@ -147,7 +156,7 @@
   function probeFix(timeout) {
     return new Promise(function (resolve) {
       if (!geoSupported()) return resolve('unsupported');
-      var t = setTimeout(function () { resolve('slow'); }, (timeout || 12000) + 1500);
+      var t = setTimeout(function () { st.geoFix = 'slow'; resolve('slow'); }, (timeout || 12000) + 1500);
       try {
         N.geolocation.getCurrentPosition(function (pos) {
           clearTimeout(t);
@@ -162,6 +171,7 @@
           /* 2 = POSITION_UNAVAILABLE: allowed, but the phone's location
              is switched off. 3 = TIMEOUT: indoors, try again. */
           if (err && err.code === 2) { st.geoFix = mobile ? 'off' : 'weak'; return resolve('off'); }
+          st.geoFix = 'slow';
           resolve('slow');
         }, { enableHighAccuracy: true, timeout: timeout || 12000, maximumAge: 60000 });
       } catch (e) { clearTimeout(t); resolve('slow'); }
@@ -283,7 +293,7 @@
   function render(s) {
     if (!gate) return;
     var card = gate.querySelector('.cp-card');
-    var n = s.notifications, g = st.geoFix === 'off' && s.location === 'on' ? 'off' : s.location;
+    var n = s.notifications, g = st.geoFix === 'off' && s.location === 'on' ? 'off' : (st.geoFix === 'slow' && s.location !== 'on' ? 'slow' : s.location);
     if (satisfied(s)) {
       card.innerHTML = '<div class="cp-done"><i>' + svg('check') + '</i><h2 class="cp-h">You’re all set</h2>' +
         '<p class="cp-p">Alerts and location are on. Cabana can reach you the moment something happens.</p></div>';
@@ -293,7 +303,7 @@
     var html = '<div class="cp-hero" aria-hidden="true"><i></i><i></i><i></i><b>' + svg(n !== 'on' && n !== 'unsupported' ? 'bell' : 'pin') + '</b></div>' +
       '<h2 class="cp-h" id="cp-h">Turn on alerts and location</h2>' +
       '<p class="cp-p">Cabana needs both to work on this device.</p>' +
-      '<div class="cp-rows">' + row('notif', 'bell', 'Notifications', n) + row('geo', 'pin', 'Location', g === 'weak' ? 'on' : g) + '</div>';
+      '<div class="cp-rows">' + row('notif', 'bell', 'Notifications', n) + row('geo', 'pin', 'Location', g === 'weak' ? 'on' : g === 'slow' ? 'ask' : g) + '</div>';
 
     var action = '', steps = null, alt = '', note = '';
     if (n === 'inapp' || g === 'inapp') {
@@ -324,8 +334,17 @@
       alt = '<button class="cp-alt" data-a="recheck">Check again</button>';
     } else if (g === 'off') {
       steps = ios ? ['Open <b>Settings → Privacy &amp; Security</b>', 'Turn <b>Location Services</b> on', 'Come back and tap Check again']
+        : twa ? ['Swipe down from the top of your screen and turn <b>Location</b> on',
+                 'Open <b>Settings → Apps → Cabana → Permissions → Location</b> and choose <b>Allow</b>',
+                 'Come back and tap Check again']
         : ['Swipe down from the top of your screen', 'Tap <b>Location</b> to turn it on', 'Come back and tap Check again'];
       alt = '<button class="cp-alt" data-a="recheck">Check again</button>';
+    } else if (g === 'slow') {
+      /* Allowed, but no position yet: indoors, or the phone is still
+         warming up. Say so, rather than offering the same button again. */
+      steps = twa ? ['Step near a window or outside', 'Check <b>Settings → Apps → Cabana → Permissions → Location</b> is on', 'Tap Try again']
+        : ['Step near a window or outside', 'Tap Try again'];
+      action = '<button class="cp-go" data-a="geo">' + svg('pin') + 'Try again</button>';
     }
     html += (steps ? '<ol class="cp-steps">' + steps.map(function (x) { return '<li>' + (/<b>|<svg/.test(x) ? x : esc(x)) + '</li>'; }).join('') + '</ol>' : '') +
       action + alt + (note ? '<div class="cp-note">' + esc(note) + '</div>' : '') +
@@ -338,6 +357,9 @@
   function open() {
     injectCSS();
     if (gate) return;
+    /* One permission surface at a time. */
+    var plain = D.getElementById('apa-loc-gate');
+    if (plain && plain.parentNode) plain.parentNode.removeChild(plain);
     gate = D.createElement('div');
     gate.className = 'cp';
     gate.setAttribute('role', 'dialog');
@@ -438,8 +460,8 @@
   function check(opts) {
     opts = opts || {};
     if (_checking && !opts.force) return;
-    _checking = true;
     if (!opts.force && exemptPage()) return;
+    _checking = true;
     signedIn().then(function (yes) {
       if (!yes && !opts.force) return;
       return whenClear().then(status).then(function (s) {
@@ -451,7 +473,7 @@
         if (satisfied(s) && !opts.force) return;
         show();
       });
-    });
+    }).then(function () { _checking = false; }, function () { _checking = false; });
   }
 
   function show() {

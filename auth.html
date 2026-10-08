@@ -382,6 +382,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null"/>
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"/></noscript>
 <link rel="stylesheet" href="/cabana-ds.css"/>
+<link rel="stylesheet" href="/cabana-getapp.css"/>
 </head>
 <body>
 
@@ -480,6 +481,12 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
             <button class="link-btn" onclick="showReset()">Forgot password?</button>
           </div>
           <button class="submit-btn" id="login-btn" onclick="handleLogin(event)">Sign in</button>
+
+          <!-- The app, offered where a returning member is already signing in. -->
+          <div class="cbn-appstrip" id="login-getapp">
+            <div class="cbn-appstrip-txt"><b>Prefer the app?</b>Booking alerts, exact pick-ups and SOS, free on Google Play.</div>
+            <a class="cbn-play" href="https://play.google.com/store/apps/details?id=africa.cabana.app&amp;referrer=utm_source%3Dsignin%26utm_medium%3Dweb" target="_blank" rel="noopener" data-cbn-play="signin" aria-label="Get Cabana on Google Play" onclick="window.gtag&amp;&amp;gtag('event','get_play_app',{source:'signin'})"><img src="/assets/app/google-play-badge.svg" width="162" height="48" alt="Get it on Google Play" loading="lazy" decoding="async"></a>
+          </div>
         </div>
 
         <!-- SIGNUP -->
@@ -562,6 +569,8 @@ html,body{height:100%;font-family:var(--font-body);background:var(--ink);color:v
               <span id="install-step-btn-label">Download app now (recommended)</span>
             </button>
             <div class="field-err" id="install-step-err" style="text-align:center;"></div>
+            <!-- On a computer the button above installs from the browser; the Play listing is one click from here. -->
+            <div class="cbn-getapp cbn-getapp--fine" id="install-step-play"><a class="cbn-play" href="https://play.google.com/store/apps/details?id=africa.cabana.app&amp;referrer=utm_source%3Dsignup%26utm_medium%3Dweb" target="_blank" rel="noopener" data-cbn-play="signup" aria-label="Get Cabana on Google Play" onclick="window.gtag&amp;&amp;gtag('event','get_play_app',{source:'signup'})"><img src="/assets/app/google-play-badge.svg" width="162" height="48" alt="Get it on Google Play" loading="lazy" decoding="async"></a></div>
 
             <button class="install-skip-btn" id="install-skip-btn" type="button" onclick="skipInstall()">
               Skip for now. Continue without the app
