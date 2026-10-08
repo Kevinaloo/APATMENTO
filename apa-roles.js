@@ -207,10 +207,20 @@
          a stale reveal here buys nothing — the page still refuses. Failure
          is silent, and a missing entry is a far better outcome than a
          broken one. */
+      /* An invited ambassador who still owes one step (a confirmed email,
+         or the identity check the programme now requires) IS an
+         ambassador. Hiding the role from them was the bug: they had no
+         way to find the door, let alone open it. They see the role with
+         what is left to do; the gateway page walks them through it. */
       try {
         if (!c.rpc) { finish(); return; }
         c.rpc('ambassador_gate').then(function (r) {
-          if (r && r.data && r.data.ok) out.ambassador = true;
+          var v = r && r.data;
+          if (v && v.ok) out.ambassador = true;
+          else if (v && (v.reason === 'identity_required' || v.reason === 'email_unconfirmed')) {
+            out.ambassador = 'pending';
+            out.ambassadorStep = v.reason;
+          }
           finish();
         }, function () { finish(); });
       } catch (e) { warn('gate', e); finish(); }
@@ -231,9 +241,16 @@
      Leaving these to the individual pages is how "switch to traveller"
      came to mean three different things depending on which screen you
      pressed it from. */
-  function go(key) {
+  function go(key, st) {
     var role = roleFor(key);
     if (!role) return;
+    /* An ambassador with a step left goes to the gateway, which says what
+       the step is and starts it, rather than to a dashboard that would
+       turn them away. */
+    if (key === 'ambassador' && st && st.ambassador === 'pending') {
+      global.location.href = 'ambassadors.html';
+      return;
+    }
 
     safe(function () {
       if (key === 'traveller' || key === 'partner') {
@@ -302,6 +319,7 @@
   + '.apa-ri-d{font-size:12px;line-height:1.55;opacity:.6}'
   + '.apa-ri-tag{font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;'
   +   'padding:3px 7px;border-radius:100px;background:rgba(125,125,160,.16);opacity:.8}'
+  + '.apa-ri-tag-step{background:rgba(109,40,255,.14);color:#6D28FF;opacity:1}'
   + '.apa-ri-go{flex:none;opacity:.35}'
   + '.apa-ri-go svg{width:16px;height:16px}'
   + '.apa-rs-f{padding:4px 22px 20px;font-size:11.5px;line-height:1.6;opacity:.5}'
@@ -364,8 +382,10 @@
       return !(r.inviteOnly && !st[r.key]);
     }).map(function (r) {
       var have = !!st[r.key];
+      var pending = st[r.key] === 'pending';
       var isHere = r.key === here;
       var verb = isHere ? 'You are here'
+               : pending ? (st.ambassadorStep === 'email_unconfirmed' ? 'Confirm your email to unlock' : 'Verify your ID to unlock')
                : have   ? r.switchVerb
                         : (r.joinVerb || ('Become a ' + r.label.toLowerCase()));
 
@@ -375,6 +395,7 @@
         +   '<span class="apa-ri-b">'
         +     '<span class="apa-ri-t">' + esc(r.label)
         +       (isHere ? '<span class="apa-ri-tag">You are here</span>'
+                        : pending ? '<span class="apa-ri-tag apa-ri-tag-step">One step left</span>'
                         : (!have ? '<span class="apa-ri-tag">Not yet</span>' : ''))
         +     '</span>'
         +     '<span class="apa-ri-d">' + esc(isHere ? r.tagline : verb + ' · ' + r.tagline) + '</span>'
@@ -403,7 +424,7 @@
     s.sheet.querySelectorAll('[data-role]').forEach(function (b) {
       b.addEventListener('click', function () {
         var key = b.getAttribute('data-role');
-        if (b.getAttribute('data-have') === 'true') go(key); else join(key);
+        if (b.getAttribute('data-have') === 'true') go(key, st); else join(key);
       });
     });
   }
@@ -464,16 +485,17 @@
         return true;
       }).map(function (r) {
         var have = !!st[r.key];
+        var pending = st[r.key] === 'pending';
         return '<button class="apa-rm-i" data-role="' + esc(r.key) + '" data-have="' + have + '">'
           + '<span style="color:' + esc(r.accent) + ';display:inline-flex">' + iconSVG(r) + '</span>'
-          + esc(have ? r.switchVerb : (r.joinVerb || ('Become a ' + r.label.toLowerCase())))
+          + esc(pending ? r.switchVerb + ' · one step left' : have ? r.switchVerb : (r.joinVerb || ('Become a ' + r.label.toLowerCase())))
           + '</button>';
       }).join('') + '</div>';
 
       host.querySelectorAll('[data-role]').forEach(function (b) {
         b.addEventListener('click', function () {
           var key = b.getAttribute('data-role');
-          if (b.getAttribute('data-have') === 'true') go(key); else join(key);
+          if (b.getAttribute('data-have') === 'true') go(key, st); else join(key);
         });
       });
       return st;

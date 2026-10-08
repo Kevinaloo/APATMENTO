@@ -438,7 +438,6 @@ function render(soft){
     +'<div class="card-body" style="padding-top:6px">'
     +'<div class="sum"><span>Food</span><b>'+esc(money(o.subtotal,o.currency))+'</b></div>'
     +(o.mode==='delivery'?'<div class="sum"><span>Delivery</span><b'+(Number(o.delivery_fee||o.kitchen_delivery_fee)?'':' class="free"')+'>'+(Number(o.delivery_fee||o.kitchen_delivery_fee)?esc(money(o.delivery_fee||o.kitchen_delivery_fee,o.currency)):'Free')+'</b></div>':'')
-    +'<div class="sum"><span>Cabana fee</span><b class="free">'+esc(o.currency)+' 0</b></div>'
     +(['declined','expired','cancelled'].indexOf(o.status)>-1
       ?'<div class="sum big"><span>Nothing charged</span><b style="text-decoration:line-through;opacity:.5">'+esc(money(o.total,o.currency))+'</b></div>'
       :o.status==='awaiting_payment'

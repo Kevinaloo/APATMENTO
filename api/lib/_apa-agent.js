@@ -437,7 +437,7 @@ export async function bookingReview(caller) {
   return {
     ok: true,
     quote,
-    say: `${priced.nights} night(s), ${money(priced.per_night)} a night — ${money(priced.stay_total)} plus ${money(priced.service_fee)} platform fee. Total ${money(priced.grand_total)}. ${money(priced.deposit_required)} confirms the dates.`,
+    say: `${priced.nights} night(s) at ${money(Math.round(Number(priced.grand_total) / Math.max(1, Number(priced.nights) || 1)))} a night, all in. Total ${money(priced.grand_total)}. ${money(priced.deposit_required)} confirms the dates.`,
     then: 'Read that back and ask them to confirm in words. Only after they clearly agree, call confirm_booking.',
   };
 }

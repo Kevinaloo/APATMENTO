@@ -99,6 +99,7 @@
 
 import { select, one, insert, update, rpc, whoami, notify, cors } from './_db.js';
 import { pendingCommission, voidOnNoShow, referralRootRef } from './_referral-lifecycle.js';
+import { checkinCode } from './_codes.js';
 
 /* The origin host's cut when their own rehoming offer — swept or
    directly shared — is taken. A share of OUR fee, never of the
@@ -477,7 +478,7 @@ function carryOver(bk, { stayTotal, grandTotal, reference }) {
     credit_applied:  bk.credit_applied,
     payment_reference: reference,
     guest_code:      bk.guest_code,
-    host_code:       'HOST-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+    host_code:       checkinCode(bk.guest_code),
     status:          bk.status,
     rehomed_from:    bk.id,
     /* So a referral commission survives the move. Without this, a

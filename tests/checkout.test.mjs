@@ -155,10 +155,12 @@ test('the grand total is every kitchen added up', async () => {
   assert.match(w.document.querySelector('.led.grand').textContent, /KES 2,050/, '1750 + 300');
 });
 
-test('the page states plainly that Cabana takes nothing', async () => {
+test('the page shows one total and says plainly nothing is charged here', async () => {
   const w = await openPage({ cart: basket({ 'k-night': NIGHT }) });
-  assert.match(text(w), /Cabana fee/);
-  assert.match(w.document.querySelector('.led.keep').textContent, /KES 0/);
+  /* Guests see one all-in total everywhere on Cabana, never a fee line,
+     not even a zero one. */
+  assert.doesNotMatch(text(w), /Cabana fee/);
+  assert.equal(w.document.querySelector('.led.keep'), null);
   assert.match(text(w), /nothing is charged here/i);
 });
 

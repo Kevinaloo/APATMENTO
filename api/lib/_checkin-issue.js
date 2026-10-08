@@ -58,6 +58,7 @@
 
 import { select, one, insert, update, rpc, whoami, notify, cors } from './_db.js';
 import { voidOnNoShow, referralRootRef } from './_referral-lifecycle.js';
+import { checkinCode } from './_codes.js';
 
 const money = (n) => 'KES ' + Number(n || 0).toLocaleString();
 const RESCUE_BASE = 150, RESCUE_PER_KM = 60;
@@ -106,14 +107,18 @@ function hoursToCheckin(dateStr, checkinTime) {
    now computed in a BEFORE trigger from the coordinates and the
    listing's own position (see the migration), so the number this reads
    is ours, and a claimed one is overwritten before it is ever stored. */
-function evidenceStrength(issue, taxRow) {
+/* A short clip recorded in the app counts the same as a live photo:
+   a dripping ceiling or a door that will not open is often clearer on
+   video than in a still. */
+export function evidenceStrength(issue, taxRow) {
+  const media = issue.photo_url || issue.video_url;
   let s = 0.4;
-  if (issue.photo_live)                       s += 0.30;
-  if (issue.photo_url)                        s += 0.10;
+  if (issue.photo_live || issue.video_live)   s += 0.30;
+  if (media)                                  s += 0.10;
   if (issue.geo_distance_m != null && issue.geo_distance_m < 250) s += 0.20;
   if (issue.geo_distance_m != null && issue.geo_distance_m > 2000) s -= 0.35;
   if ((issue.free_text || '').trim().length > 40) s += 0.05;
-  if (taxRow && taxRow.requires_photo && !issue.photo_url) s -= 0.40;
+  if (taxRow && taxRow.requires_photo && !media) s -= 0.40;
   return Math.max(0, Math.min(1, Number(s.toFixed(2))));
 }
 
@@ -379,7 +384,7 @@ export default async function handler(req, res) {
         credit_applied: bk.credit_applied,
         payment_reference: `RESCUE-${bk.payment_reference}`,
         guest_code: bk.guest_code,
-        host_code: 'HOST-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+        host_code: checkinCode(bk.guest_code),
         status: bk.status,
         rehomed_from: bk.id,
         // So a referral commission on this guest survives being moved —

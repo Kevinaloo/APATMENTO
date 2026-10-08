@@ -125,22 +125,30 @@
 
   /* Cabana's facilitation on the tour total, quoted by the server for
      this exact amount; the insert trigger charges the same number. */
-  function feeFor(total) {
-    if (total <= 0) { S.fee = 0; S.feeFor = total; return; }
-    if (S.feeFor === total) return;
-    S.fee = null; S.feeFor = total;
-    var seq = ++S.feeSeq, c = K().sb();
-    if (!c) return;
-    c.rpc('cabana_fee_quote', { p_service: 'tours', p_subtotal: total }).then(function (r) {
+  function feeFor(total, units) {
+    units = Math.max(1, units || 1);
+    var key = total + '|' + units;
+    if (total <= 0) { S.fee = 0; S.feeFor = key; return; }
+    if (S.feeFor === key) return;
+    S.fee = null; S.feeFor = key;
+    var seq = ++S.feeSeq;
+    var ask = global.ApaFees && global.ApaFees.bookingFee
+      ? global.ApaFees.bookingFee('tours', total / units, units)
+      : (function () { var c = K().sb(); return c ? c.rpc('cabana_fee_quote', { p_service: 'tours', p_subtotal: total }).then(function (r) { return r && !r.error && r.data != null ? Number(r.data) : null; }) : Promise.resolve(null); })();
+    Promise.resolve(ask).then(function (fee) {
       if (seq !== S.feeSeq) return;
-      S.fee = r && !r.error && r.data != null ? Number(r.data) : null;
+      S.fee = fee == null ? null : Number(fee);
       if (doc.getElementById('ct-bk') && doc.getElementById('ct-bk').classList.contains('open')) paint();
     }, function () {});
   }
   function paint() {
     var kit = K(), t = S.t, esc = kit.esc, I = kit.icon, q = quote(), lim = limits();
-    feeFor(q.free ? 0 : q.total);
+    feeFor(q.free ? 0 : q.total, t.price_basis === 'per_group' ? 1 : S.people);
     var fee = S.fee, payNow = fee == null ? null : q.due + fee;
+    /* One price: the guest sees what each person costs and what the whole
+       trip costs, Cabana's facilitation already inside both. */
+    var allTotal = fee == null ? null : q.total + fee;
+    var allPer = allTotal == null ? null : (t.price_basis === 'per_group' ? allTotal : Math.round(allTotal / Math.max(1, S.people)));
     var cutoffH = Number(t.booking_cutoff_hours) || 48;
     var minDay = new Date(Date.now() + 3 * 3600e3 + cutoffH * 3600e3 + 864e5 * 0).toISOString().slice(0, 10);
     var dateUI;
@@ -176,12 +184,11 @@
         '<label class="ct-field"><span class="ct-bk-l" style="margin:0">M-Pesa number</span><input class="ct-input" data-bk-phone inputmode="tel" autocomplete="tel" placeholder="07XX XXX XXX" value="' + phone + '"/></label>' +
         '<div class="ct-sum">' +
           (q.free ? '<div class="kv tot"><span>Your place</span><b>Free</b></div>'
-            : '<div class="kv"><span>' + esc(kit.money(q.per)) + (t.price_basis === 'per_group' ? ' for the group' : ' × ' + S.people) + '</span><b>' + esc(kit.money(q.total)) + '</b></div>' +
+            : '<div class="kv"><span>' + (allPer == null ? '…' : esc(kit.money(allPer))) + (t.price_basis === 'per_group' ? ' for the group' : ' × ' + S.people) + '</span><b>' + (allTotal == null ? '…' : esc(kit.money(allTotal))) + '</b></div>' +
               (q.offer && q.list > q.total ? '<div class="kv off"><span>Private offer saves you</span><span>− ' + esc(kit.money(q.list - q.total)) + '</span></div>' : '') +
-              (q.balance > 0 ? '<div class="kv"><span>Deposit to confirm (' + q.pct + '%)</span><b>' + esc(kit.money(q.due)) + '</b></div>' : '') +
-              '<div class="kv"><span>Cabana facilitation</span><b>' + (fee == null ? '…' : esc(kit.money(fee))) + '</b></div>' +
+              (q.balance > 0 ? '<div class="kv"><span>Pay now to confirm</span><b>' + (payNow == null ? '…' : esc(kit.money(payNow))) + '</b></div>' : '') +
               (q.balance > 0 ? '<div class="kv"><span>Pay the guide on the day</span><b>' + esc(kit.money(q.balance)) + '</b></div>' : '') +
-              '<div class="kv tot"><span>Pay now</span><b>' + (payNow == null ? '…' : esc(kit.money(payNow))) + '</b></div>') +
+              '<div class="kv tot"><span>' + (q.balance > 0 ? 'Due now' : 'Total') + '</span><b>' + (payNow == null ? '…' : esc(kit.money(payNow))) + '</b></div>') +
         '</div>' +
         (dep && dep.closes_at ? '<div style="font:500 12.5px/1.5 var(--ct-f);color:var(--ct-cream-3);display:flex;gap:8px;align-items:center">' + I.clock.replace('<svg', '<svg width="15" height="15"') + 'Booking for this departure closes ' + esc(kit.fmtDay(String(new Date(new Date(dep.closes_at).getTime() + 3 * 3600e3).toISOString()).slice(0, 10))) + ' at ' + esc(kit.nboClock(dep.closes_at)) + '.</div>' : '') +
         '<div class="ct-err" data-bk-err role="alert"></div>' +

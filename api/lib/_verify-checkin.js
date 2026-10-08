@@ -15,6 +15,16 @@ import { canReleaseCode, settlementOf, stayPhase } from './_payment-rules.js';
 import { releaseOnCheckIn } from './_referral-lifecycle.js';
 
 const money = (n) => 'KES ' + Number(n || 0).toLocaleString();
+const MAX_CODE_ATTEMPTS = 6;
+
+/* "48 21", "4821" and "guest-1a2b3c4d" all mean what the person meant.
+   Four-digit codes compare as digits; the older prefixed codes compare
+   as upper-case text with spaces removed. */
+export function normaliseCode(v) {
+  const raw = String(v == null ? '' : v).trim().toUpperCase();
+  if (/^[\d\s-]+$/.test(raw)) return raw.replace(/\D/g, '');
+  return raw.replace(/\s+/g, '');
+}
 const ALLOWED = ['apartment_bookings', 'tour_bookings', 'event_tickets'];
 
 /* The booking row's amount_paid is a cache of the ledger. Before we
@@ -101,12 +111,24 @@ export default async function handler(req, res) {
 
     if (!gate.ok) return res.status(409).json({ error: gate.reason, status: bk.status });
 
+    /* ── Lock ─────────────────────────────────────────────────────
+       Codes are four digits now, said out loud at a door. Four digits
+       are 10,000 possibilities, which a script exhausts in minutes, so
+       six wrong tries on a booking freeze check-in until a person looks.
+       Either party guessing the other's code releases a payout without
+       the stay having started; that is what this stops.            */
+    if (bk.checkin_locked_at) {
+      return res.status(423).json({
+        ok: false, error: 'code_locked',
+        message: 'Check-in is paused on this booking after too many wrong codes. Our team has been told and will help you now.',
+      });
+    }
+
     /* ── Code check ───────────────────────────────────────────────
        Constant-time compare. The codes are short; a timing oracle
-       on six characters is not theoretical.                        */
-    const expected = String((role === 'guest' ? bk.host_code : bk.guest_code) || '')
-      .trim().toUpperCase();
-    const given = String(code).trim().toUpperCase();
+       on four characters is not theoretical.                       */
+    const expected = normaliseCode((role === 'guest' ? bk.host_code : bk.guest_code) || '');
+    const given = normaliseCode(code);
 
     /* No code on the row means nothing to match against. Comparing
        against '' would have thrown on .length and 500'd; worse, an
@@ -120,11 +142,28 @@ export default async function handler(req, res) {
       diff |= (expected.charCodeAt(i) || 0) ^ (given.charCodeAt(i) || 0);
     }
     if (diff !== 0) {
-      return res.status(401).json({ ok: false, error: 'code_mismatch' });
+      const tries = (Number(bk.checkin_attempts) || 0) + 1;
+      const locked = tries >= MAX_CODE_ATTEMPTS;
+      /* Best effort: a database without the counter (before the
+         20261008 migration) still refuses the wrong code. */
+      try {
+        await update(table, `payment_reference=eq.${encodeURIComponent(String(reference))}`,
+          locked ? { checkin_attempts: tries, checkin_locked_at: new Date().toISOString() } : { checkin_attempts: tries });
+      } catch (e) { console.warn('[verify-checkin] attempt counter:', e.message); }
+      if (locked) {
+        await notify(bk.guest_id, 'checkin_locked', 'Check-in paused',
+          'Too many wrong codes were entered on your booking, so check-in is paused. Our team will contact you now.', { booking_id: bk.id }).catch(() => {});
+        await notify(bk.host_id, 'checkin_locked', 'Check-in paused',
+          'Too many wrong codes were entered on a booking, so check-in is paused. Our team will contact you now.', { booking_id: bk.id }).catch(() => {});
+        return res.status(423).json({ ok: false, error: 'code_locked',
+          message: 'Too many wrong codes. Check-in is paused on this booking and our team has been told.' });
+      }
+      return res.status(401).json({ ok: false, error: 'code_mismatch', attempts_left: MAX_CODE_ATTEMPTS - tries });
     }
 
     const now = new Date().toISOString();
     const patch = { status: 'checked_in', checked_in_at: now };
+    if ('checkin_attempts' in bk) patch.checkin_attempts = 0;
     /* Write the re-summed figure back so the row stops lying to every
        other reader. Only apartment_bookings has the column. */
     if (table === 'apartment_bookings') {

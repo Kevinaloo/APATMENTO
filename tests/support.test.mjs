@@ -145,7 +145,8 @@ test('the money block keeps the fee schedule internal', () => {
     'the deposit percentage in the grounding does not match _payment-rules.js');
   assert.doesNotMatch(facts, /KES\s?300|KES\s?800/, 'the assistant was handed fee amounts to recite');
   assert.match(facts, /NEVER state fee amounts/i, 'the assistant is not told to keep fees internal');
-  assert.match(facts, /shown in full at checkout/i, 'the assistant cannot say where the price is shown');
+  assert.match(facts, /price a guest sees is the price they pay/i, 'the assistant must describe prices as all-in');
+  assert.doesNotMatch(facts, /including any Cabana facilitation/i, 'guests are never told about a fee line');
 });
 
 test('facilitation applies to stays, tours, events and car hire; never to food, shopping, rides, flights or rooms', () => {

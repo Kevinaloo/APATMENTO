@@ -55,7 +55,7 @@
         </div><div class="error" id="err-2"></div><div class="foot"><button class="btn back" type="button" data-back="1">Back</button><button class="btn next" type="button" data-next="3">Continue to policy</button></div></div>
 
         <div class="panel" data-panel="3"><div class="kicker">Step 3 of 3</div><h2>Rates, rules and review</h2><p class="sub">Guests see a complete quote. Put every unavoidable cost into the rate now; hidden counter charges are not accepted.</p><div class="grid">
-          <div class="field"><label for="v-rate">Daily rate <span class="currency-label">local currency</span></label><input id="v-rate" type="number" min="0" placeholder="6500" required></div><div class="field"><label for="v-deposit">Refundable deposit <span class="currency-label">local currency</span></label><input id="v-deposit" type="number" min="0" value="0"></div>
+          <div class="field"><label for="v-rate">Daily rate <span class="currency-label">local currency</span></label><input id="v-rate" type="number" min="0" placeholder="6500" required data-apa-fee="carhire" data-apa-fee-unit="day"></div><div class="field"><label for="v-deposit">Refundable deposit <span class="currency-label">local currency</span></label><input id="v-deposit" type="number" min="0" value="0"></div>
           <div class="field"><label for="v-driver-city">Driver rate — local <span class="currency-label">local currency / day</span></label><input id="v-driver-city" type="number" min="0" value="0"></div><div class="field"><label for="v-driver-road">Driver rate — upcountry <span class="currency-label">local currency / day</span></label><input id="v-driver-road" type="number" min="0" value="0"></div>
           <div class="field"><label for="v-min-days">Minimum hire <span>days</span></label><input id="v-min-days" type="number" min="1" value="1"></div><div class="field"><label for="v-min-age">Minimum driver age</label><input id="v-min-age" type="number" min="18" value="23"></div>
           <div class="field"><label for="v-lic-years">Licence held for <span>years</span></label><input id="v-lic-years" type="number" min="0" value="2"></div><label class="check"><input id="v-border" type="checkbox"><span><strong>Cross-border hire available</strong><br>Only with written operator approval and documents.</span></label>
@@ -66,7 +66,7 @@
     </section>
   </main>
   <dialog class="gate" id="auth-gate"><h2>Sign in to protect your application</h2><p class="sub">A fleet application creates regulated inventory and must be attached to a verified Cabana account.</p><a class="btn next" id="signin-link" href="/auth">Sign in or create account</a></dialog>
-  <script src="/vendor-supabase-2.112.3.js"></script><script src="/apa-session.js"></script><script src="/cabana-carhire-core.js?v=4"></script><script src="/apa-geo.js"></script>
+  <script src="/vendor-supabase-2.112.3.js"></script><script src="/apa-session.js"></script><script src="/apa-fees.js" defer></script><script src="/cabana-carhire-core.js?v=4"></script><script src="/apa-geo.js"></script>
   <script>
   (function(){
     'use strict';

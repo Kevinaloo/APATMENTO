@@ -7,7 +7,7 @@
 <meta name="description" content="View and manage bookings for your Cabana listings. Track guests, payouts and reviews. Zero commission, always."/>
 <script src="/vendor-supabase-2.112.3.js"></script>
 <script src="/apa-session.js"></script>
-<script src="/apa-roles.js?v=20260917-2" defer></script>
+<script src="/apa-roles.js?v=20261008" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-trust.js"></script>
 <script src="/apa-admin-guard.js"></script>
@@ -571,7 +571,7 @@ async function loadBookings() {
           <td><strong style="font-family:var(--font-data);font-size:12px;">#${ref}</strong></td>
           <td><strong>${hesc(bk.listing_title||'Listing')}</strong><div class="bk-guest">${hesc(bk.guest_name||'Guest')}${bk.guest_phone?' · <a href="tel:'+hesc(String(bk.guest_phone).replace(/[^+\d]/g,''))+'">'+hesc(bk.guest_phone)+'</a>':''}</div></td>
           <td>${shortDate(bk.checkin_date)}${bk.booking_kind==='day_pass'?'<div class="bk-guest">Day pass</div>':bk.booking_kind==='hotel'&&Array.isArray(bk.rooms)?'<div class="bk-guest">'+hesc(bk.rooms.map(r=>(r.qty||1)+'× '+(r.name||'room')).join(', '))+'</div>':''}</td>
-          <td>${bk.booking_kind==='day_pass'?'Same day':shortDate(bk.checkout_date)}${bk.arrival_time?'<div class="bk-guest">arrives '+hesc(bk.arrival_time)+'</div>':''}</td>
+          <td>${bk.booking_kind==='day_pass'?'Same day':shortDate(bk.checkout_date)}${bk.booking_kind==='day_pass'&&/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(bk.arrival_time||'')?'<div class="bk-guest bk-hours">here '+hesc(bk.arrival_time.replace('-','–'))+'</div>':bk.arrival_time?'<div class="bk-guest">arrives '+hesc(bk.arrival_time)+'</div>':''}</td>
           <td>${bk.num_guests||1} guest${(bk.num_guests||1)>1?'s':''}</td>
           <td><strong>KES ${fmt(Math.round(parseFloat(bk.stay_total||0)))}</strong><div class="bk-guest">your payout</div></td>
           <td><span class="badge ${badge}">${label}</span>${code}</td>
@@ -600,13 +600,15 @@ function focusFromHash(){
 }
 window.addEventListener('hashchange',focusFromHash);
 
-/* The guest shows their GUEST-XXXXXX code at the door; the host enters
-   it here. The server re-checks the payment ledger before releasing. */
+/* The guest shows their 4-digit code at the door (older bookings carry
+   GUEST-XXXXXXXX); the host enters it here. The server re-checks the
+   payment ledger before releasing, and locks the booking after six
+   wrong tries. */
 function startCheckIn(id, btn){
   const cell = btn.closest('td');
   cell.innerHTML = `<form class="bk-ci" onsubmit="submitCheckIn(event,'${hesc(id)}')">
     <label class="sr-only" for="ci-${hesc(id)}">Guest's check-in code</label>
-    <input id="ci-${hesc(id)}" class="field-select" placeholder="GUEST-XXXXXX" autocomplete="off" autocapitalize="characters" required maxlength="20"/>
+    <input id="ci-${hesc(id)}" class="field-select" placeholder="Guest's 4-digit code" inputmode="numeric" autocomplete="off" autocapitalize="characters" required maxlength="20"/>
     <button class="btn btn-sm btn-primary" type="submit">Confirm</button></form>`;
   cell.querySelector('input').focus();
 }
@@ -619,7 +621,8 @@ async function submitCheckIn(ev, id){
     const res = await authFetch('/api/verify-checkin', { table:'apartment_bookings', reference: bk.payment_reference, role:'host', code: input.value.trim() });
     const j = await res.json().catch(()=>({}));
     if(res.ok && j.ok){ toast(j.already ? 'Already checked in' : 'Checked in. Your payout is released.'); loadBookings(); return; }
-    const why = j.error==='code_mismatch' ? 'That code does not match this booking. Ask the guest to open My Bookings.'
+    const why = j.error==='code_mismatch' ? 'That code does not match this booking. Ask the guest to open My Bookings.'+(j.attempts_left>0&&j.attempts_left<=3?' '+j.attempts_left+(j.attempts_left===1?' try':' tries')+' left.':'')
+      : j.error==='code_locked' ? (j.message || 'Too many wrong codes. Check-in is paused on this booking and our team has been told.')
       : j.error==='balance_due' ? (j.message || 'The guest still has a balance to pay before check-in.')
       : j.error==='stay_ended' ? 'This stay has already ended.'
       : (j.message || 'Could not confirm check-in. Try again.');

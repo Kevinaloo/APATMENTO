@@ -368,6 +368,15 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
     <div class="pref-row"><div class="pref-info"><strong>Promotions & offers</strong><span>Member deals, new services and seasonal offers</span></div><span class="state">On</span></div>
   </section>
 
+  <!-- Every way this person can use Cabana, in one place. apa-roles.js
+       fills it: roles they hold say "Switch to", an invited ambassador who
+       still owes a step sees it with that step, others see the way in. -->
+  <section class="card" id="roles-card">
+    <div class="card-title">Your roles</div>
+    <p style="margin:-4px 0 10px;font-size:13px;color:var(--ink3,#6b6b80);line-height:1.5;">Switch how you use Cabana. Your bookings, listings and earnings stay where they are.</p>
+    <div data-apa-roles="menu"></div>
+  </section>
+
   <section class="card">
     <div class="card-title">Account</div>
     <div class="pref-row" style="cursor:pointer;" onclick="window.location.href='my-bookings.html?back=1'"><div class="pref-info"><strong>My bookings</strong><span>View all your reservations and tickets</span></div><span style="color:var(--ink4);font-size:18px;">›</span></div>
@@ -390,6 +399,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 <script src="/cabana-people.js?v=3-living"></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/apa-admin-guard.js"></script>
+<script src="/apa-roles.js?v=20261008" defer></script>
 <script>
 const SUPABASE_URL      = 'https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';

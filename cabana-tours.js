@@ -164,9 +164,23 @@
   }
   /* The place a pass is headed, set large: "Naivasha", not "NAIVASHA". */
   function placeName(t) { var c = codeOf(t).toLowerCase(); return c.charAt(0).toUpperCase() + c.slice(1); }
+  /* Guests see one price: the guide's price with Cabana's facilitation
+     inside it. The guide's own figure stays on price_kes, because the
+     booking sheet quotes the fee on it; only what is shown changes. */
+  function allIn(p) {
+    var n = Number(p) || 0;
+    var r = n > 0 && global.ApaFees && global.ApaFees.allInSync ? global.ApaFees.allInSync('tours', n) : null;
+    return r ? r.total : n;
+  }
+  function warmAllIn(list) {
+    if (!global.ApaFees || !list || !list.length) return;
+    var prices = [];
+    list.forEach(function (t) { if (Number(t.price_kes) > 0) prices.push(Number(t.price_kes)); if (Number(t.child_price_kes) > 0) prices.push(Number(t.child_price_kes)); });
+    if (prices.length) global.ApaFees.allInMany('tours', prices).then(function () { try { emit('data'); } catch (e) { /* not ready */ } });
+  }
   function priceOf(t) {
     var free = Number(t.price_kes) === 0;
-    return { free: free, v: free ? 'Free' : money(t.price_kes), u: free ? 'pay what you like' : (t.price_basis === 'per_group' ? 'per group' : 'per person') };
+    return { free: free, v: free ? 'Free' : money(allIn(t.price_kes)), u: free ? 'pay what you like' : (t.price_basis === 'per_group' ? 'per group' : 'per person') };
   }
   function coverOf(t) { return t.cover_url || arr(t.photos)[0] || ''; }
   function whoOf(t) {
@@ -408,6 +422,7 @@
       q3.then(function (r) { return r; }, function () { return {}; })
     ]).then(function (res) {
       st.tours = Array.isArray(res[0] && res[0].data) ? res[0].data : [];
+      warmAllIn(st.tours);
       st.byId = {};
       st.tours.forEach(function (t) { st.byId[String(t.id)] = t; });
       st.deps = {};
