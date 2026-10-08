@@ -61,10 +61,10 @@
 
   /* ══ IMAGERY ═══════════════════════════════════════════════════════
 
-     Three views, and the default is deliberately Hybrid rather than the
-     street map. A host opening this should see their neighbourhood as
-     it looks from the air on the first frame, because that is the frame
-     in which they recognise their own home.
+     Three views. The street map is the default (see VIEW_ORDER below):
+     it is the map people already know how to read. Hybrid puts the
+     roofs under the street names for the moment a host wants to find
+     their own gate.
 
      Esri's World Imagery is free for this use and requires the
      attribution below — it is not decoration, and removing it breaks
@@ -120,7 +120,11 @@
     }
   };
 
-  var VIEW_ORDER = ['hybrid', 'satellite', 'map'];
+  /* The street map opens first. Hosts told us that landing on imagery
+     felt like being dropped from a plane: the streets and names they
+     navigate by were gone. Hybrid and satellite stay one tap away for
+     the moment they want to see their own roof. */
+  var VIEW_ORDER = ['map', 'hybrid', 'satellite'];
 
   /* ══ PLUS CODES (Open Location Code) ═══════════════════════════════
 
@@ -350,7 +354,7 @@
   function Pin(host, opts) {
     this.host = host;
     this.opts = opts || {};
-    this.view = this.opts.view || 'hybrid';
+    this.view = VIEWS[this.opts.view] ? this.opts.view : VIEW_ORDER[0];
     /* Crosshair on touch, draggable marker on desktop. Both are always
        available — this only decides which one opens. A thumb is worse
        at dragging than a mouse and better at panning, and the reverse
@@ -1035,7 +1039,7 @@
      * @param {number}   [opts.lat] [opts.lng]   an existing pin
      * @param {number[]} [opts.fallback]         where to open with no pin
      * @param {string}   [opts.height]
-     * @param {string}   [opts.view='hybrid']    hybrid | satellite | map
+     * @param {string}   [opts.view='map']       map | hybrid | satellite
      * @param {boolean}  [opts.crosshair]        defaults by pointer type
      * @param {Function} [opts.onChange]
      * @returns {Promise<Pin>}

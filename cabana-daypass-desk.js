@@ -89,7 +89,7 @@
     const checkout = hhmm(l.checkout_time) || '10:00';
     const st = {
       on: l.day_pass_enabled === true,
-      price: l.day_pass_price != null ? String(l.day_pass_price) : (nightly ? String(Math.round(nightly * 0.55 / 50) * 50) : ''),
+      price: l.day_pass_price != null ? String(l.day_pass_price) : (nightly ? String(Math.floor(nightly * 0.6 / 50) * 50) : ''),
       start: hhmm(l.day_pass_start) || (mins(checkout) > 600 ? checkout : '10:00'),
       end: hhmm(l.day_pass_end) || '17:00',
       days: Array.isArray(l.day_pass_days) && l.day_pass_days.length ? l.day_pass_days.map(Number) : [0, 1, 2, 3, 4, 5, 6],
@@ -108,7 +108,7 @@
         <div class="dpd-sw"><div><b>Offer day passes</b><small data-sw-sub></small></div><button type="button" class="dpd-tg" role="switch" aria-checked="${st.on}" aria-label="Offer day passes"></button></div>
         <div class="dpd-off" data-fields>
           <div class="dpd-grid">
-            <div class="dpd-f full"><label for="dpd-price">Rate per pass (${esc(cur)})</label><input id="dpd-price" type="number" inputmode="numeric" min="1" value="${esc(st.price)}"/></div>
+            <div class="dpd-f full"><label for="dpd-price">Rate per pass (${esc(cur)})${nightly ? ' · at most ' + esc(cur) + ' ' + Math.floor(nightly * 0.8).toLocaleString() : ''}</label><input id="dpd-price" type="number" inputmode="numeric" min="1" value="${esc(st.price)}" data-apa-fee="stays" data-apa-fee-unit="pass" data-currency="${esc(cur)}"/></div>
             <div class="dpd-f"><label for="dpd-start">From</label><input id="dpd-start" type="time" value="${esc(st.start)}"/></div>
             <div class="dpd-f"><label for="dpd-end">Until</label><input id="dpd-end" type="time" value="${esc(st.end)}"/></div>
             <div class="dpd-f full"><span class="dpd-l">Days</span><div class="dpd-days" data-days></div></div>
@@ -132,14 +132,16 @@
       $('[data-days]').innerHTML = ORDER.map(d => `<button type="button" class="dpd-d" data-d="${d}" aria-pressed="${st.days.includes(d)}">${DAYS[d]}</button>`).join('');
       const a = mins(st.start), b = mins(st.end), hrs = a != null && b != null ? Math.max(0, (b - a) / 60) : 0;
       const p = parseFloat(st.price) || 0;
-      $('[data-arc]').innerHTML = arc(st.start, st.end) + `<div><b>${esc(st.start)} – ${esc(st.end)}</b><small>${hrs ? hrs.toFixed(hrs % 1 ? 1 : 0) + ' hours' : ''}${p && nightly ? ' · ' + Math.round(p / nightly * 100) + '% of a night' : ''}</small></div>`;
+      $('[data-arc]').innerHTML = arc(st.start, st.end) + `<div><b>${esc(st.start)} – ${esc(st.end)}</b><small>${hrs ? hrs.toFixed(hrs % 1 ? 1 : 0) + ' hours' : ''}${p && nightly ? ' · guests save ' + Math.max(0, Math.round((1 - p / nightly) * 100)) + '% against a night' : ''}</small></div>`;
       $('.dpd-go').textContent = st.on ? 'Save day pass' : (l.day_pass_enabled ? 'Switch day passes off' : 'Save');
     }
     function problem() {
       if (!st.on) return '';
       const p = parseFloat(st.price), a = mins(st.start), b = mins(st.end);
       if (!(p > 0)) return 'Set a rate for the pass.';
-      if (nightly && p >= nightly) return `A pass has to cost less than a night (${cur} ${nightly.toLocaleString()}).`;
+      /* At least 20% below a night, so the Day Pass badge always means a
+         real saving (the database enforces the same rule). */
+      if (nightly && p > Math.floor(nightly * 0.8)) return `A pass must be at least 20% cheaper than a night: ${cur} ${Math.floor(nightly * 0.8).toLocaleString()} or less.`;
       if (a == null || b == null || b - a < 120) return 'Give guests a window of at least two hours.';
       if (a < mins(checkout)) return `Start at ${checkout} or later, after your checkout time, so day guests never overlap night guests.`;
       if (!st.days.length) return 'Choose at least one day.';
@@ -183,6 +185,7 @@
       close();
     };
     paint();
+    if (window.ApaFees) ApaFees.attach($('#dpd-price'), { service: 'stays', unit: 'pass', currency: cur });
     setTimeout(() => $('.dpd-tg').focus(), 60);
   }
 

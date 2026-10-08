@@ -230,7 +230,7 @@ textarea.in { min-height: 84px; resize: vertical; }
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
+<script src="/apa-session.js"></script><script src="/apa-fees.js" defer></script>
 <script src="/cabana-calendar.js?v=1"></script>
 <script>
 (function () {
@@ -541,7 +541,7 @@ textarea.in { min-height: 84px; resize: vertical; }
       '<label class="field"><span>Car</span><select class="in" id="o-veh">' + free.map(function (v) { return '<option value="' + v.id + '" data-rate="' + v.day_rate + '" data-dep="' + (v.deposit || 0) + '">' + esc(v.make + ' ' + v.model + ' · ' + money(v.day_rate) + '/day') + '</option>'; }).join('') +
         '<option value="">Another car (describe it)</option></select></label>' +
       '<label class="field" id="o-label-f" hidden><span>Describe the car</span><input class="in" id="o-label" placeholder="Toyota Prado TX, 7 seats, 2019"></label>' +
-      '<div class="cols"><label class="field"><span>Daily rate (' + esc(cur) + ')</span><input class="in" id="o-rate" inputmode="decimal"></label><label class="field"><span>Deposit (' + esc(cur) + ')</span><input class="in" id="o-dep" inputmode="decimal"></label></div>' +
+      '<div class="cols"><label class="field"><span>Daily rate (' + esc(cur) + ')</span><input class="in" id="o-rate" inputmode="decimal" data-apa-fee="carhire" data-apa-fee-unit="day" data-apa-fee-compact data-currency="' + esc(cur) + '"></label><label class="field"><span>Deposit (' + esc(cur) + ')</span><input class="in" id="o-dep" inputmode="decimal"></label></div>' +
       '<label class="field"><span>Total for the hire (' + esc(cur) + ')</span><input class="in" id="o-total" inputmode="decimal"></label>' +
       '<label class="field"><span>A line to the renter</span><input class="in" id="o-note" maxlength="240" placeholder="Fresh service, free delivery in Westlands"></label><div class="err" id="o-err" hidden></div>',
       '<button class="btn ghost" data-close>Cancel</button><button class="btn go" id="o-send">Send offer</button>');
@@ -577,7 +577,7 @@ textarea.in { min-height: 84px; resize: vertical; }
       '<div class="cols3"><label class="field"><span>Seats</span><input class="in" id="c-seats" inputmode="numeric" value="' + esc(v.seats || 5) + '"></label><label class="field"><span>Gearbox</span><select class="in" id="c-trans">' + opt([['automatic', 'Automatic'], ['manual', 'Manual']], v.transmission || 'automatic') + '</select></label><label class="field"><span>Drive</span><select class="in" id="c-drive">' + opt([['2wd', '2WD'], ['fwd', 'FWD'], ['awd', 'AWD'], ['4wd', '4WD']], v.drive || '2wd') + '</select></label></div>' +
       '<div class="cols"><label class="field"><span>Fuel</span><select class="in" id="c-fuel">' + opt([['petrol', 'Petrol'], ['diesel', 'Diesel'], ['hybrid', 'Hybrid'], ['electric', 'Electric']], v.fuel || 'petrol') + '</select></label><label class="field"><span>Ground clearance (mm)</span><input class="in" id="c-clear" inputmode="numeric" value="' + esc(v.ground_clearance_mm || '') + '"></label></div>' +
       '<div class="sec"><h2 style="font-size:16px">Your prices</h2><small>' + esc(cur) + ' · you keep all of it</small></div>' +
-      '<div class="cols"><label class="field"><span>Daily rate</span><input class="in" id="c-rate" inputmode="decimal" value="' + esc(m(v.day_rate)) + '"></label><label class="field"><span>Deposit</span><input class="in" id="c-dep" inputmode="decimal" value="' + esc(m(v.deposit)) + '"></label></div>' +
+      '<div class="cols"><label class="field"><span>Daily rate</span><input class="in" id="c-rate" inputmode="decimal" value="' + esc(m(v.day_rate)) + '" data-apa-fee="carhire" data-apa-fee-unit="day" data-apa-fee-compact></label><label class="field"><span>Deposit</span><input class="in" id="c-dep" inputmode="decimal" value="' + esc(m(v.deposit)) + '"></label></div>' +
       '<div class="cols"><label class="field"><span>Driver / day, city</span><input class="in" id="c-chm" inputmode="decimal" value="' + esc(m(v.chauffeur_uplift_metro)) + '"></label><label class="field"><span>Driver / day, upcountry</span><input class="in" id="c-chu" inputmode="decimal" value="' + esc(m(v.chauffeur_uplift_upcountry)) + '"></label></div>' +
       '<div class="cols"><label class="field"><span>Weekly discount %</span><input class="in" id="c-wk" inputmode="numeric" value="' + esc(v.weekly_discount_pct || '') + '"></label><label class="field"><span>Monthly discount %</span><input class="in" id="c-mo" inputmode="numeric" value="' + esc(v.monthly_discount_pct || '') + '"></label></div>' +
       '<div class="sec"><h2 style="font-size:16px">Rules</h2></div>' +

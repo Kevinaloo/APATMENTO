@@ -426,8 +426,8 @@ export const TEMPLATES = {
         body: header({ eyebrow: 'Welcome aboard', title: `Karibu, ${who}.`,
           subtitle: 'One app for stays, safaris, rides, food and everything between — across Africa, at face value.' })
         + card(h2('Start here') + features([
-            ['🏠', 'Stays that cost what they say', 'Fixed platform fee, never a percentage. Hosts keep 100%.'],
-            ['🦁', 'Tours and safaris at zero fee', 'The operator’s fare is the whole price.'],
+            ['🏠', 'One all-in price', 'The price you see is the price you pay. Nothing is added at checkout. Hosts keep 100%.'],
+            ['🦁', 'Tours and safaris, all in', 'The price on the tour is the whole price.'],
             ['✦',  'APA, in the app', 'Ask her anything. She books, checks and answers in seconds.'],
             ['🛡️', 'Money held until check-in', 'Your payment reaches the host after you are safely in.'],
           ]) + button('/apartments.html', 'Find your first stay'), { delay: 1 })
@@ -534,7 +534,7 @@ export const TEMPLATES = {
             refund ? ['Refund', money(refund), true] : null,
           ])
           + (refund
-             ? p('Refunds land back on your M-Pesa in 3 to 7 business days. The platform fee is not refundable.', { small: true })
+             ? p('The amount above is what comes back to you. Refunds land on your M-Pesa in 3 to 7 business days.', { small: true })
              : p('Under this listing’s cancellation policy no refund is due. If you think that is wrong, open the support chat and we will look at it properly.', { small: true }))
           + button('/apartments.html', 'Find somewhere else', { gradient: B.gradReef, solid: B.electric })),
         audience: 'guest',
@@ -777,7 +777,7 @@ export const TEMPLATES = {
           subtitle: 'You keep 100% of what you charge. Cabana never takes a percentage of your earnings — not now, not later.',
           gradient: B.gradDusk, emoji: '🤝' })
         + card(h2('What that means in practice') + features([
-            ['💯', 'Zero commission', 'The listing price is yours. The platform fee is charged to the guest, separately.'],
+            ['💯', 'Zero commission', 'Your price is yours. Cabana’s small fee is added on top, and guests see one all-in price.'],
             ['🛡️', 'Paid after check-in', 'The guest’s money is held until they are safely in. That hold is why new listings get booked.'],
             ['⚡', 'Import in one paste', 'Have a listing elsewhere? Paste the URL and we build it for you.'],
             ['📊', 'Real numbers', 'Views, enquiries and conversion on your dashboard, not a monthly PDF.'],

@@ -389,7 +389,10 @@
 .cx-brand { height: 26px; opacity: .92; }
 .cx-page .cx-title { font-size: clamp(36px, 6.2vw, 64px); max-width: 15ch; }
 .cx-page .cx-sub { font-size: 15px; max-width: 52ch; }
-.cx-grid { display: grid; gap: 22px; padding: 0 clamp(14px, 4vw, 48px) 80px; margin-top: -28px; position: relative; }
+/* One column that never grows past the screen: a scrolling strip inside
+   a card (the day pass dates) must scroll, not widen the page. */
+.cx-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; padding: 0 clamp(14px, 4vw, 48px) 80px; margin-top: -28px; position: relative; }
+.cx-grid > * { min-width: 0; }
 @media (min-width: 940px) { .cx-grid { grid-template-columns: minmax(0, 1fr) 400px; align-items: start; } .cx-aside { position: sticky; top: 20px; } }
 .cx-card { background: #fff; border-radius: var(--cx-radius); padding: 22px; box-shadow: 0 1px 0 var(--cx-line), 0 22px 50px -32px rgba(20, 10, 4, .45); animation: cx-rise .8s var(--cx-ease) both; }
 .cx-card + .cx-card { margin-top: 16px; }

@@ -141,7 +141,7 @@
       + benefitsHtml()
       + '<label class="c3d-opt" for="' + id + '-want"><input type="checkbox" id="' + id + '-want"' + checked + '/>'
       +   '<span class="c3d-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>'
-      +   '<span><span class="c3d-opt-t">Yes, I want the Cabana 3D Tour</span><span class="c3d-opt-d">We will contact you with the price and a time to visit. Nothing is charged now.</span></span>'
+      +   '<span><span class="c3d-opt-t">Yes, contact me about the Cabana 3D Tour</span><span class="c3d-opt-d">It is a paid upgrade, not free. Tick this and our team will contact you with the prices and how the visit works. Nothing is charged now.</span></span>'
       + '</label>'
       + '<div class="c3d-form" id="' + id + '-form">'
       +   '<div class="c3d-grid">'

@@ -13,7 +13,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -279,6 +279,25 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .dp-days{display:flex;flex-wrap:wrap;gap:6px;}
 .dp-day{min-width:44px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s;}
 .dp-day.on{background:#1a1a1a;color:#FFD27A;border-color:#1a1a1a;}
+.dp-promo{padding:0 0 14px;overflow:hidden;border:1.5px solid rgba(255,170,40,.45);background:radial-gradient(120% 90% at 100% 0%,rgba(255,196,77,.22),transparent 55%),linear-gradient(170deg,#fffaf0,#fff);box-shadow:0 18px 40px -30px rgba(180,110,0,.6);}
+.dp-promo .dp-head{padding:14px 16px 0;}
+.dp-promo .dp-body{padding:0 16px;}
+.dp-ribbon{display:block;padding:7px 16px;background:linear-gradient(90deg,#1a1206,#3a2608);color:#FFD27A;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
+.dp-promo .dp-t{font-family:var(--font-head);font-size:17px;font-weight:800;letter-spacing:-.02em;}
+.dp-promo .dp-d{font-size:13px;color:var(--ink-soft);}
+.dp-perks{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px 0;}
+.dp-perks span{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#fff;border:1px solid rgba(214,150,30,.25);font-size:12px;font-weight:600;color:#5b3c00;}
+.dp-badge-prev{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;background:linear-gradient(180deg,#FFF6E0,#FFE6B0);color:#7A4A00;border:1px solid rgba(214,150,30,.4);font-size:11px;font-weight:800;}
+.dp-badge-prev i{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle,#FFC23D 45%,#FF9F1C);box-shadow:0 0 0 2px rgba(255,194,61,.25);}
+.dp-rule{margin:14px 0 12px;padding:10px 12px;border-radius:12px;background:#fff;border:1px dashed rgba(214,150,30,.45);font-size:12.5px;color:#5b3c00;line-height:1.5;}
+.dp-rule.bad{border-color:#E0284A;background:#FFF5F6;color:#B4122E;}
+.dp-save{margin-top:6px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:750;background:#E9F9F1;color:#0B7A4E;}
+.dp-save.bad{background:#FFF0F2;color:#B4122E;}
+.dp-window{margin:2px 0 14px;}
+.dp-window-bar{position:relative;height:10px;border-radius:999px;background:repeating-linear-gradient(90deg,#F2E8D5 0 calc(100%/17 - 2px),transparent calc(100%/17 - 2px) calc(100%/17));}
+.dp-window-bar i{position:absolute;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,#FFC23D,#FF8A1F);box-shadow:0 4px 12px -4px rgba(255,138,31,.6);transition:left .25s,width .25s;}
+.dp-window-lbl{display:flex;justify-content:space-between;margin-top:5px;font-size:11px;font-weight:650;color:var(--ink-faint);}
+.dp-window-lbl span:nth-child(2){color:#7A4A00;font-weight:800;}
 @media (prefers-reduced-motion:reduce){.dp-sun,.dp-body{animation:none}}
 .ibox.mint{background:rgba(45,212,191,0.06);border-color:rgba(45,212,191,0.2);}
 .ibox-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mint-dark);margin-bottom:4px;}
@@ -372,189 +391,81 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .btn-cont.loading::after{content:'';position:absolute;width:18px;height:18px;border:2.5px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .btn-cont svg{width:16px;height:16px;}
-.falert{display:none;padding:11px 15px;border-radius:11px;background:rgba(255,61,90,0.08);border:1px solid rgba(255,61,90,0.2);color:#CC1133;font-size:13px;font-weight:500;margin-bottom:17px;line-height:1.5;}
-.falert.show{display:block;animation:fadeUp .28s;}
-/* Pin picker. The old read-only iframe is gone — a host could look
-   at where the geocoder guessed but never correct it. */
-.pin-help{font-size:12px;line-height:1.55;color:var(--ink-soft);margin:-2px 0 8px;}
-#pin-map{width:100%;height:270px;border-radius:12px;margin-top:8px;overflow:hidden;
-  border:1.5px solid var(--line);}
-.pin-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px;}
-.pin-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:10px;
-  border:1.5px solid var(--line);background:var(--surface);color:var(--ink-soft);cursor:pointer;
-  font-family:var(--font-body);font-size:12.5px;font-weight:650;transition:all .2s;}
-.pin-btn:hover{border-color:var(--violet);color:var(--violet);}
-.pin-btn:disabled{opacity:.55;cursor:default;}
-.pin-btn svg{width:14px;height:14px;}
-.pin-state{font-size:12px;color:var(--ink-faint);line-height:1.45;flex:1;min-width:150px;}
-.pin-state.set{color:var(--ink-soft);font-weight:600;}
-.addr-sw{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;box-shadow:var(--shadow-md);overflow:hidden;margin-top:3px;position:relative;z-index:50;}
-.addr-s{padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--ink-soft);transition:background .13s;}
-.addr-s:last-child{border-bottom:none;}
-.addr-s:hover{background:var(--surface-2);color:var(--ink);}
-
-/* ── Smart Location Auto-Detect Card ────────────────────────────────── */
-.loc-autodetect-card{
-  background:linear-gradient(145deg, rgba(67,97,255,0.06), rgba(142,68,234,0.04));
-  border:1.5px solid rgba(67,97,255,0.22);
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:18px;
-  box-shadow:0 4px 18px rgba(67,97,255,0.05);
-}
-.loc-autodetect-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  flex-wrap:wrap;
-  margin-bottom:12px;
-}
-.loc-autodetect-info{
-  flex:1;
-  min-width:240px;
-}
-.loc-autodetect-title{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  font-family:var(--font-head);
-  font-weight:800;
-  font-size:14px;
-  color:var(--ink);
-  margin-bottom:3px;
-}
-.loc-autodetect-sub{
-  font-size:12px;
-  color:var(--ink-soft);
-  line-height:1.45;
-  margin:0;
-}
-.btn-gps-detect{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 16px;
-  border-radius:10px;
-  border:none;
-  background:var(--grad);
-  color:#fff;
-  font-family:var(--font-head);
-  font-size:13px;
-  font-weight:750;
-  cursor:pointer;
-  box-shadow:0 4px 14px rgba(67,97,255,0.25);
-  transition:all .22s cubic-bezier(0.16, 1, 0.3, 1);
-  flex-shrink:0;
-}
-.btn-gps-detect:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 20px rgba(67,97,255,0.38);
-}
-.btn-gps-detect:active{
-  transform:translateY(0);
-}
-.btn-gps-detect.locating{
-  background:var(--electric);
-  opacity:0.85;
-  pointer-events:none;
-}
-.btn-gps-detect.locating .gps-icon{
-  animation:spin 1s linear infinite;
-}
-.btn-gps-detect.success{
-  background:linear-gradient(135deg, #10B981, #059669);
-  box-shadow:0 4px 14px rgba(16,185,129,0.3);
-}
-.gps-icon{
-  width:16px;
-  height:16px;
-}
-.loc-search-box{
-  position:relative;
-  display:flex;
-  gap:8px;
-}
-.btn-loc-search{
-  position:absolute;
-  right:6px;
-  top:50%;
-  transform:translateY(-50%);
-  background:var(--surface-2);
-  border:1px solid var(--line);
-  border-radius:8px;
-  padding:6px 14px;
-  cursor:pointer;
-  color:var(--ink);
-  font-size:12px;
-  font-weight:700;
-  font-family:var(--font-body);
-  transition:all .18s;
-}
-.btn-loc-search:hover{
-  background:var(--electric);
-  border-color:var(--electric);
-  color:#fff;
-}
-.loc-detected-badge{
-  margin-top:12px;
-  padding:12px 14px;
-  border-radius:11px;
-  background:rgba(16,185,129,0.08);
-  border:1px solid rgba(16,185,129,0.28);
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-.loc-detected-badge.pulse-in{
-  animation:fadeUp .3s ease-out;
-}
-.ldb-head{
-  display:flex;
-  align-items:center;
-  gap:7px;
-}
-.ldb-acc-dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#10B981;
-  box-shadow:0 0 0 3px rgba(16,185,129,0.25);
-  animation:gpsPulse 2s infinite;
-}
-@keyframes gpsPulse{
-  0%{box-shadow:0 0 0 0 rgba(16,185,129,0.6);}
-  70%{box-shadow:0 0 0 6px rgba(16,185,129,0);}
-  100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}
-}
-.ldb-acc-text{
-  font-size:12px;
-  font-weight:800;
-  color:#065F46;
-  font-family:var(--font-head);
-}
-.ldb-acc-meter{
-  font-size:11px;
-  font-weight:700;
-  color:#047857;
-  background:rgba(16,185,129,0.16);
-  padding:1px 7px;
-  border-radius:100px;
-  margin-left:auto;
-}
-.ldb-place{
-  font-size:13px;
-  font-weight:700;
-  color:var(--ink);
-}
-.ldb-coords{
-  font-size:11.5px;
-  color:var(--ink-soft);
-  font-family:monospace;
+.falert{display:none;position:fixed;left:50%;top:76px;z-index:400;transform:translateX(-50%);width:min(560px,calc(100vw - 24px));padding:13px 16px 13px 44px;border-radius:14px;background:#fff;border:1px solid rgba(255,61,90,0.28);color:#B4122E;font-size:14px;font-weight:600;line-height:1.5;box-shadow:0 18px 50px -18px rgba(180,18,46,.45);}
+.falert::before{content:'!';position:absolute;left:14px;top:13px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#E0284A;color:#fff;font-size:12px;font-weight:900;}
+.falert.show{display:block;animation:falertIn .34s cubic-bezier(.22,1,.36,1);}
+@keyframes falertIn{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+/* ── Location: three honest ways in, one summary out ─────────────────
+   Search, a full-screen map, or typing it in. Whichever the host picks,
+   the same address fields show what will be saved, and a pin shows as a
+   small static preview rather than a live map wedged into the form. */
+.loc-lead{font-size:14px;line-height:1.6;color:var(--ink-soft);margin:-2px 0 14px;}
+.loc-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px;}
+.loc-method{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:13px 13px 12px;border-radius:16px;border:1.5px solid var(--line-2);background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);min-height:96px;transition:border-color .2s,box-shadow .2s,transform .2s,background .2s;}
+.loc-method:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--cc-accent,#4361FF) 45%,#fff);}
+.loc-method.on{border-color:var(--cc-accent,#4361FF);background:color-mix(in srgb,var(--cc-accent,#4361FF) 6%,#fff);box-shadow:0 0 0 3px color-mix(in srgb,var(--cc-accent,#4361FF) 14%,transparent);}
+.loc-m-ico{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-bottom:6px;background:var(--surface-2);color:var(--ink-soft);transition:background .2s,color .2s;}
+.loc-m-ico svg{width:18px;height:18px;}
+.loc-method.on .loc-m-ico{background:linear-gradient(135deg,var(--cc-accent,#2DD4BF),var(--cc-accent-2,#4361FF));color:#fff;}
+.loc-m-t{font-family:var(--font-head);font-size:14.5px;font-weight:800;letter-spacing:-.01em;}
+.loc-m-d{font-size:11.5px;color:var(--ink-soft);line-height:1.4;}
+.loc-panel{margin-bottom:14px;animation:fadeUp .28s;}
+.loc-search-in{position:relative;}
+.loc-search-in>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--ink-faint);pointer-events:none;z-index:1;}
+.loc-search-in .finput{padding-left:42px;height:52px;font-size:15px;border-radius:14px;}
+.loc-gps{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-top:10px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--surface);color:var(--ink);font:700 14px var(--font-body);cursor:pointer;min-height:48px;transition:border-color .2s,color .2s;}
+.loc-gps small{display:block;font-weight:500;font-size:12px;color:var(--ink-soft);margin-top:1px;}
+.loc-gps svg{width:16px;height:16px;color:var(--cc-accent,#4361FF);}
+.loc-gps:hover{border-color:var(--cc-accent,#4361FF);}
+.loc-gps.locating svg{animation:spin 1s linear infinite;}
+.loc-gps:disabled{opacity:.6;cursor:default;}
+.loc-map-launch{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px;border-radius:18px;border:1.5px solid var(--line-2);background:linear-gradient(120deg,#f6f9ff,#fff);cursor:pointer;font:inherit;color:var(--ink);transition:transform .2s,box-shadow .2s,border-color .2s;}
+.loc-map-launch:hover{transform:translateY(-2px);border-color:var(--cc-accent,#4361FF);box-shadow:0 14px 30px -20px rgba(30,40,90,.5);}
+.loc-map-art{flex:none;width:84px;height:72px;border-radius:14px;position:relative;overflow:hidden;background:
+  linear-gradient(90deg,transparent 46%,#fff 46%,#fff 54%,transparent 54%),linear-gradient(0deg,transparent 40%,#fff 40%,#fff 48%,transparent 48%),
+  linear-gradient(135deg,transparent 60%,rgba(255,255,255,.9) 60%,rgba(255,255,255,.9) 64%,transparent 64%),linear-gradient(150deg,#dbe7d3,#e7e1d2 55%,#d6e4f0);}
+.loc-map-art::after{content:'';position:absolute;left:50%;top:44%;width:20px;height:20px;margin:-14px 0 0 -10px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(140deg,var(--cc-accent,#4F6DFF),var(--cc-accent-2,#6D28FF));border:2.5px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.25);}
+.loc-map-copy{flex:1;min-width:0;}
+.loc-map-copy b{display:block;font-family:var(--font-head);font-size:15.5px;font-weight:800;margin-bottom:3px;}
+.loc-map-copy span{display:block;font-size:12.5px;line-height:1.5;color:var(--ink-soft);}
+.loc-map-go{flex:none;font-weight:800;font-size:13px;color:var(--cc-accent,#4361FF);white-space:nowrap;}
+.loc-manual-tip{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--surface-2);font-size:13px;line-height:1.55;color:var(--ink-soft);}
+.loc-manual-tip b{color:var(--ink);}
+.loc-summary[hidden]{display:none!important;}
+.loc-has-pin .loc-panel[data-panel=map]{display:none!important;}
+.loc-summary{display:grid;grid-template-columns:minmax(0,190px) 1fr;gap:14px;align-items:stretch;padding:10px;border-radius:18px;border:1.5px solid color-mix(in srgb,var(--cc-accent,#14B8A6) 30%,#fff);background:color-mix(in srgb,var(--cc-accent,#14B8A6) 4%,#fff);margin-bottom:14px;animation:fadeUp .3s;}
+.loc-summary .cpp-prev{height:auto;min-height:118px;border-radius:12px;}
+.loc-sum-body{display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:0;padding:4px 4px 4px 0;}
+.loc-sum-k{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--cc-accent,#0D9488);}
+.loc-sum-addr{font-family:var(--font-head);font-size:15px;font-weight:800;line-height:1.35;color:var(--ink);}
+.pin-state{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+.pin-state.set{font-weight:600;}
+.loc-sum-acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+.loc-sum-acts button{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line-2);background:#fff;color:var(--ink);font:650 12.5px var(--font-body);cursor:pointer;}
+.loc-sum-acts button:hover{border-color:var(--cc-accent,#4361FF);color:var(--cc-accent,#4361FF);}
+.loc-sum-acts .loc-primary{background:linear-gradient(135deg,var(--cc-accent,#2DD4BF),var(--cc-accent-2,#4361FF));color:#fff;border-color:transparent;}
+.loc-sum-acts .loc-primary:hover{color:#fff;}
+.loc-fields{padding:14px;border-radius:18px;border:1.5px solid var(--line);background:var(--surface);}
+.loc-fields-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;font-family:var(--font-head);font-size:13px;font-weight:800;color:var(--ink);}
+.loc-fields-s{font-family:var(--font-body);font-size:11.5px;font-weight:600;color:var(--ink-faint);}
+.loc-fields.loc-fields-open{border-color:var(--cc-accent,#4361FF);box-shadow:0 0 0 3px color-mix(in srgb,var(--cc-accent,#4361FF) 12%,transparent);}
+.loc-fields .field{margin-bottom:10px;}
+.loc-addpin{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:4px;padding:11px;border-radius:12px;border:1.5px dashed color-mix(in srgb,var(--cc-accent,#4361FF) 45%,#fff);background:color-mix(in srgb,var(--cc-accent,#4361FF) 4%,#fff);color:var(--cc-accent,#4361FF);font:700 13px var(--font-body);cursor:pointer;min-height:44px;}
+.loc-addpin[hidden]{display:none;}
+@media(max-width:600px){
+  .loc-methods{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}
+  .loc-method{min-height:0;padding:11px 9px;align-items:center;text-align:center;}
+  .loc-m-d{display:none;}
+  .loc-m-ico{margin:0 0 4px;}
+  .loc-m-t{font-size:13px;}
+  .loc-summary{grid-template-columns:1fr;}
+  .loc-summary .cpp-prev{min-height:140px;}
+  .loc-map-art{width:64px;height:58px;}
+  .loc-map-go{display:none;}
 }
 .field-highlight{
-  border-color:var(--electric) !important;
-  box-shadow:0 0 0 3px rgba(67,97,255,0.2) !important;
+  border-color:var(--cc-accent,var(--electric)) !important;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--cc-accent,#4361FF) 20%,transparent) !important;
   transition:all .3s ease;
 }
 
@@ -562,6 +473,29 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .cbox-lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--electric);margin-bottom:4px;display:flex;align-items:center;gap:5px;}
 .cbox-lbl svg{width:12px;height:12px;}
 .cbox-txt{font-size:12px;color:var(--ink-soft);line-height:1.65;}
+/* ── ID verification recommendation ──────────────────────────────────── */
+.idv-card{margin:4px 0 24px;padding:16px;border-radius:20px;border:1.5px solid rgba(124,58,237,.22);background:radial-gradient(110% 90% at 100% 0%,rgba(167,139,250,.18),transparent 60%),linear-gradient(170deg,#faf7ff,#fff);box-shadow:0 18px 40px -32px rgba(91,33,182,.6);}
+.idv-top{display:flex;gap:14px;align-items:flex-start;}
+.idv-tick{flex:none;filter:drop-shadow(0 6px 12px rgba(124,58,237,.35));}
+.idv-k{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6D28D9;margin-bottom:3px;}
+.idv-t{font-family:var(--font-head);font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--ink);}
+.idv-d{font-size:13px;line-height:1.55;color:var(--ink-soft);margin-top:4px;}
+.idv-opt{display:flex;align-items:center;gap:11px;margin-top:14px;padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid rgba(124,58,237,.25);cursor:pointer;font-size:13.5px;font-weight:650;color:var(--ink);min-height:48px;}
+.idv-opt input{position:absolute;opacity:0;width:1px;height:1px;}
+.idv-box{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid #7C3AED;display:grid;place-items:center;transition:background .2s;}
+.idv-opt input:checked+.idv-box{background:linear-gradient(135deg,#8B5CF6,#6D28FF);}
+.idv-opt input:checked+.idv-box::after{content:'';width:10px;height:6px;border-left:2.6px solid #fff;border-bottom:2.6px solid #fff;transform:rotate(-45deg) translate(1px,-1px);}
+.idv-opt input:focus-visible+.idv-box{outline:3px solid #C4B5FD;outline-offset:2px;}
+.idv-card.idv-done{border-color:rgba(16,185,129,.35);background:linear-gradient(170deg,#f2fdf8,#fff);}
+.idv-card.idv-done .idv-k{color:#0B7A4E;}
+.rv-boost{display:grid;gap:10px;}
+.rv-boost-i{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);}
+.rv-boost-i b{display:block;font-size:13.5px;color:var(--ink);}
+.rv-boost-i span{display:block;font-size:12px;color:var(--ink-soft);line-height:1.45;}
+.rv-boost-i button{margin-left:auto;flex:none;border:1.5px solid var(--line-2);background:#fff;border-radius:10px;padding:8px 12px;font:700 12.5px var(--font-body);cursor:pointer;color:var(--ink);min-height:40px;}
+.rv-boost-i.ok{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.04);}
+.rv-guest{font-size:12px;color:var(--ink-soft);font-weight:600;}
+.rv-guest b{color:var(--ink);}
 /* ── Space mode (entire/private/shared) ──────────────────────────────── */
 .space-mode-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin:10px 0 0;}
 @media(max-width:600px){.space-mode-grid{grid-template-columns:1fr;gap:7px;}}
@@ -619,8 +553,11 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .tier-row-bottom{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
 .tier-field-sm{min-width:108px;flex-shrink:0;}
 .tier-field-grow{flex:1;min-width:160px;}
-.tier-field-price{flex:0 0 auto;min-width:148px;}
-.tier-field-pg{flex:1;min-width:148px;}
+/* Both price fields share the row on a wide card and stack on a phone;
+   neither may push past the card edge. */
+.tier-field-price{flex:1 1 148px;min-width:0;}
+.tier-field-pg{flex:1 1 148px;min-width:0;}
+.tier-price-wrap .finput{width:100%;box-sizing:border-box;}
 .tier-lbl{display:block;font-size:11px;font-weight:700;color:var(--ink-faint);margin-bottom:5px;letter-spacing:.03em;}
 .tier-price-wrap{position:relative;}
 .tier-cur{
@@ -635,6 +572,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .tier-del-btn:hover{border-color:#E11D48;color:#E11D48;background:rgba(225,29,72,0.05);}
 .tier-del-btn svg{width:14px;height:14px;}
 .tier-calc{margin-top:6px;width:100%;}
+.tier-calc-allin{display:flex!important;flex-direction:column;gap:2px;align-items:flex-start;border-radius:12px!important;padding:7px 12px!important;font-size:12.5px!important;color:#0B6B47!important;}
+.tier-calc-allin b{font-weight:850;}
+.tier-calc-sub{font-size:11px;font-weight:550;opacity:.75;}
 .tier-calc-pill{
   display:inline-flex;font-size:11px;font-weight:600;color:var(--ok);
   background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);
@@ -697,6 +637,10 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
 .sacts{display:flex;flex-direction:column;gap:8px;}
 .sa-p{display:block;padding:14px;border-radius:11px;background:var(--grad);color:#fff;font-family:var(--font-head);font-weight:800;font-size:14px;text-decoration:none;box-shadow:0 8px 24px rgba(67,97,255,0.26);transition:all .2s;}
 .sa-p:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(67,97,255,0.38);}
+.sp-g{margin-top:4px;font-size:12.5px;font-weight:650;color:var(--ink-soft);}
+.s-idv{display:flex;align-items:center;gap:12px;text-align:left;margin:0 0 14px;padding:12px 12px 12px 14px;border-radius:16px;border:1.5px solid rgba(124,58,237,.25);background:linear-gradient(170deg,#faf7ff,#fff);}
+.s-idv b{display:block;font-size:14px;color:var(--ink);}.s-idv span{display:block;font-size:12px;color:var(--ink-soft);}
+.s-idv .sa-p{flex:none;width:auto;padding:10px 14px;margin:0;}
 .sa-g{display:block;padding:12px;border-radius:11px;background:var(--surface);border:1.5px solid var(--line-2);color:var(--ink-soft);font-family:var(--font-head);font-weight:700;font-size:14px;text-decoration:none;transition:all .2s;}
 .sa-g:hover{border-color:var(--ink-soft);color:var(--ink);}
 </style>
@@ -821,72 +765,73 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="fsec-title">Listing title</div>
         <div class="field"><label for="f-title" class="flbl" id="s2tl">Title</label><input class="finput" id="f-title" placeholder="e.g. Skyline Loft with City Views" maxlength="80"/><div class="fhint">Be descriptive and specific. Strong titles improve search visibility.</div></div>
       </div>
-      <div class="fsec">
-        <div class="fsec-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span>Location</span>
-          <span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--electric);background:rgba(67,97,255,0.08);padding:3px 9px;border-radius:100px;border:1px solid rgba(67,97,255,0.18);">High Precision GPS &amp; Satellite</span>
+      <div class="fsec loc-sec" id="loc-sec">
+        <div class="fsec-title">Where guests will find you</div>
+        <p class="loc-lead">Pick whichever is easiest. You can switch at any time, and a pin on the map makes your location exact.</p>
+        <div class="loc-methods" role="radiogroup" aria-label="How to add your location">
+          <button type="button" class="loc-method on" data-method="search" role="radio" aria-checked="true" onclick="locMethod('search')">
+            <span class="loc-m-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <span class="loc-m-t">Search</span><span class="loc-m-d">Type it and pick a match</span>
+          </button>
+          <button type="button" class="loc-method" data-method="map" role="radio" aria-checked="false" onclick="locMethod('map')">
+            <span class="loc-m-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-5.6-7-11.2A7 7 0 0 1 19 9.8C19 15.4 12 21 12 21Z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+            <span class="loc-m-t">Pin on map</span><span class="loc-m-d">Full screen, the most accurate</span>
+          </button>
+          <button type="button" class="loc-method" data-method="manual" role="radio" aria-checked="false" onclick="locMethod('manual')">
+            <span class="loc-m-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+            <span class="loc-m-t">Type it in</span><span class="loc-m-d">Enter the address yourself</span>
+          </button>
         </div>
 
-        <!-- SMART LOCATION AUTO-DETECT & QUICK SEARCH PANEL -->
-        <div class="loc-autodetect-card" id="loc-autodetect-card">
-          <div class="loc-autodetect-top">
-            <div class="loc-autodetect-info">
-              <div class="loc-autodetect-title">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--electric);"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
-                <span>Auto-Detect Property Location</span>
-              </div>
-              <p class="loc-autodetect-sub">Auto-detect your exact property building, street, neighbourhood, and city with one tap, or search below.</p>
-            </div>
-            <button type="button" class="btn-gps-detect" id="btn-gps-detect" onclick="autoDetectLocation(this)">
-              <svg class="gps-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
-              <span>Auto-Detect My Location (GPS)</span>
-            </button>
+        <div class="loc-panel" data-panel="search">
+          <label for="f-smart-loc" class="flbl">Your street, building, estate or a landmark next to it</label>
+          <div class="loc-search-in">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input class="finput" id="f-smart-loc" placeholder="e.g. Riverside Drive, Westlands" autocomplete="off" enterkeyhint="search"/>
           </div>
-          
-          <div class="loc-search-box">
-            <div style="position:relative;flex:1;">
-              <input class="finput" id="f-smart-loc" placeholder="Type property address, landmark, estate or building name..." autocomplete="off" style="padding-left:38px;padding-right:90px;font-size:13.5px;" aria-label="Type property address, landmark, estate or building name" />
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-faint);pointer-events:none;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <button type="button" onclick="doSmartGeo()" class="btn-loc-search">Find</button>
-            </div>
-          </div>
-          
-          <div class="loc-detected-badge" id="loc-detected-badge" style="display:none;">
-            <div class="ldb-head">
-              <span class="ldb-acc-dot"></span>
-              <span class="ldb-acc-text" id="ldb-acc-text">High-Precision GPS Detected</span>
-              <span class="ldb-acc-meter" id="ldb-acc-meter">±4m Accuracy</span>
-            </div>
-            <div class="ldb-body" id="ldb-body">
-              <div class="ldb-place" id="ldb-place">Westlands, Nairobi, Kenya</div>
-              <div class="ldb-coords" id="ldb-coords">Coordinates: -1.2684, 36.8051 · Plus Code: 6GCRPR78+CVW</div>
-            </div>
-          </div>
+          <button type="button" class="loc-gps" id="btn-gps-detect" onclick="autoDetectLocation(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            <span>Use my current location<small>Best when you're at the property</small></span>
+          </button>
+          <div class="fhint">Pick a suggestion and we fill in the address. Can't see it? Choose <b>Pin on map</b> or <b>Type it in</b>.</div>
         </div>
 
-        <div class="row2">
-          <div class="field"><label for="f-country" class="flbl">Country</label><select class="fsel" id="f-country" data-value="Kenya"><option>Kenya</option></select></div>
-          <div class="field"><label for="f-city" class="flbl">City</label><input class="finput" id="f-city" placeholder="Nairobi"/></div>
+        <div class="loc-panel" data-panel="map" hidden>
+          <button type="button" class="loc-map-launch" onclick="openPinMap()">
+            <span class="loc-map-art" aria-hidden="true"></span>
+            <span class="loc-map-copy"><b>Open the full-screen map</b><span>Move the map until the pin sits on your gate or entrance. Street map first, satellite if you want it.</span></span>
+            <span class="loc-map-go">Open map &rarr;</span>
+          </button>
         </div>
-        <div class="row2">
-          <div class="field"><label for="f-area" class="flbl">Area or neighbourhood</label><input class="finput" id="f-area" placeholder="Westlands"/></div>
-          <div class="field"><label for="f-street" class="flbl">Street <span class="opt">(optional)</span></label><input class="finput" id="f-street" placeholder="Waiyaki Way"/></div>
+
+        <div class="loc-panel" data-panel="manual" hidden>
+          <div class="loc-manual-tip"><span aria-hidden="true">✍️</span><span>Fill in the address below. Then <b>add a pin</b> so guests and drivers find the exact gate. It takes ten seconds.</span></div>
         </div>
-        <div class="field">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <label class="flbl" style="margin-bottom:0;">Pin exact location on Satellite <span class="opt">(drag pin onto your gate)</span></label>
-            <span style="font-size:11.5px;color:var(--ink-soft);font-weight:600;">High-Res Hybrid Imagery</span>
-          </div>
-          <div class="pin-help">Our high-resolution satellite imagery lets you see exact compounds and rooftops. <strong>Drag the pin onto your entrance or gate</strong>.</div>
-          <div style="position:relative;"><input class="finput" id="f-addr" placeholder="Search address, building or landmark..." autocomplete="off" style="padding-right:92px;" aria-label="Pin exact location on Satellite (drag pin onto your gate)" /><button type="button" onclick="doGeo()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--grad);border:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:#fff;font-size:12px;font-weight:700;font-family:var(--font-body);">Search</button></div>
-          <div id="pin-map"></div>
-          <div class="pin-bar">
-            <button type="button" class="pin-btn" onclick="useMyLoc(this)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
-              Re-center on My GPS
-            </button>
+
+        <div class="loc-summary" id="loc-summary" hidden>
+          <div id="loc-prev"></div>
+          <div class="loc-sum-body">
+            <span class="loc-sum-k">Your pin</span>
+            <div class="loc-sum-addr" id="loc-sum-addr"></div>
             <div class="pin-state" id="pin-state">No pin set yet</div>
+            <div class="loc-sum-acts">
+              <button type="button" class="loc-primary" onclick="openPinMap()">Adjust on map</button>
+              <button type="button" onclick="clearPin()">Remove pin</button>
+            </div>
           </div>
+        </div>
+
+        <div class="loc-fields" id="loc-fields">
+          <div class="loc-fields-h"><span>Address</span><span class="loc-fields-s" id="loc-fields-s">Shown to guests as area and city only, until they book</span></div>
+          <div class="row2">
+            <div class="field"><label for="f-country" class="flbl">Country</label><select class="fsel" id="f-country" data-value="Kenya"><option>Kenya</option></select></div>
+            <div class="field"><label for="f-city" class="flbl">City or town</label><input class="finput" id="f-city" placeholder="Nairobi" autocomplete="address-level2"/></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="f-area" class="flbl">Area or neighbourhood</label><input class="finput" id="f-area" placeholder="Westlands" autocomplete="address-level3"/></div>
+            <div class="field"><label for="f-street" class="flbl">Street <span class="opt">(optional)</span></label><input class="finput" id="f-street" placeholder="Waiyaki Way" autocomplete="address-line1"/></div>
+          </div>
+          <button type="button" class="loc-addpin" id="loc-addpin" onclick="openPinMap()">📍 Add a map pin for an exact location</button>
           <input type="hidden" id="f-lat"/><input type="hidden" id="f-lng"/>
         </div>
       </div>
@@ -930,7 +875,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div class="step-header">
         <span class="step-eyebrow">Step 5 of 8</span>
         <h1 class="step-title">Pricing and <em>contact</em></h1>
-        <p class="step-sub" id="s5su">Set your rate. You keep 100%. Cabana adds a small fixed fee on top for guests.</p>
+        <p class="step-sub" id="s5su">Set your rate. You keep 100% — Cabana's fee is added on top, and guests only ever see one all-in price.</p>
       </div>
       <div class="cbox">
         <div class="cbox-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Contact details released after payment</div>
@@ -967,28 +912,40 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="dp-card dp-hotel" id="s5-hotel" style="display:none;">
           <div class="dp-head"><span class="dp-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V4h14v17M9 8h1M14 8h1M9 12h1M14 12h1M10 21v-4h4v4"/></svg></span><div><div class="dp-t">Run it like a hotel</div><div class="dp-d">Sell rooms by type, with live inventory, per-night rates, meal plans and a non-refundable option. You set those up in <strong>Rooms &amp; Rates</strong> right after publishing.</div></div><button type="button" class="tog on" id="tog-hotel" aria-label="Sell by room type" onclick="this.classList.toggle('on')"></button></div>
         </div>
-        <!-- Day pass: a daytime window at a lower rate. Off by default. -->
-        <div class="dp-card" id="s5-daypass" style="display:none;">
+        <!-- Day pass: a daytime window at a lower rate. Off by default,
+             recommended loudly: it is income from hours that earn nothing. -->
+        <div class="dp-card dp-promo" id="s5-daypass" style="display:none;">
+          <div class="dp-ribbon">Recommended · more bookings from the same place</div>
           <div class="dp-head">
             <span class="dp-ico dp-sun" aria-hidden="true"></span>
-            <div><div class="dp-t">Day Pass <span class="dp-new">New</span></div><div class="dp-d">Let guests book a few daytime hours for less than a night: work, a nap between flights, a quiet afternoon. The night stays yours to sell.</div></div>
-            <button type="button" class="tog" id="tog-daypass" aria-label="Offer a day pass" onclick="this.classList.toggle('on');dpSync()"></button>
+            <div>
+              <div class="dp-t">Offer a Day Pass</div>
+              <div class="dp-d">Earn from the daytime hours your place sits empty — remote work, a rest between flights, a quiet afternoon. You set the hours; each guest picks the hours they'll actually stay, and you see them on every booking.</div>
+            </div>
+            <button type="button" class="tog" id="tog-daypass" aria-label="Offer a day pass" aria-pressed="false" onclick="this.classList.toggle('on');this.setAttribute('aria-pressed',this.classList.contains('on'));dpSync()"></button>
+          </div>
+          <div class="dp-perks" role="list">
+            <span role="listitem"><b class="dp-badge-prev"><i aria-hidden="true"></i>Day Pass</b> badge on your listing in search</span>
+            <span role="listitem">Shown to guests filtering for day stays</span>
+            <span role="listitem">Never clashes with a night guest</span>
           </div>
           <div class="dp-body" id="dp-body" hidden>
+            <div class="dp-rule" id="dp-rule">A day pass must be at least <b>20% cheaper</b> than a night, so the badge always means a real saving.</div>
             <div class="row3">
-              <div class="field"><label for="f-dp-price" class="flbl">Day pass rate</label><input class="finput" id="f-dp-price" type="number" min="1" placeholder="2500"/><div class="fhint" id="dp-price-hint">Must be below your nightly rate.</div></div>
-              <div class="field"><label for="f-dp-start" class="flbl">From</label><input class="finput" id="f-dp-start" type="time" value="10:00"/></div>
-              <div class="field"><label for="f-dp-end" class="flbl">Until</label><input class="finput" id="f-dp-end" type="time" value="17:00"/></div>
+              <div class="field"><label for="f-dp-price" class="flbl">Day pass rate</label><input class="finput" id="f-dp-price" type="number" min="1" inputmode="numeric" placeholder="2500" oninput="dpRate()"/><div class="fhint" id="dp-price-hint">At least 20% below your nightly rate.</div><div class="dp-save" id="dp-save" hidden></div></div>
+              <div class="field"><label for="f-dp-start" class="flbl">Guests can arrive from</label><input class="finput" id="f-dp-start" type="time" value="10:00" step="1800" oninput="dpWindow()"/></div>
+              <div class="field"><label for="f-dp-end" class="flbl">Everyone leaves by</label><input class="finput" id="f-dp-end" type="time" value="17:00" step="1800" oninput="dpWindow()"/></div>
             </div>
+            <div class="dp-window" id="dp-window" aria-hidden="true"><div class="dp-window-bar"><i id="dp-window-fill"></i></div><div class="dp-window-lbl"><span>6am</span><span id="dp-window-h">7 hours a day</span><span>11pm</span></div></div>
             <div class="field"><span class="flbl">Days you offer it</span><div class="dp-days" id="dp-days" role="group" aria-label="Day pass weekdays"></div></div>
             <div class="row2">
-              <div class="field"><label for="f-dp-guests" class="flbl">Guests per pass</label><input class="finput" id="f-dp-guests" type="number" min="1" placeholder="2"/></div>
+              <div class="field"><label for="f-dp-guests" class="flbl">Guests per pass</label><input class="finput" id="f-dp-guests" type="number" min="1" inputmode="numeric" placeholder="2"/></div>
               <div class="field"><label for="f-dp-note" class="flbl">Note to day guests <span class="opt">(optional)</span></label><input class="finput" id="f-dp-note" maxlength="240" placeholder="Fast Wi-Fi, desk by the window"/></div>
             </div>
-            <div class="fhint">The window starts no earlier than your checkout time, so a day guest never meets the night guest at the door. You can switch it on or off any time from your partner page.</div>
+            <div class="fhint">The window starts no earlier than your checkout time, so a day guest never meets the night guest at the door. Switch it on or off any time from your listings.</div>
           </div>
         </div>
-        <div class="ibox mint" id="s5-comm"><div class="ibox-lbl">Zero commission</div><div class="ibox-txt">You keep <strong>100% of your listed rate</strong>. Cabana charges guests a small fixed platform fee, never a percentage of your earnings.</div></div>
+        <div class="ibox mint" id="s5-comm"><div class="ibox-lbl">You keep 100%</div><div class="ibox-txt">You keep <strong>100% of your rate</strong>. Cabana's small fee is added on top and built into the price guests see, so they see <strong>one all-in price</strong> everywhere and nothing extra at checkout. Only you see the breakdown.</div></div>
         <div class="ibox mint" id="s5-rides-note" style="display:none;"><div class="ibox-lbl">Public prices are approved separately</div><div class="ibox-txt">Your operator listing describes what you offer and where. <strong>No price is published from this form.</strong> Cabana adds an exact market, route and unit price only after it is approved in the Move control room.</div></div>
         <div class="ibox mint" id="s5-foodnote" style="display:none;"><div class="ibox-lbl">This is not your menu</div><div class="ibox-txt">One rough number so a diner can see roughly what a plate costs before they open you. <strong>Your real prices are the ones on your dishes</strong>, and you type those into the menu builder in a minute. Leave this empty if you would rather it waited for the menu.</div></div>
       </div>
@@ -1018,6 +975,19 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <!-- Cabana 3D Tour: the paid upgrade, offered for stays only.
            Mounted by cabana-3d-upgrade.js; nothing is charged here. -->
       <div id="s6-tour3d" hidden></div>
+      <!-- Identity: recommended, never required here. Verified hosts rank
+           higher in search (listings.host_verified feeds the stays sort). -->
+      <div class="idv-card" id="s6-idv">
+        <div class="idv-top">
+          <span class="idv-tick" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24"><defs><linearGradient id="idv-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFA"/><stop offset=".55" stop-color="#7C3AED"/><stop offset="1" stop-color="#5B21B6"/></linearGradient></defs><path d="M12 1l2.2 1.9 2.9-.4 1 2.7 2.7 1-.4 2.9L22.3 12l-1.9 2.2.4 2.9-2.7 1-1 2.7-2.9-.4L12 22.3l-2.2-1.9-2.9.4-1-2.7-2.7-1 .4-2.9L1.7 12l1.9-2.2-.4-2.9 2.7-1 1-2.7 2.9.4z" fill="url(#idv-g)"/><path d="M7.6 12.3l3 3 5.8-6.2" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>
+            <div class="idv-k">Recommended · under 2 minutes</div>
+            <div class="idv-t" id="idv-t">Verify your ID and rank higher</div>
+            <div class="idv-d" id="idv-d">Verified hosts rank higher in search and carry the purple tick guests look for. Two minutes with your ID and a selfie, run by our partner Didit. Cabana keeps only the result.</div>
+          </div>
+        </div>
+        <label class="idv-opt" id="idv-opt"><input type="checkbox" id="idv-after" checked/><span class="idv-box" aria-hidden="true"></span><span>Take me to verification right after I publish</span></label>
+      </div>
       <div id="s6-settings">
         <div class="fsec">
           <div class="fsec-title">Settings</div>
@@ -1206,6 +1176,10 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
       <div class="rv-block">
         <div class="rv-head"><span class="rv-ht">Ownership</span><button class="rv-edit" onclick="go(7)">Edit</button></div>
         <div id="rv-own"></div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-head"><span class="rv-ht">Boost your listing</span></div>
+        <div class="rv-boost" id="rv-boost"></div>
       </div>
       <div class="step-nav">
         <button class="btn-back" onclick="go(7)">Back</button>
@@ -1401,7 +1375,7 @@ const SVCS={
 </button>
 
 <div id="tier-preview-wrap" style="display:none">
-  <div class="tier-preview-label">How guests will choose at booking</div>
+  <div class="tier-preview-label">How guests will choose at booking · all-in prices, exactly as they see them</div>
   <div id="tier-preview"></div>
 </div>
 </div>`,
@@ -1557,8 +1531,13 @@ const F={dp:{on:false,price:'',start:'10:00',end:'17:00',days:[0,1,2,3,4,5,6],gu
   /* Cabana 3D Tour upgrade (stays). tour3dStatus mirrors listings.tour_3d_status. */
   tour3d:{wanted:false},tour3dStatus:'none'};
 
-function buildNav(){document.getElementById('snav').innerHTML=LABS.map((l,i)=>`<div class="sni${i===cur?' active':i<cur?' done':''}" id="sni-${i}"><div class="sni-n">${i<cur?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':i+1}</div><span class="sni-l">${l}</span></div>`).join('');}
-function upNav(){LABS.forEach((_,i)=>{const el=document.getElementById('sni-'+i);if(!el)return;el.className='sni'+(i===cur?' active':i<cur?' done':'');const n=el.querySelector('.sni-n');n.innerHTML=i<cur?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':String(i+1);});}
+/* The rail counts the way the step headers do: choosing a service is the
+   start, then steps 1 to 8. */
+const SNI_TICK='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const SNI_START='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg>';
+function sniMark(i){return i<cur?SNI_TICK:i===0?SNI_START:String(i);}
+function buildNav(){document.getElementById('snav').innerHTML=LABS.map((l,i)=>`<div class="sni${i===cur?' active':i<cur?' done':''}" id="sni-${i}"><div class="sni-n">${sniMark(i)}</div><span class="sni-l">${l}</span></div>`).join('');}
+function upNav(){LABS.forEach((_,i)=>{const el=document.getElementById('sni-'+i);if(!el)return;el.className='sni'+(i===cur?' active':i<cur?' done':'');const n=el.querySelector('.sni-n');n.innerHTML=sniMark(i);});}
 
 function go(n){
   document.getElementById('step-'+cur)?.classList.remove('active');
@@ -1614,7 +1593,7 @@ function bldStep(n){
       ? 'Your number, so a diner can send you their order. Then one rough price, so they know what to expect.'
       : S.priceAdmin
         ? 'Add the operator contact used for matching. Public price cards are created only after exact amounts and terms are approved in Cabana Move admin.'
-        : 'Set your rate. You keep 100%. Cabana adds a small fixed fee on top for guests.';
+        : 'Set your rate. You keep 100% — Cabana\'s fee is added on top, and guests only ever see one all-in price.';
     const s5cb=document.querySelector('#step-5 .cbox-txt');
     if(s5cb)s5cb.textContent=S.food
       ? 'Diners send their order straight to this number, itemised and totalled, and pay you for the food. Nothing goes through us, so nothing is taken out.'
@@ -1640,7 +1619,7 @@ function bldStep(n){
         staysTierNote=note;
       }
       staysTierNote.innerHTML=F.svc==='stays'
-        ? '<div class="ibox-lbl">Prices set in Step 3</div><div class="ibox-txt">Your nightly rates are defined by your pricing tiers. You set them in the Details step, and the lowest tier price is the starting rate on search.</div>'
+        ? '<div class="ibox-lbl">Nightly prices come from your tiers</div><div class="ibox-txt">You set them in the Details step. Guests see each tier as one all-in price<span id="s5-from"></span>. <a href="#" onclick="go(3);return false;">Edit tiers</a></div>'
         : '<div class="ibox-lbl">No unapproved ride price</div><div class="ibox-txt">This operator form cannot publish a fare. Exact prices are attached to a market, mode, unit and terms in Cabana Move admin.</div>';
       if(S.priceAdmin){const pIn=document.getElementById('f-price');if(pIn)pIn.value='';F.price='';}
     } else {
@@ -1662,7 +1641,7 @@ function bldStep(n){
     const depl=document.getElementById('s5depl');if(depl)depl.innerHTML=(S.dl2||'Security deposit')+(F.svc==='roommates'?'':' <span class="opt">(optional)</span>');
     const deph=document.getElementById('s5deph');if(deph)deph.style.display=F.svc==='roommates'?'':'none';
     restPr();}
-  if(n===6){const s6t=document.getElementById('s6ti');if(s6t)s6t.textContent=S.s6t||'Check-in and check-out';document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';renderPG();mountTour3d();}
+  if(n===6){const s6t=document.getElementById('s6ti');if(s6t)s6t.textContent=S.s6t||'Check-in and check-out';document.getElementById('s6il').textContent=S.il||'Start time';document.getElementById('s6ol').textContent=S.ol||'End time';document.getElementById('s6rl').textContent=S.rl||'Additional rules';const tg=document.getElementById('tog-group');if(tg)tg.style.display=S.tog?'':'none';renderPG();mountTour3d();paintIdv();}
   if(n===7)bldOwn();
   if(n===2)restLoc();
   if(n===1&&F.type)document.getElementById('badge-t').textContent=F.type;
@@ -1681,8 +1660,7 @@ function togFt(el){el.classList.toggle('sel');const f=el.dataset.f;if(el.classLi
    than the five countries the old allowlist happened to name.
    ================================================================ */
 
-let _pin = null;          // ApaMap picker handle
-let _pinSearch = null;    // autocomplete handle
+let _pinSearch = null;    // older callers' autocomplete handle (kept for doGeo)
 let _pinInit = false;
 
 /* Rough city centres, so a host who has already told us "Lagos" does
@@ -1714,103 +1692,126 @@ function cityHint(){
 }
 
 let _pinSmartSearch = null;
+let _locMethod = 'search';
+
+/* ══ LOCATION ═══════════════════════════════════════════════════════
+   Three ways in, chosen by the host rather than imposed on them:
+     search  the shared worldwide typeahead (apa-geo.js)
+     map     a full-screen map, street view first (cabana-place-picker.js)
+     manual  the address fields, typed by hand
+   Whichever is used, the same address fields show what will be saved
+   and a pin, once there is one, shows as a static preview. Nothing here
+   loads a live map until the host asks for one. */
+function locMethod(m, opts){
+  opts=opts||{};
+  _locMethod=m;
+  document.querySelectorAll('.loc-method').forEach(b=>{const on=b.dataset.method===m;b.classList.toggle('on',on);b.setAttribute('aria-checked',String(on));});
+  document.querySelectorAll('.loc-panel').forEach(p=>{p.hidden=p.dataset.panel!==m;});
+  const lf=document.getElementById('loc-fields');if(lf)lf.classList.toggle('loc-fields-open',m==='manual');
+  if(opts.quiet)return;
+  if(m==='map')openPinMap();
+  else if(m==='manual'){const id=!gv('f-city').trim()?'f-city':!gv('f-area').trim()?'f-area':'f-street';const el=document.getElementById(id);if(el){el.focus({preventScroll:true});el.scrollIntoView({behavior:'smooth',block:'center'});}}
+  else if(m==='search'){const el=document.getElementById('f-smart-loc');if(el)el.focus({preventScroll:true});}
+}
+
+/* How good is a typed search, honestly. A street name is not a gate. */
+function searchPrecision(r){
+  const k=String(r&&r.kind||'');
+  if(/^(address|building|house|poi|venue)$/.test(k))return 'parcel';
+  if(/^(street|road)$/.test(k))return 'street';
+  if(/^(neighbourhood|suburb|district|quarter|village)$/.test(k))return 'district';
+  return 'city';
+}
+function gpsPrecision(acc){
+  if(!acc)return 'street';
+  return acc<=12?'rooftop':acc<=30?'parcel':acc<=90?'street':acc<=600?'district':'city';
+}
 
 async function initPin(tries){
   if(_pinInit)return;
-  /* apa-map.js and apa-geo.js are deferred; a host who reaches this
-     step unusually fast can beat them. Wait rather than silently
-     skipping the map or the address search. */
-  if(!window.ApaMap||!window.ApaGeo){
-    if((tries||0)<20)setTimeout(()=>initPin((tries||0)+1),150);
+  /* apa-geo.js is deferred; a host who reaches this step unusually
+     fast can beat it. Wait rather than silently skipping the search. */
+  if(!window.ApaGeo){
+    if((tries||0)<25)setTimeout(()=>initPin((tries||0)+1),150);
     return;
   }
   _pinInit=true;
-
-  const lat=parseFloat(gv('f-lat')), lng=parseFloat(gv('f-lng'));
-
-  _pin=await ApaMap.picker('pin-map',{
-    lat:isFinite(lat)?lat:undefined,
-    lng:isFinite(lng)?lng:undefined,
-    fallback:cityHint(),
-    height:'280px',
-    onChange:setPin
-  });
-
-  /* Type-ahead on the smart location box and the address box, worldwide */
   _pinSmartSearch=ApaGeo.attach('f-smart-loc',{
-    limit:7,
+    limit:7,theme:'light',dismiss:true,dismissLabel:'Pick your place',
+    footer:[
+      {label:'Pin on map instead',icon:'📍',run:()=>locMethod('map')},
+      {label:'Type it myself',icon:'✍️',run:()=>locMethod('manual')}
+    ],
     onPick:r=>{
-      if(_pin)_pin.set(r.lat,r.lng,18);
-      setPin({lat:r.lat,lng:r.lng,label:r.short||r.name,precision:r.kind==='address'||r.kind==='street'?'rooftop':'parcel',address:r});
-      fillAddressFrom(r, true);
-      showDetectedBadge(r, 'Search Match');
+      fillAddressFrom(r,true);
+      setPin({lat:r.lat,lng:r.lng,label:r.short||r.name,precision:searchPrecision(r),source:'search',address:r});
     }
   });
+  paintLocSummary();
+}
 
-  _pinSearch=ApaGeo.attach('f-addr',{
-    limit:7,
-    onPick:r=>{
-      if(_pin)_pin.set(r.lat,r.lng,18);
-      setPin({lat:r.lat,lng:r.lng,label:r.short||r.name,precision:r.kind==='address'||r.kind==='street'?'rooftop':'parcel',address:r});
-      fillAddressFrom(r, true);
-      showDetectedBadge(r, 'Search Match');
-    }
+async function openPinMap(){
+  if(!window.CabanaPlace){al('The map is still loading. Try again in a moment.');return;}
+  const lat=parseFloat(gv('f-lat')),lng=parseFloat(gv('f-lng'));
+  const p=await CabanaPlace.open({
+    lat:isFinite(lat)?lat:undefined,lng:isFinite(lng)?lng:undefined,
+    fallback:cityHint(),
+    title:(gv('f-title').trim()||F.title)?'Pin “'+(gv('f-title').trim()||F.title)+'”':'Pin your exact location',
+    subtitle:'Move the map until the pin sits on your gate or entrance',
+    confirmLabel:'Use this location'
   });
+  if(!p)return;
+  /* A pin placed by hand is the truth about where the place is. The
+     street name read back from it only fills fields that are empty,
+     so a host who typed their estate's real name keeps it. */
+  setPin(p);
+  if(p.address)fillAddressFrom(p.address,false);
+  paintLocSummary();
 }
 
-function showDetectedBadge(p, sourceLabel, accuracyM){
-  const badge = document.getElementById('loc-detected-badge');
-  const accText = document.getElementById('ldb-acc-text');
-  const accMeter = document.getElementById('ldb-acc-meter');
-  const placeText = document.getElementById('ldb-place');
-  const coordsText = document.getElementById('ldb-coords');
-  if(!badge) return;
-
-  badge.style.display = 'flex';
-  badge.classList.remove('pulse-in');
-  void badge.offsetWidth; // trigger reflow
-  badge.classList.add('pulse-in');
-
-  if(accText) accText.textContent = sourceLabel || 'Location Detected';
-  if(accMeter) accMeter.textContent = accuracyM ? `±${accuracyM}m Accuracy` : (p.precision ? 'Rooftop level' : 'Verified');
-  
-  const placeStr = [p.street, p.area, p.city, p.country].filter(Boolean).join(', ') || p.short || p.name || p.label || 'Detected Address';
-  if(placeText) placeText.textContent = placeStr;
-  
-  const pCode = p.plusCode || (window.ApaGeo && isFinite(p.lat) && isFinite(p.lng) ? window.ApaGeo.plusCode(p.lat, p.lng, 11) : '');
-  if(coordsText && isFinite(p.lat) && isFinite(p.lng)){
-    coordsText.textContent = `Coordinates: ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}${pCode ? ' · Plus Code: ' + pCode : ''}`;
-  }
+function clearPin(){
+  F.lat=null;F.lng=null;F.plusCode=null;F.precision=null;F.precisionMetres=null;
+  document.getElementById('f-lat').value='';document.getElementById('f-lng').value='';
+  const st=document.getElementById('pin-state');if(st){st.classList.remove('set');st.textContent='No pin set yet';}
+  paintLocSummary();
 }
 
-/* Auto-detect user's high-precision GPS location */
+function paintLocSummary(){
+  const lat=parseFloat(gv('f-lat')),lng=parseFloat(gv('f-lng'));
+  const has=isFinite(lat)&&isFinite(lng);
+  const box=document.getElementById('loc-summary');if(!box)return;
+  box.hidden=!has;
+  document.getElementById('loc-sec')?.classList.toggle('loc-has-pin',has);
+  const add=document.getElementById('loc-addpin');if(add)add.hidden=has;
+  if(!has)return;
+  const where=[gv('f-street').trim(),gv('f-area').trim(),gv('f-city').trim(),gv('f-country')].filter(Boolean).join(', ');
+  const a=document.getElementById('loc-sum-addr');if(a)a.textContent=where||(lat.toFixed(5)+', '+lng.toFixed(5));
+  const prev=document.getElementById('loc-prev');
+  if(prev&&window.CabanaPlace)CabanaPlace.preview(prev,{lat,lng,zoom:F.precision==='rooftop'||F.precision==='parcel'?17:15,label:where});
+}
+
+/* Kept for older callers: the detected-badge panel was folded into the
+   pin summary. */
+function showDetectedBadge(){ paintLocSummary(); }
+
+/* The device's own fix, read back into an address. */
 async function autoDetectLocation(btn){
   const btnEl = btn || document.getElementById('btn-gps-detect');
-  const wasText = btnEl ? btnEl.querySelector('span').textContent : '';
-  if(btnEl){
-    btnEl.disabled = true;
-    btnEl.classList.add('locating');
-    btnEl.querySelector('span').textContent = 'Acquiring high-precision GPS…';
-  }
-
+  const label = btnEl ? btnEl.querySelector('span') : null;
+  const wasHtml = label ? label.innerHTML : '';
+  if(btnEl){ btnEl.disabled = true; btnEl.classList.add('locating'); if(label) label.textContent = 'Finding you…'; }
   try {
     if(!navigator.geolocation){
-      throw new Error('Geolocation is not supported by your browser. Please type your address in the search box.');
+      throw new Error('This device cannot share its location. Search for the address, pin it on the map, or type it in.');
     }
-
     let fix = null;
     if(window.ApaGeo && window.ApaGeo.locate){
       fix = await window.ApaGeo.locate({ highAccuracy: true, timeout: 15000, maximumAge: 0 });
     } else {
       fix = await new Promise((res, rej) => {
         navigator.geolocation.getCurrentPosition(
-          pos => res({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            accuracy: pos.coords.accuracy || null,
-            source: 'device'
-          }),
-          err => rej(new Error(err.code === 1 ? 'Location permission was declined. Please allow location access or type your address.' : 'Could not read GPS location. Please type your address.')),
+          pos => res({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy || null, source: 'device' }),
+          err => rej(new Error(err.code === 1 ? 'Location permission was declined. Allow it, or search for your address instead.' : 'Could not read your location. Search for your address instead.')),
           { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
       });
@@ -1819,53 +1820,22 @@ async function autoDetectLocation(btn){
         if(rev) Object.assign(fix, rev);
       }
     }
-
     if(!fix || !isFinite(fix.lat) || !isFinite(fix.lng)){
-      throw new Error('Could not resolve your coordinates. Please search for your property address.');
+      throw new Error('Could not resolve your coordinates. Search for your address instead.');
     }
-
-    // Move map pin and zoom to building
-    if(_pin){
-      const z = fix.accuracy && fix.accuracy <= 25 ? 20 : 18;
-      _pin.set(fix.lat, fix.lng, z);
-    }
-
-    // Auto-fill all address fields with overwrite=true
     fillAddressFrom(fix, true);
-    setPin(Object.assign({
-      lat: fix.lat,
-      lng: fix.lng,
-      accuracy: fix.accuracy,
-      source: 'device',
-      label: fix.short || fix.name || fix.label,
-      address: fix
-    }, fix));
-
-    const accM = fix.accuracy ? Math.round(fix.accuracy) : 4;
-    showDetectedBadge(fix, 'High-Precision GPS Detected', accM);
-
+    const precision = gpsPrecision(fix.accuracy);
+    setPin({ lat: fix.lat, lng: fix.lng, accuracy: fix.accuracy, source: 'device', precision,
+             label: fix.short || fix.name || fix.label, address: fix });
     const smartInput = document.getElementById('f-smart-loc');
-    if(smartInput){
-      smartInput.value = [fix.street, fix.area, fix.city].filter(Boolean).join(', ') || fix.name || '';
-    }
-
-    if(btnEl){
-      btnEl.classList.remove('locating');
-      btnEl.classList.add('success');
-      btnEl.querySelector('span').textContent = 'Location Detected (GPS)';
-      setTimeout(() => {
-        btnEl.classList.remove('success');
-        btnEl.querySelector('span').textContent = 'Re-Detect My Location (GPS)';
-      }, 3500);
+    if(smartInput) smartInput.value = [fix.street, fix.area, fix.city].filter(Boolean).join(', ') || fix.name || '';
+    if(precision !== 'rooftop' && precision !== 'parcel'){
+      al('Your phone placed you to within about '+Math.round(fix.accuracy||100)+' m. Tap "Adjust on map" to move the pin onto your gate.');
     }
   } catch(err){
-    if(btnEl){
-      btnEl.classList.remove('locating');
-      btnEl.querySelector('span').textContent = wasText || 'Auto-Detect My Location (GPS)';
-    }
-    al(err && err.message ? err.message : 'Could not detect your location. Please type your address.');
+    al(err && err.message ? err.message : 'Could not detect your location. Search for your address instead.');
   } finally {
-    if(btnEl) btnEl.disabled = false;
+    if(btnEl){ btnEl.disabled = false; btnEl.classList.remove('locating'); if(label) label.innerHTML = wasHtml || "Use my current location<small>Best when you're at the property</small>"; }
   }
 }
 
@@ -1933,21 +1903,23 @@ function setPin(p){
     fillAddressFrom(p.address, false);
   }
 
+  if(!p.plusCode){const pc=(window.CabanaPin&&CabanaPin.plusCode)||(window.ApaGeo&&ApaGeo.plusCode);if(pc){try{F.plusCode=pc(p.lat,p.lng,11);}catch(e){}}}
+
   const st=document.getElementById('pin-state');
-  if(!st)return;
-  st.classList.add('set');
-
-  if(p.pending){st.innerHTML='📍 Pin set · reading address…';return;}
-
-  const g=PIN_GRADE[F.precision]||null;
-  const where=p.label?esc(p.label):(p.lat.toFixed(5)+', '+p.lng.toFixed(5));
-  st.innerHTML=
-    (g?'<span style="color:'+g.tone+'">'+g.icon+' '+esc(g.text)+'</span><br>':'📍 ')+
-    where+
-    '<br><span style="color:var(--ink-faint);font-weight:400">'+
-      p.lat.toFixed(6)+', '+p.lng.toFixed(6)+
-      (F.plusCode?' · <b style="font-weight:600">'+esc(F.plusCode)+'</b>':'')+
-    '</span>';
+  if(st){
+    st.classList.add('set');
+    if(p.pending){st.innerHTML='Reading the address…';}
+    else{
+      const g=PIN_GRADE[F.precision]||null;
+      st.innerHTML=
+        (g?'<span style="color:'+g.tone+';font-weight:700">'+g.icon+' '+esc(g.text)+'</span><br>':'')+
+        '<span style="color:var(--ink-faint);font-weight:500">'+
+          p.lat.toFixed(5)+', '+p.lng.toFixed(5)+
+          (F.plusCode?' · <b style="font-weight:700">'+esc(F.plusCode)+'</b>':'')+
+        '</span>';
+    }
+  }
+  paintLocSummary();
 }
 
 function doGeo(){ if(_pinSearch)_pinSearch.search(); }
@@ -2048,6 +2020,7 @@ function tierCollect(){
   if(mgs.length) F.guests = String(Math.max(...mgs));
   renderTierPreview();
   updateTierModeBadge();
+  clearTimeout(window._tierCalcT);window._tierCalcT=setTimeout(renderTierCalcs,260);
 }
 
 /* Render the full tier builder UI */
@@ -2126,7 +2099,7 @@ function renderTiers(){
           </div>
           <div class="fhint" style="margin-top:3px">Charged per guest above 2. Leave 0 for flat rate.</div>
         </div>
-        ${priceVal?`<div class="tier-calc" id="tier-calc-${i}"></div>`:''}
+        <div class="tier-calc" id="tier-calc-${i}" aria-live="polite"></div>
       </div>
     </div>
   </div>
@@ -2145,7 +2118,18 @@ function renderTiers(){
   }
 }
 
-/* Inline "what guests pay" calc next to each tier price */
+/* The all-in price for one night at this rate: the host's rate with
+   Cabana's fee already inside it. Calls back at once from the cache,
+   or when the server answers. */
+function guestAllIn(price,cb){
+  price=parseFloat(price)||0;
+  if(!(price>0)||!window.ApaFees){cb(null);return;}
+  const hit=ApaFees.allInSync('stays',price);
+  if(hit){cb(hit);return;}
+  ApaFees.allIn('stays',price).then(cb,()=>cb(null));
+}
+
+/* Inline "what guests see" next to each tier price */
 function renderTierCalcs(){
   F.roomTiers.forEach((t,i)=>{
     const el = document.getElementById('tier-calc-'+i);
@@ -2155,15 +2139,16 @@ function renderTierCalcs(){
     const mg = parseInt(t.maxGuests)||2;
     const cur = gv('f-cur')||F.cur||'KES';
     if(!price){el.innerHTML='';return;}
-    if(!pg){
-      el.innerHTML=`<div class="tier-calc-pill">Flat ${cur} ${price.toLocaleString()} regardless of group size</div>`;
-      return;
-    }
-    /* Show 2-person and max-guest totals */
-    const t2 = price; /* 2 guests = base */
-    const tmax = price + Math.max(0, mg-2)*pg;
-    el.innerHTML=`<div class="tier-calc-pill">2 guests → ${cur} ${t2.toLocaleString()} &nbsp;·&nbsp; ${mg} guests → ${cur} ${tmax.toLocaleString()}</div>`;
+    const extra = pg ? ` &nbsp;·&nbsp; ${mg} guests: +${cur} ${(Math.max(0, mg-2)*pg).toLocaleString()}` : '';
+    el.innerHTML=`<div class="tier-calc-pill">You receive ${cur} ${price.toLocaleString()} / night${extra}</div>`;
+    guestAllIn(price,r=>{
+      if(!r||!document.body.contains(el)||parseFloat(F.roomTiers[i]&&F.roomTiers[i].price)!==price)return;
+      el.innerHTML=`<div class="tier-calc-pill tier-calc-allin"><span>Guests see <b>${cur} ${r.total.toLocaleString()}</b> / night</span><span class="tier-calc-sub">You receive ${cur} ${price.toLocaleString()} · Cabana fee ${cur} ${r.fee.toLocaleString()}${extra}</span></div>`;
+    });
   });
+  const from=document.getElementById('s5-from');
+  const prices=F.roomTiers.map(t=>parseFloat(t.price)).filter(p=>p>0);
+  if(from&&prices.length)guestAllIn(Math.min(...prices),r=>{if(r)from.textContent=', from '+(gv('f-cur')||F.cur||'KES')+' '+r.total.toLocaleString()+' a night';});
 }
 
 /* Guest-facing preview cards — exactly what a guest sees at booking */
@@ -2182,7 +2167,8 @@ function renderTierPreview(){
     const pg = parseFloat(t.perGuest)||0;
     const mg = parseInt(t.maxGuests)||2;
     const label = t.label || (t.beds===0?'Studio':t.beds+' Bedroom'+(t.beds>1?'s':''));
-    const fromStr = cur+' '+price.toLocaleString();
+    const hit = window.ApaFees ? ApaFees.allInSync('stays',price) : null;
+    const fromStr = cur+' '+(hit?hit.total:price).toLocaleString();
     const pgStr = pg ? `+${cur} ${pg.toLocaleString()}/extra guest` : 'Flat rate';
     const isLowest = i===0;
 
@@ -2200,12 +2186,16 @@ function renderTierPreview(){
     <span class="tp-guests">Up to ${mg} guest${mg>1?'s':''}</span>
   </div>
   <div class="tp-price-row">
-    <span class="tp-price">${fromStr}</span>
-    <span class="tp-per">/night</span>
+    <span class="tp-price" data-base="${price}">${fromStr}</span>
+    <span class="tp-per">/night · all-in</span>
     ${pg?`<span class="tp-pg">${pgStr}</span>`:''}
   </div>
 </div>`;
   }).join('');
+  preview.querySelectorAll('.tp-price[data-base]').forEach(el=>{
+    const base=parseFloat(el.dataset.base);
+    guestAllIn(base,r=>{if(r&&el.isConnected)el.textContent=cur+' '+r.total.toLocaleString();});
+  });
 }
 
 function updateTierModeBadge(){
@@ -2361,15 +2351,18 @@ function restLoc(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&
   else sv('f-country',F.country);
   sv('f-city',F.city);sv('f-area',F.area);sv('f-street',F.street);
   sv('f-lat',F.lat);sv('f-lng',F.lng);
-  if(isFinite(F.lat)&&isFinite(F.lng)){
-    setPin({lat:parseFloat(F.lat),lng:parseFloat(F.lng),pending:false});
-    if(_pin)_pin.set(parseFloat(F.lat),parseFloat(F.lng),F.precision==='rooftop'?19:F.precision==='parcel'?18:17);
-  }
+  if(F.lat!=null&&F.lng!=null&&isFinite(F.lat)&&isFinite(F.lng)){
+    setPin({lat:parseFloat(F.lat),lng:parseFloat(F.lng),pending:false,plusCode:F.plusCode,precision:F.precision});
+  }else paintLocSummary();
+  /* Someone who already has an address but no pin is nudged to the map;
+     someone with nothing yet starts on search. */
+  locMethod(F.lat!=null&&isFinite(F.lat)?'map':(F.city&&F.area?'manual':'search'),{quiet:true});
 }
 
 function restPr(){const sv=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};sv('f-cur',F.cur);sv('f-price',F.price);sv('f-minorder',F.minorder);sv('f-delfee',F.delfee);sv('f-delmins',F.delmins);sv('f-pw',F.pw);sv('f-pm',F.pm);sv('f-dep',F.dep);sv(F.svc==='roommates'?'f-mnr':'f-mn',F.mn);sv('f-wa',F.wa);sv('f-ph',F.ph);sv('f-em',F.em);}
 
-function al(m){const el=document.getElementById('falert');el.textContent=m;el.classList.add('show');el.scrollIntoView({behavior:'smooth',block:'nearest'});setTimeout(()=>el.classList.remove('show'),5000);}
+let _alT=0;
+function al(m){const el=document.getElementById('falert');el.textContent=m;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');el.setAttribute('role','alert');clearTimeout(_alT);_alT=setTimeout(()=>el.classList.remove('show'),5600);}
 /* Day pass: the same rules the database enforces, said before publish
    instead of as an error after it. */
 const DP_DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -2381,12 +2374,40 @@ function dpPaint(){
   const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null&&v!=='')el.value=v;};
   set('f-dp-price',F.dp.price);set('f-dp-start',F.dp.start);set('f-dp-end',F.dp.end);set('f-dp-guests',F.dp.guests);set('f-dp-note',F.dp.note);
   const g=document.getElementById('f-dp-guests');if(g&&!g.value)g.placeholder=String(F.guests||2);
-  const nightly=dpNightly();const h=document.getElementById('dp-price-hint');
-  if(h)h.textContent=nightly?`Must be below your nightly rate (${F.cur||'KES'} ${nightly.toLocaleString()}).`:'Must be below your nightly rate.';
+  dpRate();dpWindow();
   const th=document.getElementById('tog-hotel');if(th&&F.type==='Hotel or Resort')th.classList.toggle('on',F.hotel!==false||!window._eid);
   dpSync();
 }
-function dpSync(){const on=document.getElementById('tog-daypass')?.classList.contains('on');F.dp.on=!!on;const b=document.getElementById('dp-body');if(b)b.hidden=!on;}
+function dpSync(){const t=document.getElementById('tog-daypass');const on=t?.classList.contains('on');F.dp.on=!!on;if(t)t.setAttribute('aria-pressed',String(!!on));const b=document.getElementById('dp-body');if(b)b.hidden=!on;if(on){dpRate();dpWindow();}}
+/* The day pass discount rule, said while typing: at least 20% below a
+   night, so a "Day Pass" badge always means a real saving and nobody can
+   earn it by shaving KES 100 off the nightly rate. */
+const DP_MIN_DISCOUNT=0.20;
+function dpMax(){const n=dpNightly();return n?Math.floor(n*(1-DP_MIN_DISCOUNT)):0;}
+function dpRate(){
+  const nightly=dpNightly(),max=dpMax(),cur=F.cur||'KES';
+  const price=parseFloat(gv('f-dp-price'));
+  const h=document.getElementById('dp-price-hint'),save=document.getElementById('dp-save'),rule=document.getElementById('dp-rule');
+  if(h)h.textContent=nightly?('At most '+cur+' '+max.toLocaleString()+' — 20% below your '+cur+' '+nightly.toLocaleString()+' night.'):'At least 20% below your nightly rate.';
+  if(!save)return;
+  if(!(price>0)||!nightly){save.hidden=true;if(rule)rule.classList.remove('bad');return;}
+  const pct=Math.round((1-price/nightly)*100);
+  save.hidden=false;
+  const ok=price<=max;
+  save.classList.toggle('bad',!ok);
+  save.textContent=ok?('✓ Guests save '+pct+'% against a night'):(pct>0?'Only '+pct+'% below a night — needs to be 20% or more':'Higher than a night — needs to be 20% below');
+  if(rule)rule.classList.toggle('bad',!ok);
+}
+function dpWindow(){
+  const a=dpMinutes(gv('f-dp-start')),b=dpMinutes(gv('f-dp-end'));
+  const fill=document.getElementById('dp-window-fill'),lbl=document.getElementById('dp-window-h');
+  if(a==null||b==null||!fill)return;
+  const lo=6*60,hi=23*60,span=hi-lo;
+  const l=Math.max(0,Math.min(1,(a-lo)/span)),r=Math.max(0,Math.min(1,(b-lo)/span));
+  fill.style.left=(l*100)+'%';fill.style.width=Math.max(0,(r-l)*100)+'%';
+  const hrs=(b-a)/60;
+  if(lbl)lbl.textContent=hrs>=2?((Math.round(hrs*10)/10)+' hours a day, '+gv('f-dp-start')+'–'+gv('f-dp-end')):'At least 2 hours';
+}
 function dpNightly(){const t=(F.roomTiers||[]).map(x=>parseFloat(x.price)).filter(x=>x>0);return t.length?Math.min(...t):(parseFloat(F.price)||0);}
 function dpMinutes(v){const m=/^(\d{1,2}):(\d{2})/.exec(v||'');return m?(+m[1])*60+(+m[2]):null;}
 function valid(n){
@@ -2394,7 +2415,7 @@ function valid(n){
     const price=parseFloat(gv('f-dp-price')),nightly=dpNightly();
     const a=dpMinutes(gv('f-dp-start')),b=dpMinutes(gv('f-dp-end'));
     if(!(price>0)){al('Set a day pass rate, or switch the day pass off.');return false;}
-    if(nightly&&price>=nightly){al('A day pass has to cost less than a night ('+(F.cur||'KES')+' '+nightly.toLocaleString()+').');return false;}
+    if(nightly&&price>dpMax()){al('A day pass must be at least 20% cheaper than a night. Set it at '+(F.cur||'KES')+' '+dpMax().toLocaleString()+' or less, so guests get a real saving.');return false;}
     if(a==null||b==null||b-a<120){al('Give the day pass a window of at least two hours.');return false;}
     if(!F.dp.days.length){al('Pick at least one day for the day pass.');return false;}
   }
@@ -2645,7 +2666,20 @@ function collectOwn(){
     F.ownHolderName=n;F.ownHolderContact=c;F.ownNote=g('own-note');
   }
 }
-function nxt(n){if(!valid(n))return;collect(n);if(n===7)bldRv();go(n+1);}
+function nxt(n){if(!valid(n))return;collect(n);if(n===2)approxPin();if(n===7)bldRv();go(n+1);}
+/* A typed address with no pin still deserves a place on the map, so
+   radius search can find it. It is marked for what it is: approximate,
+   never passed off as the host's gate. */
+function approxPin(){
+  if(F.lat!=null&&isFinite(F.lat))return;
+  if(!window.ApaGeo||!ApaGeo.search||!F.city)return;
+  const q=[F.street,F.area,F.city,F.country].filter(Boolean).join(', ');
+  ApaGeo.search(q,{limit:1}).then(r=>{
+    const hit=r&&r[0];if(!hit||F.lat!=null&&isFinite(F.lat))return;
+    F.lat=hit.lat;F.lng=hit.lng;F.precision=searchPrecision(hit)==='parcel'?'street':searchPrecision(hit);
+    const a=document.getElementById('f-lat'),b=document.getElementById('f-lng');if(a)a.value=hit.lat;if(b)b.value=hit.lng;
+  }).catch(()=>{});
+}
 
 function bldRv(){collect(6);const S=SVCS[F.svc];
   document.getElementById('rv-svc').textContent=S?.lbl||F.svc;
@@ -2659,6 +2693,20 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
       ? (F.price?'About '+F.cur+' '+Number(F.price).toLocaleString()+' a plate, real prices on your menu':'Set on each dish, in your menu')
       : F.price?F.cur+' '+Number(F.price).toLocaleString()+(S?.pf==='month'?' per month'+(F.dep?', deposit '+F.cur+' '+Number(F.dep).toLocaleString():''):' / '+(S?.pp||'unit').toLowerCase()):'Not set';
   document.getElementById('rv-contact').textContent=F.wa||'Not set';
+  /* What the host receives, and what guests will see: the only place on
+     the platform both numbers sit side by side. */
+  if(!S?.priceAdmin&&!S?.food&&window.ApaFees&&F.price&&ApaFees.charges(F.svc)){
+    const rp=document.getElementById('rv-price'),base=Number(F.price),unit=S?.pf==='month'?'month':(S?.pp||'unit').toLowerCase().replace(/^per /,'');
+    ApaFees.allIn(F.svc,base).then(r=>{if(!r||!rp.isConnected)return;rp.innerHTML='You receive '+esc(F.cur)+' '+base.toLocaleString()+' / '+esc(unit)+'<br><span class="rv-guest">Guests see <b>'+esc(F.cur)+' '+r.total.toLocaleString()+'</b> all-in</span>';});
+  }
+  if(F.svc==='stays'&&F.dp&&F.dp.on&&!F.hotel&&parseFloat(F.dp.price)>0){
+    const rp=document.getElementById('rv-price'),dp=parseFloat(F.dp.price);
+    const line=document.createElement('div');line.className='rv-guest';line.style.marginTop='4px';
+    line.textContent='Day pass '+F.cur+' '+dp.toLocaleString()+' · '+F.dp.start+'–'+F.dp.end;
+    rp.appendChild(line);
+    if(window.ApaFees)ApaFees.allIn('stays',dp).then(r=>{if(r&&line.isConnected)line.innerHTML='Day pass '+esc(F.cur)+' '+dp.toLocaleString()+' · guests see <b>'+esc(F.cur)+' '+r.total.toLocaleString()+'</b> · '+esc(F.dp.start)+'–'+esc(F.dp.end);});
+  }
+  paintBoost();
   if(S)document.getElementById('rv-details').innerHTML=S.rv(F).map(([k,v])=>'<div class="rv-row"><span class="rv-k">'+k+'</span><span class="rv-v">'+v+'</span></div>').join('');
   const ow=document.getElementById('rv-own');
   if(ow&&window.ApaOwnership){
@@ -2695,6 +2743,55 @@ function bldRv(){collect(6);const S=SVCS[F.svc];
   const pb=document.getElementById('rv-phblock');
   if(F.photos.length){pb.style.display='';const ord=[cov,...Array.from({length:F.photos.length},(_,i)=>i).filter(i=>i!==cov)];document.getElementById('rv-photos').innerHTML=ord.slice(0,5).map(i=>'<img src="'+F.photos[i]+'" alt="Photo" loading="lazy" decoding="async"/>').join('');}
   else pb.style.display='none';
+}
+
+/* ══ IDENTITY · RECOMMENDED ═══════════════════════════════════════════
+   Verification is never demanded on this form; it is recommended, with
+   the true reason: verified hosts are ranked above unverified ones in
+   stays search (listings.host_verified) and carry the purple tick. */
+let _idv={known:false,verified:false,pending:null};
+async function loadIdv(tries){
+  if(_idv.known)return _idv;
+  if(!window.CabanaIdentity||!CabanaIdentity.status){
+    if((tries||0)<20){await new Promise(r=>setTimeout(r,200));return loadIdv((tries||0)+1);}
+    return _idv;
+  }
+  try{const st=await CabanaIdentity.status('host');_idv={known:true,verified:!!(st&&st.identity&&st.identity.verified),pending:st&&st.identity&&st.identity.pending||null};}
+  catch(e){_idv.known=true;}
+  return _idv;
+}
+async function paintIdv(){
+  const card=document.getElementById('s6-idv');if(!card)return;
+  const st=await loadIdv();
+  const t=document.getElementById('idv-t'),d=document.getElementById('idv-d'),opt=document.getElementById('idv-opt');
+  if(st.verified){
+    card.classList.add('idv-done');
+    if(t)t.textContent='You’re a verified host';
+    if(d)d.textContent='Your listings get the verified boost in search and the purple tick. Nothing more to do.';
+    if(opt)opt.hidden=true;
+    const k=card.querySelector('.idv-k');if(k)k.textContent='Verified';
+  }else if(st.pending==='review'){
+    if(t)t.textContent='Your ID check is being reviewed';
+    if(d)d.textContent='The verified boost and purple tick switch on by themselves once it clears.';
+    if(opt)opt.hidden=true;
+  }
+}
+function idvWanted(){const c=document.getElementById('idv-after');return !!(c&&c.checked&&!_idv.verified&&_idv.pending!=='review');}
+function paintBoost(){
+  const box=document.getElementById('rv-boost');if(!box)return;
+  const rows=[];
+  if(_idv.verified)rows.push('<div class="rv-boost-i ok"><div><b>✓ Verified host</b><span>Ranked above unverified listings in search.</span></div></div>');
+  else rows.push('<div class="rv-boost-i"><div><b>Verify your ID · under 2 minutes</b><span>'+(idvWanted()?'We’ll take you there right after you publish. Verified hosts rank higher.':'Verified hosts rank higher in search and get the purple tick.')+'</span></div><button type="button" onclick="go(6);setTimeout(()=>document.getElementById(\'s6-idv\')&&document.getElementById(\'step-6\')._ccForm&&document.getElementById(\'step-6\')._ccForm.show(document.getElementById(\'s6-idv\')),120)">'+(idvWanted()?'Change':'Add')+'</button></div>');
+  if(F.svc==='stays'){
+    const st=F.tour3dStatus&&F.tour3dStatus!=='none'?F.tour3dStatus:null;
+    const want=st||(F.tour3d&&F.tour3d.wanted);
+    rows.push(want
+      ?'<div class="rv-boost-i ok"><div><b>✓ Cabana 3D Tour '+(st?esc({requested:'requested',scheduled:'capture scheduled',live:'live'}[st]||st):'requested')+'</b><span>A paid upgrade. Our team will contact you with the prices and the process. Nothing is charged now.</span></div></div>'
+      :'<div class="rv-boost-i"><div><b>Cabana 3D Tour · paid upgrade</b><span>Guests walk through before they book, and live tours are featured at the top of Stays. Tick it and we’ll contact you with prices and the process.</span></div><button type="button" onclick="go(6);setTimeout(()=>{const el=document.getElementById(\'s6-tour3d\');const f=document.getElementById(\'step-6\')._ccForm;if(el&&f)f.show(el);},120)">Add</button></div>');
+  }
+  if(F.svc==='stays'&&F.dp&&F.dp.on&&!F.hotel)rows.push('<div class="rv-boost-i ok"><div><b>☀ Day Pass on</b><span>Your listing shows the Day Pass badge in search.</span></div></div>');
+  else if(F.svc==='stays'&&!F.hotel)rows.push('<div class="rv-boost-i"><div><b>Day Pass · recommended</b><span>Earn from daytime hours and get the Day Pass badge in search.</span></div><button type="button" onclick="go(5);setTimeout(()=>{const el=document.getElementById(\'s5-daypass\');const f=document.getElementById(\'step-5\')._ccForm;if(el&&f)f.show(el);},120)">Add</button></div>');
+  box.innerHTML=rows.join('');
 }
 
 /* ══ CABANA 3D TOUR ═════════════════════════════════════════════════
@@ -2947,6 +3044,13 @@ async function publish(){
       }
     } else {
       spv.textContent=F.cur+' '+Number(F.price||0).toLocaleString();
+      if(window.ApaFees&&F.price&&ApaFees.charges(F.svc)&&!SVCS[F.svc]?.priceAdmin){
+        ApaFees.allIn(F.svc,Number(F.price)).then(r=>{
+          if(!r)return;let g=document.getElementById('s-guest');
+          if(!g){g=document.createElement('div');g.id='s-guest';g.className='sp-g';spv.insertAdjacentElement('afterend',g);}
+          g.textContent='Guests see '+F.cur+' '+r.total.toLocaleString()+' all-in';
+        });
+      }
     }
     if(liveStatus==='pending_verification'){
       /* One identity check covers every service, so this is the only
@@ -2980,6 +3084,22 @@ async function publish(){
           ? 'Cabana 3D Tour requested. Our team will contact you with the price and a time to visit. Nothing has been charged.'
           : 'Your listing is saved, but we could not record the 3D Tour request. You can request it again from your listings board.';
         document.getElementById('ssub').insertAdjacentElement('afterend',note);
+      }
+    }
+    /* The host asked to be taken to verification after publishing. A
+       button, not a redirect: they should see their listing go live
+       first. */
+    if(liveStatus!=='pending_verification'&&idvWanted()&&!ON_BEHALF_OF&&F.own!=='on_behalf'&&window.CabanaIdentity){
+      let v=document.getElementById('s-idv');
+      if(!v){
+        v=document.createElement('div');v.id='s-idv';v.className='s-idv';
+        v.innerHTML='<div><b>One last thing: verify your ID</b><span>Under 2 minutes. Verified hosts rank higher in search.</span></div><button type="button" class="sa-p" id="s-idv-go">Verify now</button>';
+        document.querySelector('.sacts')?.insertAdjacentElement('beforebegin',v);
+        document.getElementById('s-idv-go').onclick=async e=>{
+          const b=e.currentTarget;b.disabled=true;b.textContent='Opening…';
+          try{const r=await CabanaIdentity.start('host','/partner-listings.html');if(r==='approved'){v.innerHTML='<div><b>✓ You’re verified</b><span>Your listings now get the verified boost.</span></div>';}else if(r==='review'){v.innerHTML='<div><b>ID check in review</b><span>The boost switches on by itself once it clears.</span></div>';}}
+          catch(x){b.disabled=false;b.textContent='Verify now';al(x.message||'Could not open verification.');}
+        };
       }
     }
     if(F.own==='on_behalf'&&claimResult&&claimResult.claim_url){
@@ -3151,9 +3271,11 @@ buildNav();
 </script>
 <script src="/apa-geo.js" defer></script>
 <script src="/apa-map.js" defer></script>
+<script src="/cabana-place-picker.js" defer></script>
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-lifecycle.js" defer></script>
+<script src="/apa-fees.js" defer></script>
 <script src="/cabana-listing-cards.js" defer></script>
 <script src="/cabana-listing-journeys.js" defer></script>
 <script src="/cabana-identity.js" defer></script>

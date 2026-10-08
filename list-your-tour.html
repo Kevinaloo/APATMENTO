@@ -319,7 +319,7 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
       <div class="lt-row three">
         <div>
           <label class="lt-l" for="t-price">Price per person <span>KES</span></label>
-          <input class="lt-i" id="t-price" name="price_kes" type="number" min="0" required placeholder="48000"/>
+          <input class="lt-i" id="t-price" name="price_kes" type="number" min="0" required placeholder="48000" data-apa-fee="tours" data-apa-fee-unit="person"/>
           <p class="lt-err" id="e-t-price">Enter a price, or 0 if the tour is free.</p>
         </div>
         <div>
@@ -442,7 +442,7 @@ html,body{min-height:100%;background:#FCFCFD;color:#0A0A14;
 </div>
 
 <script src="/vendor-supabase-2.112.3.js"></script>
-<script src="/apa-session.js"></script>
+<script src="/apa-session.js"></script><script src="/apa-fees.js" defer></script>
 <script src="/apa-referral-capture.js" defer></script>
 <script src="/cabana-media-upload.js"></script>
 <script src="/apa-geo.js" defer></script>

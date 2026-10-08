@@ -716,6 +716,9 @@ body.map-open .split-map{display:block;}
 .dl-cta-note{font-size:11px;color:var(--mint-deep);font-weight:600;margin-top:3px;}
 .dl-book-btn{flex-shrink:0;padding:14px 28px;border-radius:14px;background:var(--theme-grad);color:#fff;border:none;font-family:var(--font-body);font-weight:700;font-size:15px;cursor:pointer;transition:all .3s;box-shadow:0 8px 24px rgba(123,47,247,.3);white-space:nowrap;}
 .dl-daypass-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;padding:13px 16px;border-radius:14px;background:linear-gradient(180deg,#FFF6E0,#FFE6B0);color:#7A4A00;border:1px solid rgba(214,150,30,.35);font-family:var(--font-body);font-weight:700;font-size:14px;cursor:pointer;transition:transform .3s,box-shadow .3s;white-space:nowrap;}
+.dl-dp-price{font-weight:800;margin-left:2px;padding-left:8px;border-left:1px solid rgba(122,74,0,.25);font-variant-numeric:tabular-nums;}
+.card-dp{position:absolute;left:12px;bottom:22px;z-index:3;display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:999px;background:linear-gradient(180deg,#FFF6E0,#FFE6B0);color:#7A4A00;border:1px solid rgba(214,150,30,.45);font:800 11.5px/1 var(--font-body,Inter,system-ui,sans-serif);letter-spacing:.01em;box-shadow:0 6px 16px -8px rgba(122,74,0,.5);pointer-events:none;}
+.card-dp i{width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#FFC23D 45%,#FF9F1C);box-shadow:0 0 0 3px rgba(255,194,61,.28);}
 .dl-daypass-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(214,150,30,.28);}
 .dl-dp-sun{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#FFC23D 45%,rgba(255,194,61,0) 46%),conic-gradient(from 0deg,#FFB000 0 8%,transparent 8% 17%,#FFB000 17% 25%,transparent 25% 33%,#FFB000 33% 42%,transparent 42% 50%,#FFB000 50% 58%,transparent 58% 67%,#FFB000 67% 75%,transparent 75% 83%,#FFB000 83% 92%,transparent 92%);animation:dlDpSpin 9s linear infinite;}
 @keyframes dlDpSpin{to{transform:rotate(360deg)}}
@@ -2478,6 +2481,7 @@ html.sg-lock,html.sg-lock body{overflow:hidden!important;}
 <script src="/cabana-fx.js?v=1"></script>
 <script src="/cabana-range.js?v=1" defer></script>
 <script src="/apa-session.js"></script>
+<script src="/apa-fees.js"></script>
 <script src="/apa-chrome.js"></script>
 <script src="/apa-admin-guard.js"></script>
 <script>
@@ -2661,9 +2665,12 @@ async function loadNativeListings() {
        is_active from before the decision. Only an active status is
        bookable (stay_quote refuses anything else), so only that shows. */
     const isLive = l => !l.status || l.status === 'active';
+    /* A verified host ranks above an unverified one with the same
+       record: the listing form tells hosts this, so it must be true.
+       host_verified is server-owned (synced from the identity check). */
+    const rank = l => (Number(l.internal_score) || 0) + (l.host_verified === true ? 12 : 0);
     const stays = data.filter(l => isStay(l) && isLive(l))
-      .sort((a, b) => (b.featured === true) - (a.featured === true)
-        || (Number(b.internal_score) || 0) - (Number(a.internal_score) || 0))
+      .sort((a, b) => (b.featured === true) - (a.featured === true) || rank(b) - rank(a))
       .slice(0, 120);
 
     console.log('[listings] Loaded', data.length, 'rows →', stays.length, 'stays');
@@ -2728,6 +2735,28 @@ async function loadNativeListings() {
 
 /* ── Main init ── */
 
+/* Host prices in, guest prices out. The fee comes from the server, one
+   batched question for the whole page; the host's own figure is kept as
+   basePrice for anything that needs it (nothing guest-facing does). */
+async function applyAllInPrices(list) {
+  if (!window.ApaFees || !list || !list.length) return;
+  const amounts = [];
+  list.forEach(a => {
+    if (Number(a.price) > 0 && a.basePrice == null) amounts.push(Number(a.price));
+    if (a.dayPass && Number(a.dayPass.price) > 0 && a.dayPass.basePrice == null) amounts.push(Number(a.dayPass.price));
+  });
+  if (!amounts.length) return;
+  try {
+    const m = await ApaFees.allInMany('stays', amounts);
+    list.forEach(a => {
+      const p = Number(a.price);
+      if (a.basePrice == null && m.has(p)) { a.basePrice = p; a.price = m.get(p); }
+      if (a.dayPass && a.dayPass.basePrice == null && m.has(Number(a.dayPass.price))) {
+        a.dayPass.basePrice = Number(a.dayPass.price); a.dayPass.price = m.get(Number(a.dayPass.price));
+      }
+    });
+  } catch (e) { console.warn('[all-in]', e && e.message); }
+}
 
 async function loadListings() {
   updateBanner('loading');
@@ -2738,6 +2767,12 @@ async function loadListings() {
 
   // Fetch real listings from Supabase only
   const native = await loadNativeListings();
+  /* One price for guests: every nightly and day-pass figure on this page
+     already carries Cabana's fee. A slow answer never holds the page:
+     after a moment the grid paints and the prices settle in place. */
+  const allIn = applyAllInPrices(native);
+  const settled = await Promise.race([allIn.then(() => true), new Promise(r => setTimeout(() => r(false), 2200))]);
+  if (!settled) allIn.then(() => { try { applyAndRender(); } catch (e) { /* page moved on */ } });
   // Cards must not become clickable before their deferred detail helpers exist.
   if (document.readyState === 'loading') {
     await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
@@ -2895,12 +2930,12 @@ function stayCardPrice(apt){
     const total=Number(q.grand_total);
     return `<span class="val">${conv?fxMain(total):fxKes(total)}</span> <span class="per">total · ${q.nights} night${q.nights===1?'':'s'}</span>`
       +(conv?`<span class="cb-fx-real">${fxKes(total)} · you pay in KES</span>`:'')
-      +`<span class="cb-offer-note ${q.offer?'cb-offer-applied':''}">${q.offer?'Offer applied · '+_esc(q.offer.title)+' · ':''}Includes Cabana fee${q.offer?.verified?' · Save '+fxKes(q.offer.total_saving):''}</span>`;
+      +(q.offer?`<span class="cb-offer-note cb-offer-applied">Offer applied · ${_esc(q.offer.title)}${q.offer.verified?' · Save '+fxKes(q.offer.total_saving):''}</span>`:`<span class="cb-offer-note">The price you pay. Nothing added at checkout.</span>`);
   }
   if(_searchState.dateIn&&_searchState.dateOut)return '<span class="per">Check dates for a confirmed price</span>';
   return `<span class="val">${conv?fxMain(apt.price):fxKes(apt.price)}</span> <span class="per">/ night</span>`
     +(conv?`<span class="cb-fx-real">${fxKes(apt.price)} a night · you pay in KES</span>`:'')
-    +`<span class="cb-offer-note">Choose dates for offers and total including Cabana fee</span>`;
+    +`<span class="cb-offer-note">All-in price · add dates for offers and your total</span>`;
 }
 async function loadStaySearchQuotes(){
   const s=_searchState;
@@ -2995,6 +3030,7 @@ function renderCards(list) {
       <div class="card-media${many ? ' has-many' : ''}">
         <div class="card-rail">${slides}</div>
         ${window.CabanaPropertyTour?.badge(apt) || ''}
+        ${apt.dayPass && apt.bookingModel !== 'hotel' ? `<span class="card-dp" title="Day pass ${apt.dayPass.start}–${apt.dayPass.end}"><i aria-hidden="true"></i>Day pass</span>` : ''}
         ${apt.featured ? `<span class="card-tag card-tag-featured"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.8 2.8 5.7 6.3.9-4.6 4.4 1.1 6.2L12 17.1 6.4 20l1.1-6.2L2.9 9.4l6.3-.9L12 2.8Z"/></svg>Featured</span>`
           : apt.hot ? `<span class="card-tag card-tag-hot">${SVG_FLAME} In demand</span>` : ''}
         <button type="button" class="card-heart${isWishlisted(apt.id) ? ' on' : ''}" data-heart="${apt.id}"
@@ -3616,7 +3652,7 @@ function openDrawer(id) {
         <button class="dl-wishlist-btn" title="Save to wishlist" onclick="toggleWishlist('${apt.id}',this)">
           ${isWishlisted(apt.id)?'<svg viewBox="0 0 24 24" fill="#FF4D6D" stroke="#FF4D6D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
         </button>
-        ${apt.dayPass && apt.bookingModel !== 'hotel' ? `<button class="dl-daypass-btn" onclick="bookNow('${apt.id}','daypass')" title="Day pass · ${apt.dayPass.start}–${apt.dayPass.end}"><span class="dl-dp-sun" aria-hidden="true"></span>Day pass</button>` : ''}
+        ${apt.dayPass && apt.bookingModel !== 'hotel' ? `<button class="dl-daypass-btn" onclick="bookNow('${apt.id}','daypass')" title="Day pass · ${apt.dayPass.start}–${apt.dayPass.end} · ${fxKes(apt.dayPass.price)}"><span class="dl-dp-sun" aria-hidden="true"></span>Day pass<span class="dl-dp-price">${fxKes(apt.dayPass.price)}</span></button>` : ''}
         <button class="dl-book-btn" onclick="bookNow('${apt.id}')">${apt.bookingModel === 'hotel' ? 'Choose a room →' : 'Reserve →'}</button>
       </div>
     </div>

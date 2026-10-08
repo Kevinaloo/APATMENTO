@@ -48,7 +48,7 @@
       countdown: !t.live && t.ms && t.ms < 14 * L.DAY ? e.starts_at : null,
       meta: [
         { icon: 'pin', html: esc([e.venue, e.city].filter(Boolean).join(', ') || 'Venue to be announced') },
-        { icon: 'ticket', html: free ? 'Free entry' : 'From <b>' + esc(u.money(e.price_from, e.currency)) + '</b>', hot: true }
+        { icon: 'ticket', html: free ? 'Free entry' : 'From <b>' + esc(u.money(L.allIn ? L.allIn(e.price_from) : e.price_from, e.currency)) + '</b>', hot: true }
       ],
       sub: e.tagline || e.description,
       media: clip ? { kind: 'video', src: clip, poster: e.cover_url } : { kind: 'image', src: e.cover_url || u.arr(e.photos)[0] || '' },
@@ -582,17 +582,17 @@
             '<div class="lv-panel"><div class="lv-panel-h">' + (t.live ? 'On now' : 'Starts in') + '</div>' + UI.clock(e.starts_at, e.ends_at) +
               (tiers.length ? tiers.map(function (x, i) {
                 var gone = x.qty != null && x.sold != null && x.sold >= x.qty;
-                return '<div class="lv-tier' + (gone ? ' gone' : '') + '"><div><div class="lv-tier-n">' + esc(x.name || 'Tier ' + (i + 1)) + '</div>' + (x.note ? '<div class="lv-tier-note">' + esc(x.note) + '</div>' : '') + (gone ? '<div class="lv-tier-note" style="color:#FF6B81">Sold out</div>' : '') + '</div><div class="lv-tier-p">' + (Number(x.price_kes) === 0 ? 'Free' : esc(u.money(x.price_kes, e.currency))) + '</div></div>';
-              }).join('') : '<div class="lv-tier"><div class="lv-tier-n">' + (free ? 'Free entry' : 'Tickets') + '</div><div class="lv-tier-p">' + (free ? 'Free' : 'From ' + esc(u.money(e.price_from, e.currency))) + '</div></div>') +
+                return '<div class="lv-tier' + (gone ? ' gone' : '') + '"><div><div class="lv-tier-n">' + esc(x.name || 'Tier ' + (i + 1)) + '</div>' + (x.note ? '<div class="lv-tier-note">' + esc(x.note) + '</div>' : '') + (gone ? '<div class="lv-tier-note" style="color:#FF6B81">Sold out</div>' : '') + '</div><div class="lv-tier-p">' + (Number(x.price_kes) === 0 ? 'Free' : esc(u.money(L.allIn ? L.allIn(x.price_kes) : x.price_kes, e.currency))) + '</div></div>';
+              }).join('') : '<div class="lv-tier"><div class="lv-tier-n">' + (free ? 'Free entry' : 'Tickets') + '</div><div class="lv-tier-p">' + (free ? 'Free' : 'From ' + esc(u.money(L.allIn ? L.allIn(e.price_from) : e.price_from, e.currency))) + '</div></div>') +
               '<button class="lv-btn" type="button" data-act="book" data-id="' + esc(e.id) + '" style="width:100%;margin-top:14px">' + ic('ticket') + (free ? 'Reserve a place' : 'Get tickets') + '</button>' +
-              '<p style="margin:10px 0 0;font-size:12px;color:var(--lv-ink-3);text-align:center">Face value. Cabana adds nothing to the ticket price.</p>' +
+              '<p style="margin:10px 0 0;font-size:12px;color:var(--lv-ink-3);text-align:center">All-in price. Nothing is added at checkout.</p>' +
             '</div>' +
             (e.organiser_name ? '<div class="lv-panel"><div class="lv-panel-h">Presented by</div><div class="lv-org">' + (u.safeUrl(e.organiser_logo) ? '<img src="' + esc(e.organiser_logo) + '" alt=""/>' : '<span class="ph">' + esc(e.organiser_name.charAt(0)) + '</span>') +
               '<div><b>' + esc(e.organiser_name) + (e.organiser_verified ? ic('shield') : '') + '</b><small>' + (e.organiser_kind === 'cabana' ? 'A Cabana night' : 'Independent organiser') + '</small></div></div></div>' : '') +
           '</aside>' +
         '</div>' +
         (more.length ? UI.row({ title: 'More nights like this', items: more, render: UI.card.event, col: 'clamp(200px, 17vw, 250px)', all: L.href.tab('events') }) : '') +
-        '<div class="lv-bookbar"><div><b>' + (free ? 'Free' : esc(u.money(e.price_from, e.currency))) + '</b><small>' + esc(u.when(e.starts_at)) + '</small></div><button class="lv-btn" type="button" data-act="book" data-id="' + esc(e.id) + '">' + (free ? 'Reserve' : 'Get tickets') + '</button></div>';
+        '<div class="lv-bookbar"><div><b>' + (free ? 'Free' : esc(u.money(L.allIn ? L.allIn(e.price_from) : e.price_from, e.currency))) + '</b><small>' + esc(u.when(e.starts_at)) + '</small></div><button class="lv-btn" type="button" data-act="book" data-id="' + esc(e.id) + '">' + (free ? 'Reserve' : 'Get tickets') + '</button></div>';
       doc.body.classList.add('lv-has-bookbar');
       UI.wireRails(ctx.el);
     }
