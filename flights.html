@@ -430,11 +430,11 @@ html,body{min-height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif
         <div class="fd-grid fd-grid-2" style="margin-bottom:18px">
           <div class="fd-field" id="fd-f-depart">
             <label for="fd-depart">Departing</label>
-            <input type="date" class="fd-in" id="fd-depart" required>
+            <input type="date" class="fd-in" id="fd-depart" required data-cdp="Departing" data-cdp-theme="dark">
           </div>
           <div class="fd-field" id="fd-f-return">
             <label for="fd-return">Returning</label>
-            <input type="date" class="fd-in" id="fd-return">
+            <input type="date" class="fd-in" id="fd-return" data-cdp="Returning" data-cdp-theme="dark" data-cdp-after="fd-depart">
           </div>
         </div>
 
@@ -747,6 +747,7 @@ html,body{min-height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif
 
 <script src="/fd-atlas.js" defer></script>
 <script src="/fd-dialcodes.js" defer></script>
+<script src="/cabana-datepick.js" defer></script>
 <script src="/cabana-flights.js" defer></script>
 
 <script src="/analytics.js" defer></script>
@@ -860,7 +861,7 @@ html,body{min-height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif
 </style>
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
-<script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-calm.js" defer></script><script src="/cabana-lifecycle.js" defer></script>
 <script src="/cabana-footer-search.js" defer></script>
 </body>
 </html>

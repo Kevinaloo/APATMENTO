@@ -530,6 +530,12 @@
        sheet or choosing a currency. A card that lands on top of a press
        in progress swallows it, so the offer waits for a clear moment. */
     if (document.querySelector('html.cm-lock,html.sg-lock,body.sc-open,body.fm-open,.cfx')) return true;
+    /* Reading a listing or any other full-screen sheet: the stay drawer, the
+       location journey, a native dialog, or anything that has locked the
+       page's scroll. The offer must never land on the thing someone is
+       deciding about. */
+    if (document.querySelector('#drawer.open,dialog[open],.cabana-location-flight,.cim-player')) return true;
+    if (document.body && document.body.style.overflow === 'hidden') return true;
     var a = document.activeElement;
     if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
     return false;
@@ -752,7 +758,8 @@
         if (bar) bar.style.transform = 'scaleX(' + Math.max(0, left / POP_LIFE_MS) + ')';
       }
       if (left <= 0) { close(false); return; }
-      requestAnimationFrame(tick);
+      /* A 5 s countdown bar does not need 60 fps. */
+      setTimeout(function () { requestAnimationFrame(tick); }, 50);
     }
 
     function close(byHand) {

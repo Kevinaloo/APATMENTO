@@ -298,7 +298,11 @@ async function persistSegments(segments){
     last_computed: new Date().toISOString(),
   }));
   try {
-    await fetch(`${SUPA_URL}/rest/v1/user_segments`, {
+    /* The table has two unique keys (anon_id+segment, user_id+segment). Without
+       on_conflict, merge-duplicates cannot pick one, so every repeat visit got
+       a 409 and segments were never refreshed. */
+    const conflict = USER_ID ? 'user_id,segment' : 'anon_id,segment';
+    await fetch(`${SUPA_URL}/rest/v1/user_segments?on_conflict=${conflict}`, {
       method: 'POST',
       headers: {
         'apikey': SUPA_KEY,

@@ -231,19 +231,15 @@
       }
     },
     {
-      /* shopping.html merges a curated seller catalogue with anything
-         partners listed themselves, and prefixes the two id spaces so
-         they cannot collide. The rail reproduces both the merge and the
-         prefixes, so ?open= resolves to the same card on arrival. */
+      /* Partner shopping listings, prefixed 'l' exactly as shopping.html
+         prefixes them, so ?open= resolves to the same card on arrival. */
       key: 'shopping',
       title: 'Shopping',
       dest: 'shopping',
       fetch: function () {
-        return Promise.all([
-          get('scraped_shopping?select=*&active=is.true&in_stock=is.true&limit=40'),
-          get('listings?select=*&type=eq.shopping&is_active=is.true&limit=40')
-        ]).then(function (res) {
-          var listed = (res[1] || []).map(function (l) {
+        /* Partner listings only: the curated scraped catalogue was retired. */
+        return get('listings?select=*&type=eq.shopping&is_active=is.true&limit=40').then(function (rows) {
+          var listed = (rows || []).map(function (l) {
             return {
               pid: 'l' + l.id,
               name: l.title || 'Product',
@@ -253,17 +249,7 @@
               hot: false
             };
           });
-          var curated = (res[0] || []).map(function (r) {
-            return {
-              pid: 's' + r.id,
-              name: r.name || 'Product',
-              seller: r.seller || r.market || 'Local seller',
-              price: Number(r.price) || 0,
-              img: r.image_url || null,
-              hot: !!r.hot
-            };
-          });
-          return listed.concat(curated).sort(function (a, b) {
+          return listed.sort(function (a, b) {
             return (Number(b.hot) - Number(a.hot)) || a.name.localeCompare(b.name);
           }).slice(0, 12);
         });

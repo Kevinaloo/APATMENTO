@@ -311,7 +311,7 @@ html.wv-lock,html.wv-lock body{overflow:hidden!important;}
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="tb-left">
-    <a href="dashboard.html?role=guest&back=1" class="tb-back">
+    <a href="dashboard.html?role=guest&back=1" class="tb-back" aria-label="Back to dashboard">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     </a>
     <img src="cabana-emblem.png" class="tb-icon-sm" alt="" fetchpriority="high" decoding="async"/><img src="cabana-wordmark-color.png" class="tb-logo tb-cab-wm" alt="Cabana" onerror="this.style.display='none'" loading="lazy" decoding="async"/>
@@ -340,7 +340,7 @@ html.wv-lock,html.wv-lock body{overflow:hidden!important;}
   <div class="search-wrap">
     <div class="search-bar">
       <input class="sb-input" id="searchInput" type="text" placeholder="Search products or sellers…" oninput="renderAll()" aria-label="Search products or sellers" />
-      <button class="sb-btn" type="button">
+      <button class="sb-btn" type="button" aria-label="Search products">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       </button>
     </div>
@@ -408,8 +408,7 @@ const ESC_MAP = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ESC_MAP[m]);
 const money = n => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 
-// ── Live inventory. Curated African sellers (scraped_shopping) plus
-//    anything partners have added themselves (listings, type=shopping).
+// ── Live inventory: what partners have listed themselves (listings, type=shopping).
 //    Nothing here is hardcoded: the grid is whatever the catalogue holds.
 let PRODUCTS = [];
 let _cat = 'all', _search = '', _loaded = false;
@@ -449,17 +448,14 @@ async function loadProducts(){
   const { createClient } = supabase;
   const sb = createClient(SB_URL, SB_KEY);
 
-  const [shop, listed] = await Promise.all([
-    sb.from('scraped_shopping').select('*').eq('active', true).eq('in_stock', true),
-    sb.from('listings').select('*').eq('type', 'shopping').eq('is_active', true),
-  ]);
+  /* The curated scraped catalogue was retired (migration 20260822150000), so the
+     grid is partner listings only. */
+  const listed = await sb.from('listings').select('*').eq('type', 'shopping').eq('is_active', true);
 
-  PRODUCTS = []
-    .concat((listed.data || []).map(normaliseListing))
-    .concat((shop.data  || []).map(normaliseScraped))
+  PRODUCTS = (listed.data || []).map(normaliseListing)
     .sort((a, b) => (Number(b.hot) - Number(a.hot)) || a.name.localeCompare(b.name));
 
-  return (shop.error && listed.error) ? shop.error : null;
+  return listed.error || null;
 }
 
 // ── Category chips, built from what the catalogue actually contains
@@ -814,6 +810,6 @@ function openFromQuery(){
 </style>
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
-<script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-calm.js" defer></script><script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>
