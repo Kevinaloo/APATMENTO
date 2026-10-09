@@ -76,9 +76,9 @@ PAGES.append(dict(
          ])),
         ("How the zero-commission model works",
          "<p>Most travel platforms are funded by taking a percentage of each booking. Cabana "
-         "is not. A host lists at the rate they want to receive, a guest pays exactly that, "
-         "and the money settles to the host. Cabana earns from optional paid placement and "
-         "value-added services instead of from the transaction itself.</p>"
+         "is not. A host lists at the rate they want to receive, and that full amount settles "
+         "to the host. Guests see one small facilitation fee before they pay. Cabana also earns "
+         "from optional paid placement and value-added services.</p>"
          + table(["Platform", "Taken from host", "Added for guest"], [
              ["<b>Cabana</b>", "<b>0%</b>", "<b>0%</b>"],
              ["Airbnb", "~3%", "~14% service fee"],

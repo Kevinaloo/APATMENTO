@@ -30,17 +30,17 @@
 <link rel="apple-touch-icon" href="/cabana-apple-touch-icon.png"/>
 <meta name="apple-mobile-web-app-title" content="Cabana"/>
 <meta property="og:site_name" content="Cabana"/>
-<meta property="og:title" content="Order Food Near You in Kenya | Restaurant Menus | Cabana"/>
+<meta property="og:title" content="Food Delivery in Kenya: Order From Restaurants | Cabana"/>
 <meta property="og:description" content="Real dishes, real menus, real prices. Browse food from kitchens across Kenya and order straight from the counter."/>
 <meta property="og:url" content="https://cabana.africa/food"/>
 <meta property="og:type" content="website"/>
 <meta property="og:image" content="https://cabana.africa/og-food.jpg"/>
 <meta property="og:locale" content="en_KE"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Order Food Near You in Kenya | Restaurant Menus | Cabana"/>
+<meta name="twitter:title" content="Food Delivery in Kenya: Order From Restaurants | Cabana"/>
 <meta name="twitter:description" content="Real dishes, real prices. Order straight from the kitchen."/>
 <meta name="twitter:image" content="https://cabana.africa/og-food.jpg"/>
-<title>Order Food Near You in Kenya | Restaurant Menus | Cabana</title>
+<title>Food Delivery in Kenya: Order From Restaurants | Cabana</title>
 <!-- ═══════════════════════════════════════════════════════════════
      TYPE
      Zodiak, a high-contrast contemporary serif with a genuinely
@@ -2003,7 +2003,7 @@ function paintDock(){
     : '/order?ref='+encodeURIComponent(o.ref)+(tok?'&t='+encodeURIComponent(tok):'');
   var eta=o.status==='accepted'&&o.eta_ready_at?' · ready '+CabanaOrders.clock(o.eta_ready_at):'';
   el.className='dock'+(o.status==='ready'||o.status==='on_the_way'?' good':'');
-  el.innerHTML=(o.kitchen.photo?'<img src="'+esc(o.kitchen.photo)+'" alt=""/>':'<span class="dph"></span>')
+  el.innerHTML=(o.kitchen.photo?'<img src="'+esc(o.kitchen.photo)+'" alt="" loading="lazy" decoding="async"/>':'<span class="dph"></span>')
     +'<span class="dock-b"><b>'+esc(o.kitchen.name)+esc(more)+'</b><small><i></i><span>'+esc(CabanaOrders.say(o.status,o.mode)+eta)+'</span></small></span>'
     +'<span class="dock-go">Track</span>';
   el.hidden=false; document.body.classList.add('has-dock');
@@ -2018,7 +2018,7 @@ function paintAgain(){
   if(!done.length){ sec.hidden=true; return; }
   rail.innerHTML=done.map(function(o,i){
     return '<button class="ag" type="button" data-again="'+i+'">'
-      +(o.kitchen.photo?'<img src="'+esc(o.kitchen.photo)+'" alt="" loading="lazy"/>':'<span class="aph"></span>')
+      +(o.kitchen.photo?'<img src="'+esc(o.kitchen.photo)+'" alt="" loading="lazy" decoding="async"/>':'<span class="aph"></span>')
       +'<span class="ag-b"><b>'+esc(o.kitchen.name)+'</b><small>'+esc(o.items.map(function(x){return x.qty+'× '+x.name;}).join(', '))+'</small></span>'
       +'<span class="ag-go">Again</span></button>';
   }).join('');

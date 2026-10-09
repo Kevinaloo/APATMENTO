@@ -85,6 +85,8 @@ NOINDEX = {
     "partner-listings.html", "partner-bookings.html", "partner-calendar.html",
     "partner-agents.html", "partner-analytics.html", "partner-earnings.html",
     "partner-reviews.html", "partner-settings.html", "partner-cabana.html",
+    "404.html", "order.html", "person.html", "rider.html", "tours-studio.html",
+    "partner-fleet.html", "partner-orders.html", "partner-rooms.html",
 }
 
 SERVICE_HUBS = {

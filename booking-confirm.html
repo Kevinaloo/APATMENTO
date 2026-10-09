@@ -93,6 +93,10 @@ body.cx{min-height:100vh;}
 /* No card or PayPal on this release: M-Pesa only, and Cabana Pay is coming. */
 #pgt-paypal,#pgt-card{display:none !important;}
 </style>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="dns-prefetch" href="//www.googletagmanager.com"/>
 </head>
 <body class="cx" data-cx-vibe="stays">
 <div class="cx-page">
@@ -102,7 +106,7 @@ body.cx{min-height:100vh;}
         <button class="cx-back" type="button" onclick="history.length>1?history.back():location.href='/apartments'" aria-label="Back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19.2 12H4.8M10.8 5.6 4.4 12l6.4 6.4"/></svg>
         </button>
-        <img class="cx-brand" src="/cabana-wordmark-white.png" alt="Cabana" onerror="this.style.display='none'"/>
+        <img class="cx-brand" src="/cabana-wordmark-white.png" alt="Cabana" onerror="this.style.display='none'" fetchpriority="high" decoding="async"/>
         <div class="nav-avatar rv-avatar" id="nav-avatar"></div>
       </div>
       <div class="cx-motif" id="rv-motif" aria-hidden="true"></div>
@@ -605,7 +609,7 @@ function paintRooms() {
   list.innerHTML = ROOMS_CATALOG.map(function (r) {
     const p = ROOM_PICK[r.id], left = r.rooms_left == null ? 20 : r.rooms_left;
     const sold = left <= 0;
-    const ph = r.photos && r.photos[0] ? '<img src="' + safeText(r.photos[0]) + '" alt="" loading="lazy"/>' : (window.CabanaCheckout ? CabanaCheckout.icon('bed') : '');
+    const ph = r.photos && r.photos[0] ? '<img src="' + safeText(r.photos[0]) + '" alt="" loading="lazy" decoding="async"/>' : (window.CabanaCheckout ? CabanaCheckout.icon('bed') : '');
     const chips = [r.bed_setup, r.view, r.size_sqm ? r.size_sqm + ' m²' : null, 'Sleeps ' + r.max_adults + (r.max_children ? ' + ' + r.max_children + ' child' + (r.max_children > 1 ? 'ren' : '') : '')]
       .filter(Boolean).map(function (c) { return '<span class="cx-chip">' + safeText(c) + '</span>'; }).join('')
       + (sold ? '<span class="cx-chip is-hot">Sold out</span>' : left <= 3 ? '<span class="cx-chip is-hot">' + left + ' left</span>' : '');
@@ -953,7 +957,7 @@ async function showOutcome(d, saved, svc) {
   m.innerHTML = '<div class="rv-modal-card cx" data-cx-vibe="' + VIBE + '" role="dialog" aria-modal="true">' +
     CabanaCheckout.outcomeHtml(out, { progress: total ? Math.round(paid / total * 100) : 0, code: d.fully_paid === true ? saved.guest_code : null }) +
     (contacts ? '<div class="rv-contacts">' + contacts + '</div>' : '') +
-    '<div class="rv-modal-acts"><a class="cx-pay" href="/my-bookings.html?back=1" style="text-decoration:none"><span class="cx-pay-l">View in My Bookings</span></a>' +
+    '<div class="rv-modal-acts"><a class="cx-pay" href="/my-bookings?back=1" style="text-decoration:none"><span class="cx-pay-l">View in My Bookings</span></a>' +
     (out.tone === 'open' ? '<button class="cx-ghost" type="button" data-x>Pay a little more now</button>' : '') + '</div></div>';
   document.body.appendChild(m);
   requestAnimationFrame(function () { m.classList.add('is-open'); CabanaCheckout.animateProgress(m); });
@@ -998,7 +1002,7 @@ function showToast(msg, ms) {
       guestCount = Math.max(1, Math.min(apt.maxGuests, guestCount));
       document.getElementById('guest-cap').textContent = 'Up to ' + apt.maxGuests + (apt.maxGuests > 1 ? ' guests' : ' guest');
       const ph = Array.isArray(l.photos) && l.photos[0];
-      if (ph) document.getElementById('sum-thumb').innerHTML = '<img src="' + safeText(ph) + '" alt="" loading="lazy"/>';
+      if (ph) document.getElementById('sum-thumb').innerHTML = '<img src="' + safeText(ph) + '" alt="" loading="lazy" decoding="async"/>';
       /* A hotel always books by room; a stay that has switched off day passes cannot sell one. */
       if (l.booking_model === 'hotel' && BOOKING_KIND !== 'hotel') { BOOKING_KIND = 'hotel'; location.replace(location.pathname + '?' + (function () { const p = new URLSearchParams(params); p.set('kind', 'hotel'); return p.toString(); })()); return; }
       if (BOOKING_KIND === 'day_pass' && !l.day_pass_enabled) { showError('This stay is not offering day passes right now.'); }

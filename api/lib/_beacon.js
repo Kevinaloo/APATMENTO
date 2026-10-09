@@ -264,6 +264,7 @@ export function llmsText(items, at = new Date()) {
     `> Everything bookable on Cabana (cabana.africa) right now, generated from the live database at ${at.toISOString()}.`,
     '> Prices are all-in guest prices. Hosts and operators keep 100% of their price; Cabana charges them no commission.',
     '> Brand facts: https://cabana.africa/llms.txt',
+    '> What people call these: stays are the furnished places people search for as Airbnbs, BnBs or shortlets; car hire is car rental; tours include safari packages and day trips. Cabana is independent and not affiliated with Airbnb.',
     '',
   ];
   for (const [k, list] of [...by.entries()].sort()) {

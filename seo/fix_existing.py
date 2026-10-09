@@ -34,6 +34,8 @@ NOINDEX = {
     "partner-reviews.html", "partner-settings.html", "partner-cabana.html",
     "partner-menu.html", "restaurant.html", "support-console.html",
     "ambassador-dashboard.html", "checkout.html",
+    "404.html", "order.html", "person.html", "rider.html", "tours-studio.html",
+    "partner-fleet.html", "partner-orders.html", "partner-rooms.html",
 }
 
 # Pages where the legacy name is load-bearing and must survive.
@@ -172,6 +174,12 @@ def ensure_hreflang(src, fname):
 
 
 def ensure_robots_meta(src, fname):
+    # A page that already asks not to be indexed means it: a 404, a tool, a
+    # page the index gate held back. This sweep only ever adds noindex; the
+    # index gate alone promotes a held-back page once it has inventory.
+    cur = re.search(r'<meta\s+name="robots"\s+content="([^"]*)"', src)
+    if cur and "noindex" in cur.group(1).lower():
+        return src, 0
     private = fname in NOINDEX
     want = ("noindex, nofollow" if private else
             "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1")
