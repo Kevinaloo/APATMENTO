@@ -55,8 +55,8 @@
 
   if (window.CabanaPin) return;
 
-  var LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-  var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  var LEAFLET_CSS = '/assets/location-flight/leaflet-1.9.4.css';
+  var LEAFLET_JS = '/assets/location-flight/vendor-leaflet-1.9.4.min.js';
   var CSS_HREF = '/cabana-pinpoint.css';
 
   /* ══ IMAGERY ═══════════════════════════════════════════════════════
@@ -329,13 +329,29 @@
     return _leaflet;
   }
 
+  /* Resolves once the stylesheet has applied (or after 2.5s — a slow
+     CSS file must never hold the map hostage). Leaflet measures its
+     container the instant it is built; if the picker's own stylesheet
+     has not landed yet, the stage is a static zero-height block, the
+     map caches that size, and tiles only ever load for a sliver of the
+     real frame — the "covered up" map that never fills in. */
   function ensureCSS() {
-    if (document.querySelector('link[data-cabana-pin]')) return;
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = CSS_HREF;
-    link.setAttribute('data-cabana-pin', '');
-    document.head.appendChild(link);
+    var link = document.querySelector('link[data-cabana-pin]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = CSS_HREF;
+      link.setAttribute('data-cabana-pin', '');
+      document.head.appendChild(link);
+    }
+    return new Promise(function (resolve) {
+      var done = false;
+      function fin() { if (!done) { done = true; resolve(); } }
+      if (link.sheet) return fin();
+      link.addEventListener('load', fin);
+      link.addEventListener('error', fin);
+      setTimeout(fin, 2500);
+    });
   }
 
   function esc(s) {
@@ -437,7 +453,6 @@
     }
 
     this._wireSearch();
-    setTimeout(function () { map.invalidateSize(); }, 60);
     this._watchSize();
   };
 
@@ -974,19 +989,62 @@
 
   /* ── Sizing ────────────────────────────────────────────────────── */
 
-  /* Leaflet measures its container on init. Inside a wizard step that
-     was display:none a moment ago that measurement is zero and the map
-     renders as a grey sliver — which is precisely where this picker
-     lives, on step four of a listing form. */
+  /* Leaflet measures its container once, on init, and trusts that
+     number until told otherwise. Everything that can change the real
+     size after that — a full-screen sheet finishing its slide-in, the
+     Android URL bar collapsing, a keyboard opening, a rotation, a
+     wizard step un-hiding — leaves the cached size stale, and a stale
+     size means tiles are only requested for the old, smaller rectangle:
+     the rest of the frame stays grey however far you pan or zoom.
+
+     So the size is re-checked on every signal that could mean it
+     changed, and — the part that makes it self-healing — at the start
+     of every gesture, so a map that was ever wrong repairs itself the
+     moment a finger touches it. */
   Pin.prototype._watchSize = function () {
-    var self = this;
-    if (typeof ResizeObserver === 'undefined') return;
-    var seen = 0;
-    this._ro = new ResizeObserver(function () {
-      var w = self.host.clientWidth;
-      if (w && w !== seen) { seen = w; self.map.invalidateSize(); }
+    var self = this, map = this.map, host = this.host, raf = 0;
+    var timers = [];
+
+    function sync() {
+      raf = 0;
+      if (!host.isConnected || !self.map) return;
+      var w = host.clientWidth, h = host.clientHeight;
+      if (!w || !h) return;
+      var s = map.getSize();
+      if (Math.abs(s.x - w) > 1 || Math.abs(s.y - h) > 1) {
+        map.invalidateSize({ animate: false, pan: false });
+      }
+    }
+    function queue() { if (!raf) raf = requestAnimationFrame(sync); }
+    this._syncSize = queue;
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this._ro = new ResizeObserver(queue);
+      this._ro.observe(host);
+    }
+    window.addEventListener('resize', queue);
+    window.addEventListener('orientationchange', queue);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', queue);
+    host.addEventListener('transitionend', queue, true);
+    document.addEventListener('transitionend', queue, true);
+    map.on('movestart zoomstart', queue);
+    host.addEventListener('pointerdown', queue, true);
+    host.addEventListener('touchstart', queue, { capture: true, passive: true });
+
+    /* A short run of checks while the page settles: sheets animate in,
+       fonts reflow, the address bar retracts. */
+    [0, 60, 150, 340, 700, 1400, 2600].forEach(function (ms) {
+      timers.push(setTimeout(queue, ms));
     });
-    this._ro.observe(this.host);
+
+    this._unwatchSize = function () {
+      timers.forEach(clearTimeout);
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('resize', queue);
+      window.removeEventListener('orientationchange', queue);
+      if (window.visualViewport) window.visualViewport.removeEventListener('resize', queue);
+      document.removeEventListener('transitionend', queue, true);
+    };
   };
 
   /* ── Public handle ─────────────────────────────────────────────── */
@@ -1021,6 +1079,7 @@
 
   Pin.prototype.destroy = function () {
     if (this._ro) this._ro.disconnect();
+    if (this._unwatchSize) this._unwatchSize();
     if (this._search && this._search.destroy) this._search.destroy();
     clearTimeout(this._warnTimer);
     this.map.remove();
@@ -1048,12 +1107,12 @@
       var host = resolveEl(el);
       if (!host) return Promise.reject(new Error('CabanaPin: no host element'));
 
-      ensureCSS();
+      var cssReady = ensureCSS();
       host.classList.add('cpin', 'cpin-booting');
       host.innerHTML = '<div class="cpin-boot"><div class="cpin-boot-orb"></div>' +
         '<div>Loading the map…</div></div>';
 
-      return loadLeaflet().then(function () {
+      return Promise.all([loadLeaflet(), cssReady]).then(function () {
         var pin = new Pin(host, opts || {});
         host.classList.remove('cpin-booting');
         return pin;

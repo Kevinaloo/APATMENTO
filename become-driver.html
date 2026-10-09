@@ -549,7 +549,7 @@ select.fi{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8
         <!-- step 3 -->
         <div class="fs-step" id="s3">
           <label class="fl" for="a-mpesa">M-Pesa number for payouts</label>
-          <input class="fi" id="a-mpesa" type="tel" inputmode="tel" placeholder="Same as your phone, or a different number"/>
+          <input class="fi" id="a-mpesa" data-no-cc type="tel" inputmode="tel" placeholder="Same as your phone, or a different number"/>
           <p class="f-hint">Payouts run every Monday morning for the week that just ended. There is no
             minimum balance and no withdrawal charge from our side.</p>
 
@@ -974,5 +974,6 @@ try{ ApaSession.ready(function(st){
 })();
 </script>
 <style>.drv-id{margin:0 0 14px;padding:11px 13px;border-radius:12px;font-size:13px;line-height:1.5;background:rgba(124,58,237,.07);color:#3B2D5E;border:1px solid rgba(124,58,237,.14)}.drv-id.ok{background:rgba(13,148,103,.08);border-color:rgba(13,148,103,.2);color:#075E43}.drv-id button{margin-left:6px;border:0;border-radius:8px;padding:5px 10px;background:#6D28FF;color:#fff;font:600 12px inherit;cursor:pointer}</style>
+<script src="/cabana-countries.js" defer></script>
 </body>
 </html>

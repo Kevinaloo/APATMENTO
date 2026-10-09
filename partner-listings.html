@@ -154,15 +154,6 @@ body{display:flex;flex-direction:column;}
 .filter-chip.active{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(67,97,255,0.22);}
 .filter-right{margin-left:auto;display:flex;gap:8px;}
 
-/* LISTING CARDS */
-.listing-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;align-items:center;gap:14px;transition:all .2s;margin-bottom:9px;}
-.listing-card:hover{box-shadow:var(--sh-md);border-color:rgba(45,212,191,0.2);transform:translateX(2px);}
-.lc-thumb{width:66px;height:66px;border-radius:12px;object-fit:cover;flex-shrink:0;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:26px;}
-.lc-thumb img{width:100%;height:100%;object-fit:cover;border-radius:12px;}
-.lc-info{flex:1;min-width:0;}
-.lc-name{font-family:var(--fh);font-size:14px;font-weight:800;color:var(--ink);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.lc-meta{font-size:12px;color:var(--soft);line-height:1.5;}
-
 /* Ownership badge on a listing card. Quiet by default; amber when the
    listing is on its way to somebody else, because that is a state a
    partner must not discover by surprise. */
@@ -173,9 +164,9 @@ body{display:flex;flex-direction:column;}
 
 /* Ownership sheet */
 .own-scrim{position:fixed;inset:0;background:rgba(9,10,20,.42);backdrop-filter:blur(3px);
-  opacity:0;pointer-events:none;transition:opacity .24s;z-index:220;}
+  opacity:0;pointer-events:none;transition:opacity .24s;z-index:2210;}
 .own-scrim.open{opacity:1;pointer-events:auto;}
-.own-sheet{position:fixed;z-index:221;right:0;top:0;bottom:0;width:min(440px,100%);
+.own-sheet{position:fixed;z-index:2211;right:0;top:0;bottom:0;width:min(440px,100%);
   background:var(--card,#fff);box-shadow:-20px 0 60px rgba(9,10,20,.16);
   transform:translateX(102%);transition:transform .3s cubic-bezier(.22,1,.36,1);
   display:flex;flex-direction:column;}
@@ -244,15 +235,6 @@ body{display:flex;flex-direction:column;}
 .lc-share .cshare-glyph{width:14px;height:14px;}
 .lc-share:hover{transform:translateY(-1px);border-color:rgba(67,97,255,.45);box-shadow:0 6px 16px rgba(67,97,255,.16);}
 .lc-share:focus-visible{outline:2px solid var(--electric);outline-offset:2px;}
-/* On a phone the actions take their own row under the listing and wrap,
-   instead of squeezing the title and price into a one-word column. */
-@media(max-width:600px){
-  .listing-card{flex-wrap:wrap;align-items:flex-start;}
-  .lc-right{width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;}
-  .lc-acts{flex-wrap:wrap;}
-}
-.lc-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
-.lc-acts{display:flex;gap:6px;}
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:4px 10px;border-radius:100px;white-space:nowrap;}
 .badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .b-green{background:rgba(16,185,129,0.08);color:#059669;border:1px solid rgba(16,185,129,0.2);}.b-green::before{background:#059669;}
@@ -260,6 +242,80 @@ body{display:flex;flex-direction:column;}
 .b-sun{background:linear-gradient(135deg,rgba(255,196,77,.18),rgba(242,128,58,.12));color:#9A4A06;border:1px solid rgba(242,128,58,.3);}.b-sun::before{background:#F2803A;}
 .b-amber{background:rgba(245,177,46,0.1);color:#D97706;border:1px solid rgba(245,177,46,0.25);}.b-amber::before{background:#D97706;}
 .b-grey{background:var(--s2);color:var(--faint);border:1px solid var(--line2);}.b-grey::before{background:var(--faint);}
+
+/* A phone should show listings, not four tall tiles and two rows of chips. */
+@media(max-width:600px){
+  .stat-row{grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+  .stat-card{padding:11px 10px}.stat-card::after{display:none}
+  .sc-lbl{font-size:8.5px;letter-spacing:.05em;margin-bottom:6px}.sc-val{font-size:20px;margin-bottom:0}.sc-meta{display:none}
+  .filter-bar{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px 14px;padding:2px 16px 6px;scrollbar-width:none}
+  .filter-bar::-webkit-scrollbar{display:none}.filter-chip{flex:none}
+  .pg-hd{margin-bottom:16px}.pg-sub{display:none}
+}
+/* ═══ LISTING CARDS — the whole card is the control ═══ */
+.lcards{display:grid;gap:12px}
+@media(min-width:1100px){.lcards{grid-template-columns:repeat(2,1fr)}}
+.lcard{position:relative;display:flex;gap:14px;align-items:stretch;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  box-shadow:var(--sh-sm);cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit;-webkit-tap-highlight-color:transparent;
+  transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s,border-color .2s}
+.lcard:hover{transform:translateY(-2px);box-shadow:var(--sh-md);border-color:rgba(67,97,255,.25)}
+.lcard:active{transform:scale(.99)}
+.lcard:focus-visible{outline:2px solid var(--electric);outline-offset:2px}
+.lcard-media{position:relative;flex:none;width:104px;height:104px;border-radius:15px;overflow:hidden;background:var(--grad);display:grid;place-items:center;
+  color:#fff;font:800 30px var(--fh)}
+.lcard-media img{width:100%;height:100%;object-fit:cover;display:block}
+.lcard-dot{position:absolute;left:7px;top:7px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(10,11,24,.3);background:#10B981}
+.lcard-dot.off{background:#F59E0B}.lcard-dot.held{background:#7C3AED}.lcard-dot.wait{background:#7C3AED}
+.lcard-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding-right:22px}
+.lcard-svc{font:800 10px/1 var(--fb);letter-spacing:.1em;text-transform:uppercase;color:var(--mint-d)}
+.lcard-name{font:800 16px/1.25 var(--fh);letter-spacing:-.015em;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lcard-loc{font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lcard-foot{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin-top:3px}
+.lcard-price{font:800 13.5px var(--fh);color:var(--mint-d)}
+.lcard-stat{font-size:12px;color:var(--faint);font-weight:600}
+.lcard-chev{position:absolute;right:12px;top:50%;margin-top:-9px;width:18px;height:18px;color:var(--faint)}
+.lcard .lc-own{margin-top:2px}
+.lcard-tag{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;margin-top:3px;font:700 11px var(--fb);padding:3px 9px;border-radius:100px;background:rgba(124,58,237,.09);color:#6D28D9}
+.lcard-tag.warn{background:rgba(245,158,11,.12);color:#B45309}
+@media(max-width:420px){.lcard-media{width:88px;height:88px}.lcard{gap:12px;padding:10px}.lcard-name{font-size:15px}}
+
+/* ═══ MANAGE SHEET ═══ */
+.ms-scrim{position:fixed;inset:0;background:rgba(9,10,20,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .24s;z-index:2200}
+.ms-scrim.open{opacity:1;pointer-events:auto}
+.ms{position:fixed;z-index:2201;right:0;top:0;bottom:0;width:min(500px,100%);background:var(--surface);box-shadow:-24px 0 70px rgba(9,10,20,.18);
+  transform:translateX(104%);transition:transform .34s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;overscroll-behavior:contain}
+.ms.open{transform:none}
+@media(max-width:700px){.ms{left:0;top:auto;width:auto;max-height:92vh;border-radius:26px 26px 0 0;transform:translateY(105%)}.ms.open{transform:none}}
+.ms-grip{display:none;width:38px;height:4px;border-radius:4px;background:rgba(10,11,24,.16);margin:9px auto 0}
+@media(max-width:700px){.ms-grip{display:block}}
+.ms-head{display:flex;gap:14px;align-items:center;padding:16px 18px 14px;border-bottom:1px solid var(--line)}
+.ms-img{flex:none;width:64px;height:64px;border-radius:16px;overflow:hidden;background:var(--grad);display:grid;place-items:center;color:#fff;font:800 24px var(--fh)}
+.ms-img img{width:100%;height:100%;object-fit:cover}
+.ms-ht{flex:1;min-width:0}
+.ms-ht h2{font:800 17px/1.25 var(--fh);letter-spacing:-.02em;color:var(--ink2);margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ms-ht p{font-size:12.5px;color:var(--soft);margin-bottom:6px}
+.ms-x{flex:none;align-self:flex-start;width:36px;height:36px;border-radius:11px;border:1.5px solid var(--line2);background:var(--s2);display:grid;place-items:center;color:var(--soft);cursor:pointer}
+.ms-body{flex:1;overflow-y:auto;padding:16px 18px calc(24px + env(safe-area-inset-bottom,0px))}
+.ms-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.ms-stat{background:var(--s2);border-radius:14px;padding:11px 8px;text-align:center}
+.ms-stat b{display:block;font:800 16px var(--fh);color:var(--ink2)}
+.ms-stat span{font-size:10.5px;color:var(--faint);font-weight:700;letter-spacing:.03em}
+.ms-note{display:flex;gap:11px;padding:13px 14px;border-radius:14px;margin-bottom:16px;font-size:12.5px;line-height:1.6;background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);color:#4C1D95}
+.ms-note svg{width:18px;height:18px;flex:none;margin-top:1px}
+.ms-note b{display:block;margin-bottom:2px;color:#3B0764}
+.ms-note.amber{background:rgba(245,158,11,.09);border-color:rgba(245,158,11,.28);color:#92400E}.ms-note.amber b{color:#78350F}
+.ms-sec{font:800 10px/1 var(--fb);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:18px 2px 9px}
+.ms-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.ms-act{display:flex;align-items:center;gap:11px;padding:13px 12px;border-radius:15px;border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font:700 13px/1.25 var(--fb);text-decoration:none;text-align:left;cursor:pointer;transition:border-color .16s,background .16s,transform .16s}
+.ms-act:hover{border-color:rgba(67,97,255,.4);background:var(--s2)}.ms-act:active{transform:scale(.97)}
+.ms-act i{flex:none;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--grad-soft);color:var(--electric)}
+.ms-act i svg{width:17px;height:17px}
+.ms-act small{display:block;font:500 11px/1.3 var(--fb);color:var(--faint);margin-top:1px}
+.ms-act.primary{background:var(--grad);border-color:transparent;color:#fff;grid-column:1/-1;justify-content:center;padding:15px}
+.ms-act.primary i{background:rgba(255,255,255,.2);color:#fff}
+.ms-act.danger{color:var(--err)}.ms-act.danger i{background:rgba(255,61,90,.08);color:var(--err)}
+.ms-act.wide{grid-column:1/-1}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:11px;border:none;font-family:var(--fb);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;}
@@ -356,8 +412,6 @@ body{display:flex;flex-direction:column;}
 </style>
 
   <link rel="canonical" href="https://cabana.africa/partner-listings"/>
-<link rel="stylesheet" href="/cabana-offers.css">
-<script src="/cabana-offers.js" defer></script>
 </head>
 <body data-apa-role="partner">
 <div class="amb"><div class="ab ab1"></div><div class="ab ab2"></div></div>
@@ -451,7 +505,6 @@ body{display:flex;flex-direction:column;}
     Settings
   </a>
 
-  <button class="sbl" type="button" onclick="openStayOffers()" style="border:0;background:transparent;text-align:left">Offers &amp; campaigns</button>
   <div class="sb-refer">
     <div class="sb-refer-title">Invite a host.<br/><strong>Earn 5% for 365 days.</strong></div>
     <div class="sb-refer-sub">Every booking your referred host takes earns you 5% of our service fee, for 365 days from the day they join. No cap on how many you invite.</div>
@@ -483,8 +536,6 @@ body{display:flex;flex-direction:column;}
       Add listing
     </button>
   </div>
-  <div class="cb-offers-entry"><span class="cb-offers-entry-mark" aria-hidden="true">%</span><div><strong>Make room for your next booking.</strong><span>Create an offer or join a Cabana campaign. Your stay, your choice.</span></div><button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers()">Explore offers <span aria-hidden="true">↗</span></button></div>
-  <section id="partner-offers" hidden aria-label="Stay offers"></section>
 
 
   <!-- Listings THIS partner has sent out that are still waiting to be
@@ -543,34 +594,6 @@ body{display:flex;flex-direction:column;}
 
 </main>
 </div>
-
-<!-- MOBILE NAV -->
-<nav class="mobile-nav">
-  <a class="mn-item active" href="partner-listings.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    Listings
-  </a>
-  <a class="mn-item" href="partner-bookings.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
-    Bookings
-  </a>
-  <a class="mn-item" href="partner-earnings.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-    Earnings
-  </a>
-  <a class="mn-item" href="partner-calendar.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-    Calendar
-  </a>
-  <a class="mn-item" href="partner-analytics.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-4 4"/></svg>
-    Analytics
-  </a>
-  <a class="mn-item" onclick="openAddModal();return false;" href="#">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Add
-  </a>
-</nav>
 
 <!-- ============================================
      ADD LISTING MODAL
@@ -691,20 +714,23 @@ body{display:flex;flex-direction:column;}
   </div><!-- al-sheet -->
 </div>
 
+<div class="ms-scrim" id="ms-scrim" onclick="closeManage()"></div>
+<aside class="ms" id="ms" role="dialog" aria-modal="true" aria-labelledby="ms-title">
+  <div class="ms-grip"></div>
+  <div class="ms-head">
+    <div class="ms-img" id="ms-img"></div>
+    <div class="ms-ht"><h2 id="ms-title"></h2><p id="ms-sub"></p><span id="ms-badge" class="badge"></span></div>
+    <button class="ms-x" id="ms-x" type="button" onclick="closeManage()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="16" height="16"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="ms-body" id="ms-body"></div>
+</aside>
 <div class="toast" id="toast"></div>
 
 <script>
-async function openStayOffers(listingId){
-  const root=document.getElementById('partner-offers');
-  if(!window.CabanaOffers){toast('Offers are loading. Please try again.',false);return;}
-  await CabanaOffers.mount({client:sb,root,listingId});
-  root.scrollIntoView({block:'start',behavior:'auto'});
-}
-
 const SURL='https://gfwgbgdvxtocwhilrtdw.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmd2diZ2R2eHRvY3doaWxydGR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTE2NjMsImV4cCI6MjA5NzA4NzY2M30.U8JClv06YsNAwq9qsPb3lQ4SIPeRPjKMzsYxVfcmujw';
 let sb=null;try{sb=supabase.createClient(SURL,SKEY);}catch(e){}
-let allListings=[],activeFilter='all';
+let allListings=[],activeFilter='all',ME=null;
 
 /* TOAST */
 function toast(m,ok=true){const t=document.getElementById('toast');t.textContent=m;t.style.background=ok?'#0A0B18':'#FF3D5A';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
@@ -721,6 +747,7 @@ async function loadListings(){
     const{data:{session}}=await sb.auth.getSession();
     if(!session)return;
     const uid=session.user.id;
+    ME=uid;
     const av=document.getElementById('tb-av');
     if(av)av.textContent=(session.user.user_metadata?.first_name||session.user.email||'P')[0].toUpperCase();
 
@@ -729,7 +756,7 @@ async function loadListings(){
        "you have no listings". Sorting is client-side for the same reason. */
     const{data,error}=await sb.from('listings')
       .select('*')
-      .eq('partner_id',uid)
+      .or('partner_id.eq.'+uid+',created_by.eq.'+uid)
       .is('deleted_at',null);
 
     if(error){
@@ -1058,6 +1085,49 @@ async function loadMenuCounts(ids){
   (data||[]).forEach(r=>{MENU_COUNT[r.listing_id]=(MENU_COUNT[r.listing_id]||0)+1;});
 }
 
+/* How a listing relates to the person looking at this board.
+     held      — they filled it in for somebody; still theirs to run until
+                 that person claims it, invisible to guests meanwhile
+     onboarded — they built it, a different person now owns it
+     mine      — theirs outright
+   Only `mine` may be paused or activated: the database refuses everyone
+   else, which is why the button used to do nothing. */
+function rel(l){
+  const row=OWN[l.id]||{};
+  const type=l.ownership_type||row.ownership_type;
+  const held=type==='on_behalf'||l.status==='pending_owner';
+  const mine=!ME||l.partner_id===ME;
+  if(!mine)return {kind:'onboarded',held:false,mine:false,row};
+  return {kind:held?'held':'mine',held,mine:true,row,
+    who:l.held_for_name||row.held_for_name||'the owner'};
+}
+function stateOf(l){
+  const r=rel(l);
+  if(r.kind==='onboarded')return {cls:'b-violet',txt:'Handed over',dot:'wait'};
+  if(r.held)return {cls:'b-violet',txt:'Awaiting owner',dot:'held'};
+  if(l.status==='pending_verification')return {cls:'b-violet',txt:'Waiting on verification',dot:'wait'};
+  if(l.status==='active'||l.is_active)return {cls:'b-green',txt:'Live',dot:''};
+  return {cls:'b-amber',txt:'Paused',dot:'off'};
+}
+const ICO={
+  edit:'<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>',
+  pause:'<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  cube:'<path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  bed:'<path d="M2 20V8M2 14h20v6M22 14v-3a3 3 0 0 0-3-3H10v6"/>',
+  menu:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>',
+  bag:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+  share:'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'
+};
+const ic=(k,w)=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'+(w?' width="'+w+'" height="'+w+'"':'')+' aria-hidden="true">'+ICO[k]+'</svg>';
+
 function renderListings(list){
   const el=document.getElementById('listings-list');
   if(!list.length){
@@ -1070,55 +1140,132 @@ function renderListings(list){
     </div>`;
     return;
   }
-  el.innerHTML=list.map(l=>{
-    const photo=l.photos?.[0];
+  el.innerHTML='<div class="lcards">'+list.map(l=>{
+    const photo=l.photos&&l.photos[0];
     const svc=SVC_LABELS[l.service]||l.type||'Stay';
-    const isActive=l.status==='active'||l.is_active;
-    const waiting=l.status==='pending_verification';
-    const isStay=(l.service||'stays')==='stays';
-    const isHotel=isStay&&l.booking_model==='hotel';
-    const loc=[l.area,l.city].filter(Boolean).join(', ')||l.location||'Kenya';
-    return`<div class="listing-card">
-      ${photo
-        ?`<div class="lc-thumb"><img src="${esc(photo)}" alt="${esc(l.title||'')}" onerror="this.parentElement.textContent=this.dataset.f" data-f="${esc(svc[0])}" fetchpriority="high" decoding="async"/></div>`
-        :`<div class="lc-thumb">${svc[0]}</div>`
-      }
-      <div class="lc-info">
-        <div class="lc-name">${esc(l.title||'Untitled listing')}</div>
-        <div class="lc-meta">${esc(svc)} &middot; ${esc(loc)} &middot; ${l.booking_count||0} booking${l.booking_count!==1?'s':''}</div>
-        ${ownBadge(l)}
-        <div class="lc-price">${priceLine(l)}</div>
-        ${isActive&&!waiting?(window.CabanaShare?.button(l,{host:true,className:'lc-share',showLabel:true})||''):''}
+    const st=stateOf(l),r=rel(l);
+    const loc=[l.area,l.city].filter(Boolean).join(', ')||l.location||'';
+    const n=l.booking_count||0;
+    let tag='';
+    if(r.kind==='held')tag='<span class="lcard-tag">'+ic('shield',12)+'Held for '+esc(r.who)+' · hidden from guests</span>';
+    else if(r.kind==='onboarded')tag='<span class="lcard-tag">'+ic('users',12)+'Listed by you · now run by the owner</span>';
+    else if(OWN[l.id]&&OWN[l.id].pending_transfer_id)tag='<span class="lcard-tag warn">'+ic('share',12)+'Transfer waiting</span>';
+    return `<div class="lcard" role="button" tabindex="0" data-id="${esc(l.id)}" aria-label="Manage ${esc(l.title||'listing')}">
+      <div class="lcard-media">${photo?`<img src="${esc(photo)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:esc(svc[0])}<span class="lcard-dot ${st.dot}" title="${esc(st.txt)}"></span></div>
+      <div class="lcard-body">
+        <span class="lcard-svc">${esc(svc)}</span>
+        <div class="lcard-name">${esc(l.title||'Untitled listing')}</div>
+        ${loc?`<div class="lcard-loc">${esc(loc)}</div>`:''}
+        <div class="lcard-foot"><span class="lcard-price">${esc(priceLine(l))}</span><span class="lcard-stat">${n} booking${n===1?'':'s'}</span></div>
+        <span class="badge ${st.cls}" style="align-self:flex-start;margin-top:3px">${esc(st.txt)}</span>
+        ${tag}
       </div>
-      <div class="lc-right">
-        <span class="badge ${waiting?'b-violet':isActive?'b-green':'b-amber'}">${waiting?'Waiting on verification':isActive?'Active':'Paused'}</span>
-        ${isStay&&!isHotel&&l.day_pass_enabled?`<span class="badge b-sun" title="Day pass ${esc(String(l.day_pass_start||'').slice(0,5))}–${esc(String(l.day_pass_end||'').slice(0,5))}">Day pass on</span>`:''}
-        <div class="lc-acts">
-          ${(l.service==='food'||l.type==='food')?`<a href="partner-menu.html?id=${l.id}" class="btn btn-primary btn-sm" title="Add dishes, prices and offers">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
-            Menu
-          </a>
-          <a href="partner-orders.html?id=${l.id}" class="btn btn-ghost btn-sm" title="Accept, cook and hand over orders">Orders</a>`:''}
-          ${isHotel?`<a href="partner-rooms.html?listing=${l.id}" class="btn btn-primary btn-sm" title="Room types, inventory and nightly rates">Rooms &amp; rates</a>`:''}
-          ${isStay&&!isHotel?`<button class="btn btn-ghost btn-sm" type="button" onclick="openDayPass('${l.id}')" title="Sell a daytime window at a lower rate">${l.day_pass_enabled?'Day pass':'Add day pass'}</button>`:''}
-          ${(l.service||'stays')==='stays'?`<button class="btn btn-ghost btn-sm" type="button" onclick="openStayOffers('${l.id}')">Offers</button>`:''}
-          ${(l.service||'stays')==='stays'?tour3dAction(l):''}
-          <a href="add-listing.html?from=dashboard&edit=${l.id}" class="btn btn-ghost btn-sm">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Edit
-          </a>
-          <button class="btn btn-ghost btn-sm" onclick="openOwnership('${l.id}')" title="Ownership and transfer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Ownership
-          </button>
-          ${waiting?`<button class="btn btn-primary btn-sm" type="button" onclick="verifyFor('${l.id}')">Verify to go live</button>`:`<button class="btn btn-danger btn-sm" onclick="toggleStatus('${l.id}','${l.status||'active'}','${l.is_active}')">
-            ${isActive?'Pause':'Activate'}
-          </button>`}
-        </div>
-      </div>
+      <svg class="lcard-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICO.chev}</svg>
     </div>`;
-  }).join('');
+  }).join('')+'</div>';
 }
+document.addEventListener('click',e=>{
+  const c=e.target.closest&&e.target.closest('.lcard');
+  if(c)openManage(c.dataset.id);
+});
+document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('lcard')){e.preventDefault();openManage(e.target.dataset.id);}
+});
+
+/* ── The manage sheet ─────────────────────────────────────────────────
+   One place per listing, opened by tapping the card. Everything a host
+   can do to a listing is here, grouped, and every action says what it
+   does — the card itself stays quiet enough to read. */
+let MS_ID=null;
+function act(o){
+  const tag=o.href?'a':'button';
+  const attrs=o.href?`href="${o.href}"`:`type="button" onclick="${o.on}"`;
+  return `<${tag} class="ms-act ${o.cls||''}" ${attrs}><i>${ic(o.i)}</i><span>${o.t}${o.s?`<small>${o.s}</small>`:''}</span></${tag}>`;
+}
+function tour3dTile(l){
+  const st=l.tour_3d_status||'none';
+  if(st==='live')return act({i:'cube',t:'3D Tour live',s:'Featured on Stays',on:'void 0'});
+  if(st==='requested'||st==='scheduled')return act({i:'cube',t:'3D '+(st==='scheduled'?'scheduled':'requested'),s:'We will contact you',on:'void 0'});
+  return act({on:"openTour3d('"+l.id+"')",i:'cube',t:'Add 3D Tour',s:'Featured placement'});
+}
+function openManage(id){
+  const l=allListings.find(x=>String(x.id)===String(id));
+  if(!l)return;
+  MS_ID=id;
+  const r=rel(l),st=stateOf(l);
+  const svc=l.service||'stays',isStay=svc==='stays',isHotel=isStay&&l.booking_model==='hotel';
+  const isFood=svc==='food'||l.type==='food';
+  const isActive=l.status==='active'||l.is_active;
+  const waiting=l.status==='pending_verification';
+  const photo=l.photos&&l.photos[0];
+  const loc=[l.area,l.city].filter(Boolean).join(', ')||l.location||'';
+  const guestUrl=window.CabanaShare&&CabanaShare.listingUrl?CabanaShare.listingUrl(l):'';
+  const n=l.booking_count||0;
+  const rate=l.avg_rating?Number(l.avg_rating).toFixed(1):'–';
+
+  let h='<div class="ms-stats"><div class="ms-stat"><b>'+n+'</b><span>BOOKINGS</span></div>'
+    +'<div class="ms-stat"><b>'+esc(rate)+'</b><span>RATING</span></div>'
+    +'<div class="ms-stat"><b style="font-size:13px;line-height:1.5">'+esc(priceLine(l))+'</b><span>PRICE</span></div></div>';
+
+  if(r.kind==='held'){
+    h+='<div class="ms-note">'+ic('shield')+'<div><b>Held for '+esc(r.who)+'</b>Guests cannot see this listing until '+esc(r.who)+' signs in and claims it. It is yours to complete and share until then, and nothing here can switch it on early.</div></div>';
+  }else if(r.kind==='onboarded'){
+    h+='<div class="ms-note">'+ic('users')+'<div><b>You listed this one</b>It now belongs to its owner, so only they can edit, pause or activate it. You keep a read-only view and your onboarding credit.</div></div>';
+  }else if(waiting){
+    h+='<div class="ms-note amber">'+ic('info')+'<div><b>One step from live</b>Verify your identity once and this listing goes live by itself.</div></div>';
+  }
+
+  h+='<div class="ms-sec">Manage</div><div class="ms-grid">';
+  if(r.mine){
+    h+=act({href:'add-listing.html?from=dashboard&edit='+encodeURIComponent(l.id),i:'edit',t:'Edit details',s:'Photos, price, rules',cls:r.held?'primary':''});
+  }
+  if(guestUrl&&isActive&&!r.held)h+=act({href:guestUrl,i:'eye',t:'View as guest',s:'See what guests see'});
+  if(r.mine&&!r.held){
+    if(waiting)h+=act({on:"verifyFor('"+l.id+"')",i:'shield',t:'Verify to go live',cls:'primary'});
+    else h+=act({on:"toggleStatus('"+l.id+"','"+(l.status||'active')+"','"+l.is_active+"')",i:isActive?'pause':'play',t:isActive?'Pause listing':'Activate listing',s:isActive?'Hide it from guests':'Show it to guests',cls:isActive?'':'primary'});
+  }
+  h+='</div>';
+
+  if(r.mine&&!r.held){
+    h+='<div class="ms-sec">Grow</div><div class="ms-grid">';
+    if(isStay&&!isHotel)h+=act({on:"openDayPass('"+l.id+"')",i:'sun',t:l.day_pass_enabled?'Day pass':'Add day pass',s:l.day_pass_enabled?'On · tap to tune':'Sell daytime visits'});
+    if(isStay)h+=tour3dTile(l);
+    if(isHotel)h+=act({href:'partner-rooms.html?listing='+l.id,i:'bed',t:'Rooms & rates',s:'Types and inventory'});
+    if(isFood){
+      h+=act({href:'partner-menu.html?id='+l.id,i:'menu',t:'Menu',s:'Dishes and prices'});
+      h+=act({href:'partner-orders.html?id='+l.id,i:'bag',t:'Orders',s:'Accept and hand over'});
+    }
+    h+=act({href:'partner-calendar.html?listing='+l.id,i:'cal',t:'Calendar',s:'Availability'});
+    h+=act({href:'partner-cabana.html',i:'users',t:'Cabana Match',s:'Fill empty nights'});
+    h+='</div>';
+  }
+
+  if(r.mine||(r.kind==='held'&&OWN[l.id]&&OWN[l.id].pending_transfer_id)){
+    h+='<div class="ms-sec">Ownership</div><div class="ms-grid">';
+    if(r.kind==='held'&&OWN[l.id]&&OWN[l.id].pending_transfer_id)h+=act({on:"shareClaimLink('"+l.id+"')",i:'share',t:'Share claim link',s:'Send it to '+esc(r.who)});
+    if(r.mine)h+=act({on:"closeManage();openOwnership('"+l.id+"')",i:'users',t:'Ownership & transfer',s:r.held?'Resend or cancel the invite':'Co-owners, hand over',cls:'wide'});
+    h+='</div>';
+  }
+
+  const body=document.getElementById('ms-body');
+  document.getElementById('ms-img').innerHTML=photo?'<img src="'+esc(photo)+'" alt="">':esc((SVC_LABELS[svc]||'S')[0]);
+  document.getElementById('ms-title').textContent=l.title||'Untitled listing';
+  document.getElementById('ms-sub').textContent=[SVC_LABELS[svc]||'Stay',loc].filter(Boolean).join(' · ');
+  document.getElementById('ms-badge').className='badge '+st.cls;
+  document.getElementById('ms-badge').textContent=st.txt;
+  body.innerHTML=h;body.scrollTop=0;
+  document.getElementById('ms').classList.add('open');
+  document.getElementById('ms-scrim').classList.add('open');
+  document.documentElement.style.overflow='hidden';
+  const x=document.getElementById('ms-x');if(x)x.focus({preventScroll:true});
+}
+function closeManage(){
+  document.getElementById('ms').classList.remove('open');
+  document.getElementById('ms-scrim').classList.remove('open');
+  document.documentElement.style.overflow='';
+  MS_ID=null;
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&MS_ID)closeManage();});
 
 /* ══ CABANA 3D TOUR ══════════════════════════════════════════════════
    The paid upgrade for a stay that is already listed. The button shows
@@ -1132,6 +1279,7 @@ function tour3dAction(l){
   return '<button class="btn btn-ghost btn-sm" type="button" onclick="openTour3d(\''+l.id+'\')" title="Cabana 3D Tour: featured placement and a walkthrough">'+cube+' Add 3D Tour</button>';
 }
 async function openTour3d(id){
+  closeManage();
   const l=allListings.find(x=>String(x.id)===String(id));
   if(!l||!window.Cabana3DUpgrade||!sb)return;
   const{data:{session}}=await sb.auth.getSession();
@@ -1148,22 +1296,30 @@ async function openTour3d(id){
 
 async function toggleStatus(id,status,isActive){
   if(!sb)return;
+  const l=allListings.find(x=>String(x.id)===String(id));
+  /* Held for somebody else, or owned by somebody else: nothing to switch.
+     The button is not drawn for these, this is the belt to its braces. */
+  if(l){const r=rel(l);if(!r.mine||r.held){toast('This listing goes live when its owner claims it',false);return;}}
   const activate=(status!=='active'||isActive==='false');
-  const{data,error}=await sb.from('listings').update({status:activate?'active':'inactive',is_active:activate}).eq('id',id).select('status').maybeSingle();
+  const{data,error}=await sb.from('listings').update({status:activate?'active':'inactive',is_active:activate}).eq('id',id).eq('partner_id',ME).select('status').maybeSingle();
   if(error){toast('Failed to update',false);return;}
+  if(!data){toast('Only the listing owner can do that',false);return;}
+  closeManage();
   /* The database holds a listing back until its owner is cleared. */
   if(activate&&data&&data.status==='pending_verification')toast('Verify your identity once and this goes live by itself');
-  else toast(activate?'Listing activated':'Listing paused');
+  else toast(activate?'Listing is live':'Listing paused');
   loadListings();
 }
 /* Day pass: on, off and tuned from the card. */
 function openDayPass(id){
+  closeManage();
   const l=allListings.find(x=>String(x.id)===String(id));
   if(!l||!window.CabanaDayPassDesk)return;
   CabanaDayPassDesk.open({sb,listing:l,onSaved:x=>{toast(x.day_pass_enabled?'Day pass is live':'Day pass switched off');renderListings(activeFilter==='all'?allListings:allListings.filter(y=>(y.service||y.type||'').toLowerCase()===activeFilter||(y.type||'').toLowerCase().includes(activeFilter)));}});
 }
 /* One identity check, for every service. The listing activates itself. */
 async function verifyFor(id){
+  closeManage();
   const l=allListings.find(x=>String(x.id)===String(id));
   const ctx={roommates:'roommates_host',food:'food_vendor',shopping:'shopping_seller',events:'event_organiser',tours:'tour_operator'}[(l&&l.service)||'']||'host';
   if(!window.CabanaIdentity){location.href='partner-settings.html';return;}
@@ -1304,5 +1460,6 @@ document.addEventListener('DOMContentLoaded',loadListings);
 <script src="/apa-fees.js" defer></script>
 <script src="/cabana-daypass-desk.js" defer></script>
 <script src="/cabana-share.js?v=1" defer></script>
+<script src="/partner-nav.js" defer></script>
 </body>
 </html>

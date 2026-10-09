@@ -51,8 +51,8 @@
 
   if (window.CabanaGlobe) return;
 
-  var LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-  var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  var LEAFLET_CSS = '/assets/location-flight/leaflet-1.9.4.css';
+  var LEAFLET_JS = '/assets/location-flight/vendor-leaflet-1.9.4.min.js';
   var ATLAS_URL = '/cabana-world-atlas.json';
   var LIVE_URL = '/api/atlas';
 

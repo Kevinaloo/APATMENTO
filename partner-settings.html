@@ -345,7 +345,7 @@ td strong{color:var(--ink);font-weight:600;}
       <input class="field-input" id="s-city" type="text" placeholder="Where you are based"
              data-apa-geo data-geo-limit="6"/>
     </div>
-    <div class="field"><label for="s-mpesa" class="field-label">M-Pesa payout number</label><input class="field-input" id="s-mpesa" type="tel" placeholder="0700 000 000"/><div class="field-hint">Earnings are sent here automatically</div></div>
+    <div class="field"><label for="s-mpesa" class="field-label">M-Pesa payout number</label><input class="field-input" id="s-mpesa" data-no-cc type="tel" placeholder="0700 000 000"/><div class="field-hint">Earnings are sent here automatically</div></div>
   </div>
   <button class="btn btn-primary" onclick="saveSettings()">Save changes</button>
 </div>
@@ -468,4 +468,6 @@ function switchToGuest(){
 <script src="/cabana-calm.js" defer></script><script src="/cabana-lifecycle.js" defer></script>
 <script src="/chat.js?v=41" defer></script>
 <script src="/cabana-identity.js" defer></script>
+<script src="/partner-nav.js" defer></script>
+<script src="/cabana-countries.js" defer></script>
 </body></html>

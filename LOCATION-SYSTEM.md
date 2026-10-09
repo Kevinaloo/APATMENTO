@@ -156,3 +156,21 @@ tables missing `latitude`/`longitude` columns — was resolved in commit `a091d0
 
 Tours and events from this point forward are searchable by radius the same
 way stays are. Existing rows carry `NULL` until re-submitted or backfilled.
+
+---
+
+## Map sizing (Oct 2026)
+
+Symptom: the pin picker and listing maps showed one block of tiles and grey
+everywhere else, however far you panned or zoomed. Cause: Leaflet caches its
+container size at construction. The picker built the map before
+`cabana-pinpoint.css` had applied (stage still a zero-height static block) and
+only re-measured on *width* changes, so tiles were only ever requested for the
+stale rectangle. Fixes, in `cabana-pinpoint.js` and `apa-map.js`:
+
+- the picker waits for its stylesheet before building the map;
+- the size is re-checked on width **and** height changes, window/visual-viewport
+  resize, rotation, transitions, and at the start of every gesture, so a map
+  that was ever wrong repairs itself on first touch;
+- Leaflet is served from `/assets/location-flight/` everywhere (the picker and
+  globe no longer depend on unpkg.com).

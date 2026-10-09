@@ -267,7 +267,7 @@ html,body{min-height:100%;font-family:var(--font-body);background:var(--bg);colo
 
     <div class="row-2">
       <div class="field"><label class="field-label" for="f-city">City</label><input class="field-input" id="f-city" maxlength="60" placeholder="Nairobi"></div>
-      <div class="field"><label class="field-label" for="f-country">Country</label><select class="field-input" id="f-country"></select></div>
+      <div class="field"><label class="field-label" for="f-country">Country</label><select class="field-input" id="f-country" data-country="iso"><option value="">Choose your country</option></select></div>
     </div>
     <div class="pref-row" style="padding-top:0"><div class="pref-info"><strong>Show my city on my profile</strong><span>Only the city and country you type. Never your address or live location.</span></div><button class="toggle" type="button" role="switch" aria-checked="false" data-pref="show_location" aria-label="Show my city"></button></div>
 
@@ -437,7 +437,6 @@ function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 function buildStatic() {
   const dn = typeof Intl !== 'undefined' && Intl.DisplayNames ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
-  $('f-country').innerHTML = '<option value="">Choose…</option>' + COUNTRIES.map(c => `<option value="${c}">${esc(dn ? dn.of(c) : c)}</option>`).sort((a, b) => a.localeCompare(b)).join('');
   $('f-orgkind').innerHTML = '<option value="">Choose…</option>' + Object.entries(PP.ORG_KIND).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
   $('f-langs').innerHTML = Object.entries(PP.LANG).map(([k, v]) => `<button type="button" class="chip" data-lang="${k}" aria-pressed="false">${esc(v)}</button>`).join('');
   $('f-interests').innerHTML = Object.entries(PP.INTERESTS).map(([k, v]) => `<button type="button" class="chip" data-int="${k}" aria-pressed="false">${esc(v)}</button>`).join('');
@@ -849,7 +848,7 @@ function openOrgForm() {
     <div class="field"><label class="field-label" for="o-legal">Registered name</label><input class="field-input" id="o-legal" maxlength="120" required value="${esc(d.display_name || '')}"><span class="field-hint">Exactly as on your certificate.</span></div>
     <div class="row-2">
       <div class="field"><label class="field-label" for="o-reg">Registration or permit number</label><input class="field-input" id="o-reg" maxlength="60" required></div>
-      <div class="field"><label class="field-label" for="o-country">Country of registration</label><select class="field-input" id="o-country" required>${$('f-country').innerHTML}</select></div>
+      <div class="field"><label class="field-label" for="o-country">Country of registration</label><select class="field-input" id="o-country" data-country="iso" required></select></div>
     </div>
     <div class="row-2">
       <div class="field"><label class="field-label" for="o-kind">Type</label><select class="field-input" id="o-kind" required>${$('f-orgkind').innerHTML}</select></div>
@@ -858,6 +857,7 @@ function openOrgForm() {
     <div class="field"><label class="field-label" for="o-doc">Certificate of incorporation, business permit or registration</label><input class="field-input" id="o-doc" type="file" accept="application/pdf,image/*" required><span class="field-hint">PDF or photo, up to 8 MB. Stored privately and seen only by Cabana’s verification team.</span></div>
     <div class="progress" id="org-prog" hidden><i></i></div>
     <div class="acts"><button class="btn btn-gold" type="submit">Submit for review</button><button class="btn btn-ghost" type="button" id="org-cancel">Cancel</button></div></form>`;
+  if (window.CabanaCountries) CabanaCountries.upgrade();
   $('o-country').value = d.country_code || 'KE'; $('o-kind').value = d.org_kind || '';
   $('org-cancel').addEventListener('click', () => slot.innerHTML = '');
   $('org-form').addEventListener('submit', async e => {
@@ -994,5 +994,6 @@ function showToast(msg) { toast(msg); }
 <script src="/cabana-call.js" defer></script>
 <script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
 <script src="/cabana-calm.js" defer></script><script src="/cabana-lifecycle.js" defer></script>
+<script src="/cabana-countries.js" defer></script>
 </body>
 </html>

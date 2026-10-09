@@ -824,7 +824,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(
         <div class="loc-fields" id="loc-fields">
           <div class="loc-fields-h"><span>Address</span><span class="loc-fields-s" id="loc-fields-s">Shown to guests as area and city only, until they book</span></div>
           <div class="row2">
-            <div class="field"><label for="f-country" class="flbl">Country</label><select class="fsel" id="f-country" data-value="Kenya"><option>Kenya</option></select></div>
+            <div class="field"><label for="f-country" class="flbl">Country</label><select class="fsel" id="f-country" data-country="name" data-value="Kenya"><option>Kenya</option></select></div>
             <div class="field"><label for="f-city" class="flbl">City or town</label><input class="finput" id="f-city" placeholder="Nairobi" autocomplete="address-level2"/></div>
           </div>
           <div class="row2">
@@ -3279,5 +3279,6 @@ buildNav();
 <script src="/cabana-listing-cards.js" defer></script>
 <script src="/cabana-listing-journeys.js" defer></script>
 <script src="/cabana-identity.js" defer></script>
+<script src="/cabana-countries.js" defer></script>
 </body>
 </html>

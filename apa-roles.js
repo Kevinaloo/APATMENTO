@@ -376,17 +376,14 @@
     var s = buildSheet();
     var here = current();
 
-    var rows = ROLES.filter(function (r) {
-      /* Invitation-only and not invited: not a row, not a greyed-out row,
-         nothing. See rule 2 at the top of this file. */
-      return !(r.inviteOnly && !st[r.key]);
-    }).map(function (r) {
+    var rows = ROLES.map(function (r) {
       var have = !!st[r.key];
       var pending = st[r.key] === 'pending';
       var isHere = r.key === here;
       var verb = isHere ? 'You are here'
                : pending ? (st.ambassadorStep === 'email_unconfirmed' ? 'Confirm your email to unlock' : 'Verify your ID to unlock')
                : have   ? r.switchVerb
+               : r.inviteOnly ? 'By invitation only'
                         : (r.joinVerb || ('Become a ' + r.label.toLowerCase()));
 
       return '<button class="apa-ri" data-role="' + esc(r.key) + '" data-have="' + have + '"'
@@ -396,7 +393,7 @@
         +     '<span class="apa-ri-t">' + esc(r.label)
         +       (isHere ? '<span class="apa-ri-tag">You are here</span>'
                         : pending ? '<span class="apa-ri-tag apa-ri-tag-step">One step left</span>'
-                        : (!have ? '<span class="apa-ri-tag">Not yet</span>' : ''))
+                        : (!have ? '<span class="apa-ri-tag">' + (r.inviteOnly ? 'Invite only' : 'Not yet') + '</span>' : ''))
         +     '</span>'
         +     '<span class="apa-ri-d">' + esc(isHere ? r.tagline : verb + ' · ' + r.tagline) + '</span>'
         +   '</span>'
@@ -424,7 +421,9 @@
     s.sheet.querySelectorAll('[data-role]').forEach(function (b) {
       b.addEventListener('click', function () {
         var key = b.getAttribute('data-role');
-        if (b.getAttribute('data-have') === 'true') go(key, st); else join(key);
+        if (b.getAttribute('data-have') === 'true') go(key, st);
+        else if (key === 'ambassador' && !(st.ambassador === 'pending')) { close(); gate(); }
+        else join(key);
       });
     });
   }
@@ -456,6 +455,138 @@
     });
   }, 'esc');
 
+
+  /* ── "This account is not part of that" ───────────────────────────────
+     Shown instead of a dead end when somebody who has not been invited
+     reaches for the Ambassador programme. It says what is true, and gives
+     them a real way to ask: a message that arrives in the admin inbox
+     (api/contact-admin → Resend), with their account attached so nobody
+     has to ask who they are. */
+  var GATE_CSS = ''
+    + '.apa-g-scrim{position:fixed;inset:0;z-index:2500;background:rgba(9,10,20,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .24s}'
+    + '.apa-g-scrim.on{opacity:1;pointer-events:auto}'
+    + '.apa-g{position:fixed;z-index:2501;left:50%;top:50%;width:min(440px,calc(100vw - 28px));max-height:calc(100dvh - 32px);overflow:auto;background:#fff;color:#0C0D1A;'
+    +   'border-radius:26px;padding:26px 22px 22px;box-shadow:0 30px 90px rgba(9,10,20,.35);opacity:0;pointer-events:none;transform:translate(-50%,-46%) scale(.97);'
+    +   'transition:opacity .24s,transform .28s cubic-bezier(.22,1,.36,1);font-family:system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}'
+    + '.apa-g.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}'
+    + '@media(max-width:520px){.apa-g{left:0;right:0;top:auto;bottom:0;width:auto;border-radius:26px 26px 0 0;transform:translateY(14px);padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}.apa-g.on{transform:none}}'
+    + '@media(prefers-color-scheme:dark){.apa-g{background:#15161F;color:#F2F3F9}}[data-theme="dark"] .apa-g{background:#15161F;color:#F2F3F9}'
+    + '.apa-g-i{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#6D28FF,#4F6DFF);margin-bottom:16px;box-shadow:0 12px 28px -10px rgba(109,40,255,.6)}'
+    + '.apa-g-i svg{width:26px;height:26px}'
+    + '.apa-g h2{margin:0 0 8px;font-size:20px;line-height:1.25;font-weight:800;letter-spacing:-.02em}'
+    + '.apa-g p{margin:0 0 18px;font-size:14px;line-height:1.65;opacity:.7}'
+    + '.apa-g label{display:block;font-size:12px;font-weight:700;margin:0 0 6px;opacity:.8}'
+    + '.apa-g textarea,.apa-g input{width:100%;box-sizing:border-box;border-radius:14px;border:1.5px solid rgba(125,125,160,.35);background:transparent;color:inherit;font:500 15px/1.5 inherit;padding:12px 14px;outline:none;transition:border-color .16s}'
+    + '.apa-g textarea{min-height:120px;resize:vertical}'
+    + '.apa-g textarea:focus,.apa-g input:focus{border-color:#6D28FF}'
+    + '.apa-g-f{margin-bottom:14px}'
+    + '.apa-g-r{display:flex;gap:10px;flex-wrap:wrap}'
+    + '.apa-g-b{flex:1;min-width:140px;min-height:48px;border-radius:15px;border:1.5px solid rgba(125,125,160,.35);background:transparent;color:inherit;font:700 14.5px inherit;cursor:pointer;transition:transform .16s,opacity .16s}'
+    + '.apa-g-b:active{transform:scale(.97)}'
+    + '.apa-g-b.p{border-color:transparent;color:#fff;background:linear-gradient(135deg,#6D28FF,#4F6DFF);box-shadow:0 12px 26px -12px rgba(109,40,255,.8)}'
+    + '.apa-g-b[disabled]{opacity:.55;cursor:default}'
+    + '.apa-g-m{font-size:12.5px;line-height:1.55;margin:10px 0 0;min-height:18px}'
+    + '.apa-g-m.e{color:#E11D48}.apa-g-m.ok{color:#059669;font-weight:700}';
+
+  var _gate = null;
+
+  function gateEnsure() {
+    if (_gate) return _gate;
+    safe(function () {
+      if (!doc.getElementById('apa-g-css')) {
+        var st = doc.createElement('style'); st.id = 'apa-g-css'; st.textContent = GATE_CSS; doc.head.appendChild(st);
+      }
+    }, 'gate-css');
+    var scrim = doc.createElement('div'); scrim.className = 'apa-g-scrim';
+    var box = doc.createElement('div'); box.className = 'apa-g';
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Ambassador access');
+    scrim.addEventListener('click', gateClose);
+    doc.body.appendChild(scrim); doc.body.appendChild(box);
+    _gate = { scrim: scrim, box: box };
+    return _gate;
+  }
+
+  function gateClose() {
+    if (!_gate) return;
+    _gate.scrim.classList.remove('on'); _gate.box.classList.remove('on');
+    safe(function () { doc.documentElement.style.overflow = ''; }, 'unlock');
+  }
+
+  function accountEmail() {
+    return new Promise(function (resolve) {
+      var c = client();
+      if (!c || !c.auth || !c.auth.getSession) { resolve({ email: '', token: '' }); return; }
+      c.auth.getSession().then(function (r) {
+        var s = r && r.data && r.data.session;
+        resolve({ email: (s && s.user && s.user.email) || '', token: (s && s.access_token) || '' });
+      }, function () { resolve({ email: '', token: '' }); });
+    });
+  }
+
+  function gate() {
+    var g = gateEnsure();
+    accountEmail().then(function (acct) {
+      var shield = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6z"/><path d="M12 8v4M12 16h.01"/></svg>';
+      g.box.innerHTML =
+          '<div class="apa-g-i">' + shield + '</div>'
+        + '<h2>This account isn’t part of the Ambassador programme</h2>'
+        + '<p>Ambassadors are a hand-picked field team, joined by invitation only'
+        + (acct.email ? ', and <b>' + esc(acct.email) + '</b> hasn’t been invited' : ', and this account hasn’t been invited')
+        + ' — so this service isn’t available to it. If you think that’s a mistake, or you’d like to be considered, send us a message and we’ll get back to you.</p>'
+        + '<div class="apa-g-r"><button type="button" class="apa-g-b p" data-g-contact>Contact support</button>'
+        + '<button type="button" class="apa-g-b" data-g-close>Close</button></div>';
+      g.box.querySelector('[data-g-close]').addEventListener('click', gateClose);
+      g.box.querySelector('[data-g-contact]').addEventListener('click', function () { gateContact(acct); });
+      g.scrim.classList.add('on'); g.box.classList.add('on');
+      safe(function () { doc.documentElement.style.overflow = 'hidden'; }, 'lock');
+      safe(function () { g.box.querySelector('[data-g-contact]').focus(); }, 'focus');
+    });
+  }
+
+  function gateContact(acct) {
+    var g = gateEnsure();
+    g.box.innerHTML =
+        '<h2>Message our team</h2>'
+      + '<p>Tell us who you are and why you’re interested. It goes straight to the Cabana admin team.</p>'
+      + (acct.email ? '' : '<div class="apa-g-f"><label for="apa-g-em">Your email</label><input id="apa-g-em" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>')
+      + '<div class="apa-g-f"><label for="apa-g-msg">Your message</label><textarea id="apa-g-msg" maxlength="2000" placeholder="Hi, I’d like to join the Ambassador programme because…"></textarea></div>'
+      + '<div class="apa-g-r"><button type="button" class="apa-g-b p" data-g-send>Send message</button><button type="button" class="apa-g-b" data-g-close>Cancel</button></div>'
+      + '<p class="apa-g-m" role="status" aria-live="polite"></p>';
+    var msg = g.box.querySelector('#apa-g-msg'), em = g.box.querySelector('#apa-g-em');
+    var note = g.box.querySelector('.apa-g-m'), send = g.box.querySelector('[data-g-send]');
+    g.box.querySelector('[data-g-close]').addEventListener('click', gateClose);
+    safe(function () { msg.focus(); }, 'focus');
+
+    send.addEventListener('click', function () {
+      var text = msg.value.trim(), mail = acct.email || (em && em.value.trim()) || '';
+      note.className = 'apa-g-m e';
+      if (text.length < 10) { note.textContent = 'Please write a little more so we can help.'; return; }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { note.textContent = 'Add a valid email so we can reply to you.'; return; }
+      send.disabled = true; send.textContent = 'Sending…'; note.className = 'apa-g-m'; note.textContent = '';
+      var headers = { 'Content-Type': 'application/json' };
+      if (acct.token) headers.Authorization = 'Bearer ' + acct.token;
+      fetch('/api/contact-admin', {
+        method: 'POST', headers: headers,
+        body: JSON.stringify({ topic: 'ambassador-access', message: text, email: mail, page: global.location.pathname })
+      }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok && j.ok !== false, j: j }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.j && res.j.error) || 'send_failed');
+          g.box.innerHTML = '<div class="apa-g-i" style="background:linear-gradient(135deg,#10B981,#2DD4BF)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>'
+            + '<h2>Message sent</h2><p>Thank you. We’ll reply to <b>' + esc(mail) + '</b> as soon as we can.</p>'
+            + '<div class="apa-g-r"><button type="button" class="apa-g-b p" data-g-close>Done</button></div>';
+          g.box.querySelector('[data-g-close]').addEventListener('click', gateClose);
+        })
+        .catch(function (e) {
+          send.disabled = false; send.textContent = 'Send message';
+          note.className = 'apa-g-m e';
+          note.innerHTML = (e && e.message === 'rate_limit_exceeded' ? 'You’ve sent a few messages already — please wait a minute.' : 'We couldn’t send that just now.')
+            + ' You can also email <a href="mailto:connect@cabana.africa?subject=' + encodeURIComponent('Ambassador programme') + '">connect@cabana.africa</a>.';
+        });
+    });
+  }
+
+  safe(function () { doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') gateClose(); }); }, 'gate-esc');
+
   /* ── Mounting ─────────────────────────────────────────────────────── */
 
   function mountTrigger(host, opts) {
@@ -480,22 +611,23 @@
     var here = current();
     return status().then(function (st) {
       host.innerHTML = '<div class="apa-rm">' + ROLES.filter(function (r) {
-        if (r.key === here) return false;
-        if (r.inviteOnly && !st[r.key]) return false;
-        return true;
+        return r.key !== here;
       }).map(function (r) {
         var have = !!st[r.key];
         var pending = st[r.key] === 'pending';
         return '<button class="apa-rm-i" data-role="' + esc(r.key) + '" data-have="' + have + '">'
           + '<span style="color:' + esc(r.accent) + ';display:inline-flex">' + iconSVG(r) + '</span>'
-          + esc(pending ? r.switchVerb + ' · one step left' : have ? r.switchVerb : (r.joinVerb || ('Become a ' + r.label.toLowerCase())))
+          + esc(pending ? r.switchVerb + ' · one step left' : have ? r.switchVerb
+              : r.inviteOnly ? r.label + ' · by invitation' : (r.joinVerb || ('Become a ' + r.label.toLowerCase())))
           + '</button>';
       }).join('') + '</div>';
 
       host.querySelectorAll('[data-role]').forEach(function (b) {
         b.addEventListener('click', function () {
           var key = b.getAttribute('data-role');
-          if (b.getAttribute('data-have') === 'true') go(key, st); else join(key);
+          if (b.getAttribute('data-have') === 'true') go(key, st);
+          else if (key === 'ambassador' && st.ambassador !== 'pending') gate();
+          else join(key);
         });
       });
       return st;
@@ -528,6 +660,7 @@
     join: join,
     open: open,
     close: close,
+    gate: gate,
     mount: mount,
     refresh: function () { _status = null; return status(); }
   };
