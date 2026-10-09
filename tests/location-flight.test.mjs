@@ -7,7 +7,7 @@ const flight = readFileSync(new URL('../cabana-location-flight.js', import.meta.
 const mapSource = readFileSync(new URL('../apa-map.js', import.meta.url), 'utf8');
 const deferred = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return {promise,resolve,reject}; };
 const flush = async () => { for(let i=0;i<12;i++) await Promise.resolve(); };
-function setup({reduced=false, area, globePromise, loadPromise, tilesNever=false}={}) {
+function setup({reduced=false, area, globePromise, loadPromise}={}) {
   const dom=new JSDOM('<button id="listing">Listing</button>',{url:'https://cabana.africa/apartments',runScripts:'outside-only'});
   const w=dom.window; let now=0,next=0;const timers=new Map(),frames=new Map(),maps=[],globes=[];
   w.setTimeout=(fn,delay=0)=>{const id=++next;timers.set(id,{fn,at:now+delay});return id;};
@@ -29,14 +29,11 @@ function setup({reduced=false, area, globePromise, loadPromise, tilesNever=false
       flyTo(center,zoom){this.views.push({center,zoom,animated:true});},setView(center,zoom){this.views.push({center,zoom,animated:false});},remove(){this.removed=true;}};
     maps.push(m);return m;
   },circle:()=>({addTo(){}})};
-  const handlers={};
-  w.ApaMap={load:()=>loadPromise||Promise.resolve(L),paintBase:()=>({base:{on:(name,fn)=>{ if(tilesNever)(handlers[name]=handlers[name]||[]).push(fn); else fn(); }},destroy(){}})};
+  w.ApaMap={load:()=>loadPromise||Promise.resolve(L),paintBase:()=>({base:{on:(name,fn)=>fn()},destroy(){}})};
   w.eval(flight);
   const button=w.document.querySelector('button');button.focus();
   const opts={name:'Forest House',city:'Nairobi',country:'Kenya',area:'Westlands',areaPromise:area||Promise.resolve({center:[-1.26,36.8],radius:500}),returnFocus:button};
-  return {w,dom,maps,globes,opts,timers,frames,handlers,dialog:()=>w.document.querySelector('dialog'),
-    async run(ms,step=16){for(let t=0;t<ms;t+=step)await this.tick(Math.min(step,ms-t));},
-    get now(){return now;},
+  return {w,dom,maps,globes,opts,timers,frames,dialog:()=>w.document.querySelector('dialog'),
     async tick(ms){now+=ms;for(const [id,t] of [...timers])if(t.at<=now){timers.delete(id);t.fn();}for(const [id,fn] of [...frames]){frames.delete(id);fn(now);}await flush();},
     finish(){w.CabanaLocationFlight.close();dom.window.close();}};
 }
@@ -45,52 +42,12 @@ test('opens synchronously on click even when every location resource is still pe
   const s=setup({area:new Promise(()=>{}),globePromise:new Promise(()=>{})});
   s.w.CabanaLocationFlight.open(s.opts);
   assert.equal(s.dialog().open,true);assert.match(s.dialog().textContent,/Exact location available after booking/);
-  assert.equal(s.dialog().querySelector('.clf-count').textContent,'15s');
+  assert.equal(s.dialog().querySelector('.clf-count').textContent,'30s');
   assert.equal(s.w.document.body.style.overflow,'hidden');s.finish();
 });
-test('the journey is 15 seconds of media time, and closes when geocoding and maps never answer',async()=>{
+test('hard deadline closes at 30 seconds even when geocoding and maps never answer',async()=>{
   const s=setup({area:new Promise(()=>{})});s.w.CabanaLocationFlight.open(s.opts);
-  await s.run(14000);assert.ok(s.dialog());await s.run(6600);assert.equal(s.dialog(),null);assert.equal(s.frames.size,0);s.finish();
-});
-test('a hard wall-clock deadline still ends a journey whose frames never run',async()=>{
-  const s=setup({area:new Promise(()=>{})});s.w.CabanaLocationFlight.open(s.opts);
-  await s.tick(20499);assert.ok(s.dialog());await s.tick(1);assert.equal(s.dialog(),null);s.finish();
-});
-test('a hitching frame never skips a scene: media time advances by a capped step',async()=>{
-  const s=setup();s.w.CabanaLocationFlight.open(s.opts);await flush();await s.tick(16);
-  await s.tick(4000);   // one 4 s freeze must count as at most one capped frame
-  assert.equal(s.dialog().dataset.stage,'0');assert.match(s.dialog().querySelector('.clf-count').textContent,/^1[45]s$/);s.finish();
-});
-test('the street map is warmed invisibly at the zoom the globe hands over at',async()=>{
-  const s=setup();s.w.CabanaLocationFlight.open(s.opts);await flush();
-  const z=s.maps[0].options.zoom;assert.ok(z>3.5&&z<6,'matched zoom, not a fixed 3: '+z);
-  assert.ok(!s.dialog().classList.contains('clf-map-visible'));s.finish();
-});
-test('the handoff waits for map tiles, then flies once to the area and lands before the end',async()=>{
-  const s=setup({tilesNever:true});s.w.CabanaLocationFlight.open(s.opts);await flush();
-  await s.run(8000);assert.ok(!s.dialog().classList.contains('clf-map-visible'));
-  await s.run(1500);  // holding at the handoff: the clock is nearly still, nothing is skipped
-  assert.ok(!s.dialog().classList.contains('clf-map-visible'));assert.equal(s.dialog().dataset.stage,'2');
-  s.handlers.load.forEach(fn=>fn());await s.run(300);
-  assert.ok(s.dialog().classList.contains('clf-map-visible'));
-  const flies=s.maps[0].views.filter(v=>v.animated);assert.equal(flies.length,1);assert.equal(flies[0].zoom,14);s.finish();
-});
-test('on a very slow network the handoff proceeds after the hold limit instead of waiting forever',async()=>{
-  const s=setup({tilesNever:true});s.w.CabanaLocationFlight.open(s.opts);await flush();
-  await s.run(8300+3600);assert.ok(s.dialog().classList.contains('clf-map-visible'));s.finish();
-});
-test('a device that cannot keep up gets the still arrival instead of a stuttering flight',async()=>{
-  const s=setup();s.w.CabanaLocationFlight.open(s.opts);await flush();
-  for(let i=0;i<80;i++)await s.tick(130);   // ~8 fps even after quality steps down
-  assert.equal(s.dialog()?.dataset.stage??'4','4');assert.ok(s.maps[0].views.some(v=>v.zoom===14&&!v.animated));
-  for(let i=0;i<60;i++)await s.tick(130);assert.equal(s.dialog(),null);s.finish();
-});
-test('a globe that drops frames steps its quality down, never up',async()=>{
-  const s=setup();let tiers=[];
-  s.w.CabanaLocationGlobe.create=()=>Promise.resolve({draw(){},destroy(){},setQuality(n){tiers.push(n);}});
-  s.w.CabanaLocationFlight.open(s.opts);await flush();await s.run(300);assert.deepEqual(tiers,[]);
-  for(let i=0;i<60;i++)await s.tick(48);   // sustained ~20 fps
-  assert.ok(tiers.length>=1&&tiers.every((n,i)=>i===0||n>tiers[i-1]));s.finish();
+  await s.tick(29999);assert.ok(s.dialog());await s.tick(1);assert.equal(s.dialog(),null);assert.equal(s.frames.size,0);s.finish();
 });
 test('click dismiss, Escape and native cancel release resources and restore listing focus',async()=>{
   for(const kind of ['click','escape','cancel']){
@@ -115,7 +72,7 @@ test('a globe that arrives after dismissal is destroyed and never reopens the pr
 });
 test('listing data is text, not HTML or raw coordinates',async()=>{
   const s=setup();s.w.CabanaLocationFlight.open({...s.opts,name:'<img src=x onerror=alert(1)>',area:'<svg onload=alert(1)>',latitude:12.345678,longitude:98.765432});
-  await flush();await s.run(9000);assert.equal(s.dialog().querySelector('h2 img'),null);assert.match(s.dialog().querySelector('h2').textContent,/<img/);
+  await flush();await s.tick(24000);assert.equal(s.dialog().querySelector('h2 img'),null);assert.match(s.dialog().querySelector('h2').textContent,/<img/);
   assert.doesNotMatch(s.dialog().textContent,/12\.345678|98\.765432/);assert.deepEqual([...s.maps[0].options.center],[-1.26,36.8]);s.finish();
 });
 test('reduced motion shows the final area without a flying camera or rotating globe',async()=>{
@@ -125,19 +82,18 @@ test('reduced motion shows the final area without a flying camera or rotating gl
 });
 test('all five geographic stages occur before automatic dismissal',async()=>{
   const s=setup();s.w.CabanaLocationFlight.open(s.opts);await flush();const stages=[];
-  await s.run(16);stages.push(s.dialog().dataset.stage);
-  for(const step of [3100,3000,3400,3100]){await s.run(step);stages.push(s.dialog().dataset.stage);}
+  for(const delta of [16,5400,5400,5400,5400]){await s.tick(delta);stages.push(s.dialog().dataset.stage);}
   assert.deepEqual(stages,['0','1','2','3','4']);assert.equal(s.maps[0].views.at(-1).zoom,14);s.finish();
 });
 test('missing or invalid areas do not animate to an invented point',async()=>{
   for(const center of [null,[null,0],[NaN,0],[91,30],[0,181]]){
-    const s=setup({area:Promise.resolve(center?{center,radius:500}:null)});s.w.CabanaLocationFlight.open(s.opts);await flush();await s.run(300);
-    assert.equal(s.maps.length,0);assert.match(s.dialog().textContent,/not available/);await s.run(4000);assert.equal(s.dialog(),null);s.finish();
+    const s=setup({area:Promise.resolve(center?{center,radius:500}:null)});s.w.CabanaLocationFlight.open(s.opts);await flush();await s.tick(27000);
+    assert.equal(s.maps.length,0);assert.match(s.dialog().textContent,/not available/);await s.tick(3000);assert.equal(s.dialog(),null);s.finish();
   }
 });
 test('map failure still allows dismissal and automatic continuation',async()=>{
   const s=setup({loadPromise:Promise.reject(new Error('offline'))});s.w.CabanaLocationFlight.open(s.opts);await flush();
-  assert.match(s.dialog().textContent,/temporarily unavailable/);await s.run(16500);assert.equal(s.dialog(),null);s.finish();
+  assert.match(s.dialog().textContent,/temporarily unavailable/);await s.tick(30000);assert.equal(s.dialog(),null);s.finish();
 });
 test('page navigation tears down a running preview',async()=>{
   const s=setup();s.w.CabanaLocationFlight.open(s.opts);await flush();s.w.dispatchEvent(new s.w.Event('pagehide'));
@@ -174,11 +130,4 @@ test('approximate points remain valid and near the listing at the poles and date
     assert.ok(Math.abs(a.center[0])<=90&&Math.abs(a.center[1])<=180);assert.ok(s.api.distance(...pt,...a.center)<501);
   }
   s.dom.window.close();
-});
-
-test('the area circle is added on arrival, not during the zoom animation that would balloon its stroke',async()=>{
-  const s=setup();let added=0;
-  s.w.ApaMap.load=()=>Promise.resolve({map:(el,o)=>({el,options:o,views:[],attributionControl:{setPrefix(){}},on(){},invalidateSize(){},stop(){},flyTo(){},setView(){},remove(){}}),circle:()=>({addTo(){added++;}})});
-  s.w.CabanaLocationFlight.open(s.opts);await flush();
-  await s.run(9000);assert.equal(added,0);await s.run(3600);assert.equal(added,1);s.finish();
 });

@@ -35,20 +35,14 @@
     const geography = await preload();
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Canvas unavailable');
-    const d3 = window.d3, projection = d3.geoOrthographic().clipAngle(90).precision(.6);
+    const d3 = window.d3, projection = d3.geoOrthographic().clipAngle(90).precision(1);
     const path = d3.geoPath(projection, context), sphere = {type:'Sphere'}, grid = d3.geoGraticule10();
-    /* Quality tiers. Tier 0 is the full picture; the journey steps down a tier
-       only if frames are arriving late, so a slow phone still gets a smooth
-       globe, just a simpler one. */
-    const TIERS = [
-      { dpr: 2,   precision: .6, grid: true,  borders: true,  borderScale: 1.4 },
-      { dpr: 1.5, precision: 1.2, grid: false, borders: true,  borderScale: 2.2 },
-      { dpr: 1,   precision: 2.4, grid: false, borders: false, borderScale: 99 }
-    ];
-    let tier = 0, dead = false, width = 0, height = 0, dpr = 1, previous;
+    let dead = false, width = 0, height = 0, dpr = 1, previous;
     function resize() {
       width = canvas.clientWidth; height = canvas.clientHeight;
-      dpr = Math.min(window.devicePixelRatio || 1, TIERS[tier].dpr);
+      /* 1.5x is indistinguishable on a globe this soft, and 44% fewer pixels to fill
+         on every frame of a 30 s animation. */
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
       previous = null;
     }
@@ -56,10 +50,9 @@
     const observer = window.ResizeObserver ? new ResizeObserver(resize) : null;
     observer?.observe(canvas);
     return {
-      draw({lat = 0, lng = 0, scale = 1, pin = null, pinAlpha = 0}) {
+      draw({lat = 0, lng = 0, scale = 1}) {
         if (dead || !width || !height) return;
-        const pulse = pin && pinAlpha > .01 ? Math.floor(performance.now() / 50) : 0;
-        const key = [lat,lng,scale,width,height,pinAlpha.toFixed(2),pulse].join(',');
+        const key = [lat,lng,scale,width,height].join(',');
         if (key === previous) return;
         previous = key;
         const radius = Math.min(width * .43, height * .42) * scale;
@@ -73,37 +66,19 @@
         const ocean = context.createRadialGradient(cx-radius*.4,cy-radius*.5,0,cx,cy,radius*1.15);
         ocean.addColorStop(0,'#367c89');ocean.addColorStop(.6,'#174e63');ocean.addColorStop(1,'#082731');
         context.beginPath();path(sphere);context.fillStyle=ocean;context.fill();
-        if (TIERS[tier].grid) { context.beginPath();path(grid);context.strokeStyle='#9fd4d328';context.lineWidth=.6;context.stroke(); }
+        context.beginPath();path(grid);context.strokeStyle='#9fd4d328';context.lineWidth=.6;context.stroke();
         const land = context.createLinearGradient(cx-radius,cy-radius,cx+radius,cy+radius);
         land.addColorStop(0,'#c9d9ad');land.addColorStop(.45,'#95b99d');land.addColorStop(1,'#428183');
         context.beginPath();path(geography.land);context.fillStyle=land;context.fill();
         context.strokeStyle='#d9ecd160';context.lineWidth=.65;context.stroke();
         /* Country borders are hairlines at world scale; drawing ~200 polylines per
            frame only pays off once the globe is zoomed in. */
-        if (TIERS[tier].borders && scale >= TIERS[tier].borderScale) { context.beginPath();path(geography.borders);context.strokeStyle='#173f4b55';context.lineWidth=.55;context.stroke(); }
+        if (scale >= 1.4) { context.beginPath();path(geography.borders);context.strokeStyle='#173f4b55';context.lineWidth=.55;context.stroke(); }
         context.save();context.beginPath();path(sphere);context.clip();
         const shade=context.createRadialGradient(cx-radius*.35,cy-radius*.4,radius*.2,cx+radius*.08,cy+radius*.07,radius*1.03);
         shade.addColorStop(0,'#001a2700');shade.addColorStop(.66,'#001a2707');shade.addColorStop(1,'#000e248c');
         context.fillStyle=shade;context.fillRect(0,0,width,height);context.restore();
         context.beginPath();path(sphere);context.lineWidth=1.1;context.strokeStyle='#a4e3e988';context.stroke();
-        /* Where we are heading: a soft violet beacon that fades in as the camera
-           commits to the property, and only while that point faces us. */
-        if (pin && pinAlpha > .01 && d3.geoDistance([lng, lat], [pin[1], pin[0]]) < Math.PI / 2 - .04) {
-          const p = projection([pin[1], pin[0]]);
-          if (p) {
-            const beat = (Math.sin(performance.now() / 260) + 1) / 2, r = 9 + 7 * beat;
-            const halo = context.createRadialGradient(p[0],p[1],0,p[0],p[1],r * 2.2);
-            halo.addColorStop(0,'rgba(160,120,255,' + (.55 * pinAlpha) + ')');halo.addColorStop(1,'rgba(130,84,255,0)');
-            context.fillStyle = halo;context.beginPath();context.arc(p[0],p[1],r * 2.2,0,Math.PI * 2);context.fill();
-            context.globalAlpha = pinAlpha;context.fillStyle = '#fff';context.strokeStyle = '#8254ff';context.lineWidth = 2.2;
-            context.beginPath();context.arc(p[0],p[1],4,0,Math.PI * 2);context.fill();context.stroke();context.globalAlpha = 1;
-          }
-        }
-      },
-      setQuality(n) {
-        tier = Math.max(0, Math.min(TIERS.length - 1, n | 0));
-        projection.precision(TIERS[tier].precision);
-        resize();
       },
       destroy() { dead = true; observer?.disconnect(); context.clearRect(0,0,canvas.width,canvas.height); }
     };
