@@ -48,14 +48,7 @@ test('stay card quote cannot leak across dates or guest counts',()=>{
   ctx._searchState.adults=3;assert.equal(ctx.staySearchQuote(apt),null);assert.doesNotMatch(ctx.stayCardPrice(apt),/3,900/);
 });
 
-test('host offer controls have an executable handler that mounts the existing section',async()=>{
+test('the partner board no longer carries stay offers controls',()=>{
   const html=readFileSync(new URL('../partner-listings.html',import.meta.url),'utf8');
-  const scripts=Array.from(html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g),m=>m[1]).join('\n');
-  const handler=scripts.match(/async function openStayOffers\(listingId\)\{[\s\S]*?\n\}/)?.[0];
-  assert.ok(handler,'handler must be inside a script element');
-  const root={scrollIntoView(){}};let mounted;
-  const offers={async mount(args){mounted=args;}};const sb={};
-  const ctx=vm.createContext({document:{getElementById:()=>root},window:{CabanaOffers:offers},CabanaOffers:offers,sb});
-  vm.runInContext(handler,ctx);await ctx.openStayOffers('stay-1');
-  assert.equal(mounted.root,root);assert.equal(mounted.client,sb);assert.equal(mounted.listingId,'stay-1');
+  assert.doesNotMatch(html,/openStayOffers|cabana-offers|Explore offers|Offers &amp; campaigns/);
 });

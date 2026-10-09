@@ -1026,14 +1026,34 @@
      and invalidating on the first real size fixes it once and for
      all, which is why every builder below calls this. */
   function watchSize(map, el) {
-    var sizing = setTimeout(function () { if (el.isConnected) map.invalidateSize(); }, 60);
-    map.on('unload', function () { clearTimeout(sizing); if (map._apaRO) map._apaRO.disconnect(); });
-    if (typeof ResizeObserver === 'undefined') return;
-    var seen = 0;
-    var ro = new ResizeObserver(function () {
-      var w = el.clientWidth;
-      if (w && w !== seen) { seen = w; map.invalidateSize(); }
+    var raf = 0, timers = [];
+    function sync() {
+      raf = 0;
+      if (!el.isConnected) return;
+      var w = el.clientWidth, h = el.clientHeight;
+      if (!w || !h) return;
+      var s = map.getSize();
+      /* Height matters as much as width: a map whose box grew taller
+         (full-screen toggle, a sheet finishing its slide, a collapsing
+         URL bar) keeps requesting tiles for its old, smaller frame and
+         leaves the rest grey however far it is panned or zoomed. */
+      if (Math.abs(s.x - w) > 1 || Math.abs(s.y - h) > 1) map.invalidateSize({ animate: false, pan: false });
+    }
+    function queue() { if (!raf) raf = requestAnimationFrame(sync); }
+    [0, 60, 340, 900, 2000].forEach(function (ms) { timers.push(setTimeout(queue, ms)); });
+    window.addEventListener('resize', queue);
+    window.addEventListener('orientationchange', queue);
+    map.on('movestart zoomstart', queue);
+    el.addEventListener('pointerdown', queue, true);
+    map.on('unload', function () {
+      timers.forEach(clearTimeout);
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('resize', queue);
+      window.removeEventListener('orientationchange', queue);
+      if (map._apaRO) map._apaRO.disconnect();
     });
+    if (typeof ResizeObserver === 'undefined') return;
+    var ro = new ResizeObserver(queue);
     ro.observe(el);
     map._apaRO = ro;
   }

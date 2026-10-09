@@ -194,7 +194,7 @@ test('an ambassador who still owes the ID check sees the role, with one step lef
   dom.window.close();
 });
 
-test('a confirmed ambassador switches straight in; a stranger sees no row', async () => {
+test('a confirmed ambassador switches straight in; a stranger sees an invite-only row that opens the contact gate', async () => {
   const yes = roles({ ok: true });
   assert.equal((await yes.R.status()).ambassador, true);
   yes.dom.window.close();
@@ -203,7 +203,16 @@ test('a confirmed ambassador switches straight in; a stranger sees no row', asyn
   assert.equal(st.ambassador, false);
   const host = no.d.createElement('div'); no.d.body.append(host);
   await no.R.mount(host, { as: 'menu' });
-  assert.doesNotMatch(host.textContent, /Ambassador/);
+  /* Listed for everyone, but honest: invitation only, and clicking it
+     explains that this account is not part of the programme and offers
+     the support form instead of navigating anywhere. */
+  assert.match(host.textContent, /Ambassador · by invitation/);
+  host.querySelector('[data-role="ambassador"]').click();
+  await new Promise(r => setTimeout(r, 30));
+  const gate = no.d.querySelector('.apa-g');
+  assert.ok(gate && gate.classList.contains('on'), 'the gate dialog opens');
+  assert.match(gate.textContent, /isn.t part of the Ambassador programme/);
+  assert.match(gate.textContent, /Contact support/);
   no.dom.window.close();
 });
 
