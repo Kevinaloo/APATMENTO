@@ -265,7 +265,10 @@ test('a hub needs two indexable things before it asks to be indexed', () => {
   const syok = B.hubModel('/syokimau-apartments', list);
   assert.equal(hubIndexable(syok.items), true);
   const html = renderHub(syok);
-  assert.match(html, /<h1>Apartments &amp; stays in Syokimau, Nairobi<\/h1>/);
+  assert.match(html, /<h1>Airbnbs, BnBs &amp; short stays in Syokimau, Nairobi<\/h1>/);
+  assert.match(html, /<title>Airbnbs, BnBs &amp; Apartments in Syokimau, Nairobi \| Cabana<\/title>/);
+  assert.match(html, /<meta name="description" content="2 Airbnbs &amp; BnBs in Syokimau, Nairobi, live now\. From KES 2,600 per night, all-in\./);
+  assert.match(html, /not affiliated with, endorsed by or sponsored by Airbnb/, 'a page that uses the word says whose word it is');
   assert.equal(byType(ldOf(html), 'ItemList').numberOfItems, 2);
 });
 

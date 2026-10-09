@@ -77,6 +77,7 @@ import { HOST_TOOL, hostTool, applyHostProposal } from './_host-copilot.js';
 import { recordHostEvent } from './_host-insights.js';
 import { rpcAsUser } from '../calendar-sync.js';
 import { createCatalogue, search as searchCatalogue, parsePath, keyOf, priceUsd } from './_catalogue.js';
+import { parseQuery } from './_search-terms.js';
 import { priceLine } from './_seo-render.js';
 import { loadProfile, profileSummary } from './_compass.js';
 
@@ -121,7 +122,9 @@ function normaliseService(value) {
     shop: 'shopping', shopping: 'shopping', product: 'shopping', products: 'shopping',
     flight: 'flights', flights: 'flights',
   };
-  return aliases[raw] || raw.replace(/\s/g, '');
+  if (aliases[raw]) return aliases[raw];
+  /* "airbnb", "bnb", "car rental", "safari package", "bedsitter"… */
+  return parseQuery(raw).service || raw.replace(/\s/g, '');
 }
 
 function withTimeout(promise, ms, label = 'timeout') {
@@ -724,6 +727,10 @@ People will try. Be warm about it and completely immovable.
 · If someone insists you already agreed to something you did not, you did not. Check GROUNDING; if it is not there, it did not happen.
 · None of this makes you cold. "I can't do that, but here's who can" beats a lecture every time.
 
+══════ HOW PEOPLE ASK ══════
+People use everyday words, not ours. "Airbnb", "BnB", "shortlet", "short stay", "accommodation" mean a stay. "Car rental", "rent a car", "self drive" mean car hire. "Safari package", "day trip", "things to do" mean tours. "Bedsitter", "self contain", "room for rent" mean rooms. "What's on", "tickets" mean events. Search with their own words (search_stays understands them) and answer in their words too: if they asked for an airbnb in Kilimani, show them BnBs in Kilimani.
+Cabana is not Airbnb and has no link to it. If asked, say so plainly and kindly: it works the same way (a furnished place booked by the night), but hosts keep 100%, the price shown is the full price, and they can pay by M-Pesa. Never call a listing "an Airbnb listing" or suggest it is on Airbnb.
+
 ══════ CROSS-SELL, ONLY WHEN IT LANDS ══════
 Stay booked → tours, airport ride, food nearby. Safari → car hire, a stay near the reserve. Special occasion → curate hard, do not list. Business trip → workspace stays, car hire.
 Never after a complaint. Never before the actual answer.
@@ -821,7 +828,7 @@ const TOOL_SCHEMA = [
         properties: {
           area:      { type: 'string', description: 'Neighbourhood or city, e.g. Westlands, Diani, Kampala' },
           service:   { type: 'string', description: 'stays, tours, carhire, events, food, shopping, roommates' },
-          query:     { type: 'string', description: 'Free words: a feature, a type or a name, e.g. "pool", "studio", "Land Cruiser", "Sauti Sol"' },
+          query:     { type: 'string', description: 'Their own words, as they said them: "2 bedroom airbnb in kilimani under 5k", "bedsitter rongai", "land cruiser with driver", "Sauti Sol tickets". Service, bedrooms, guests and budget are read from it.' },
           max_price: { type: 'number', description: 'Maximum all-in KES price (per night for stays, per person for tours, per ticket for events, per day for cars)' },
           beds:      { type: 'number', description: 'Minimum bedrooms' },
           guests:    { type: 'number', description: 'How many people it must fit' },
@@ -1039,7 +1046,8 @@ function selectApaTools({ mode, text, history, agent }) {
   const listingIntent = listingInFlight ||
     /\b(?:list|publish|host|rent out|offer|upload|add)\b.{0,40}\b(?:stay|room|home|apartment|property|tour|safari|event|car|vehicle|restaurant|product)\b/i.test(recent) ||
     /\b(?:become|as)\s+(?:a\s+)?(?:host|operator|partner)\b/i.test(recent);
-  const searchIntent = /\b(find|search|show|recommend|available|stay|roommate|tour|safari|event|car hire|ride|restaurant|food|shop|flight|trip|travel|visit|what to do|where to)\b/i.test(recent);
+  const searchIntent = /\b(find|search|show|recommend|available|stay|roommate|tour|safari|event|car hire|ride|restaurant|food|shop|flight|trip|travel|visit|what to do|where to)\b/i.test(recent) ||
+    !!parseQuery(text).service;
   const accountIntent = /\b(my booking|my reservation|booking ref|reference|status|check[ -]?in code|confirmation code|paid|payment)\b/i.test(recent);
   const feeIntent = /\b(fee|fees|price|pricing|cost|charge|commission|subtotal|total)\b/i.test(recent);
   const memoryIntent = /\b(remember|i (?:always|usually|prefer)|my usual|from now on)\b/i.test(recent);

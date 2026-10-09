@@ -25,6 +25,7 @@
    it lands on is worse than one that says "see price".
    ══════════════════════════════════════════════════════════════════════ */
 import { resolvePlace, slugify, titleCase } from './_places.js';
+import { parseQuery } from './_search-terms.js';
 
 export const SITE = 'https://cabana.africa';
 
@@ -313,10 +314,27 @@ export function placeSupply(items) {
 }
 
 /* Fuzzy text search across the catalogue, for APA and the search box.
-   Every word must land somewhere (title, place, type, amenity, host);
-   place hits weigh most because "Kilimani" means Kilimani. */
-export function search(items, { q = '', service, place, maxPrice, minBeds, guests, kind, limit = 8 } = {}) {
-  const words = slugify(q).split('-').filter(w => w.length > 1);
+   People search the way they talk: "2 bedroom airbnb in kilimani under
+   5k", "bedsitter rongai", "land cruiser with driver". Words that only
+   name a service become the service, numbers become filters, kind words
+   ("cottage", "studio") rank a match higher, and only what is left has
+   to land somewhere (place, title, type, amenity, host). Place hits weigh
+   most because "Kilimani" means Kilimani. */
+const CATALOGUE_SERVICES = new Set(Object.values(KIND_SERVICE));
+
+export function search(items, { q = '', service, place, maxPrice, minBeds, guests, kind, driver, limit = 8 } = {}) {
+  const ask = parseQuery(q);
+  /* Asked only for something the catalogue does not hold (a taxi, a
+     flight): nothing here answers it, and a stay near the airport is not
+     a ride to it. */
+  if (!service && !kind && ask.services.length && !ask.services.some(x => CATALOGUE_SERVICES.has(x))) return [];
+  service = service || ask.services.find(x => CATALOGUE_SERVICES.has(x));
+  maxPrice = maxPrice > 0 ? maxPrice : ask.maxPrice || 0;
+  minBeds = minBeds > 0 ? minBeds : ask.beds || 0;
+  guests = guests > 0 ? guests : ask.guests || 0;
+  driver = driver ?? ask.driver;
+  const words = ask.words.map(slugify).filter(w => w.length > 1);
+  const prefer = ask.prefer.map(slugify);
   const placeId = place ? resolvePlace({ area: place, city: place }).key || slugify(place) : null;
   const scored = [];
   for (const it of items) {
@@ -327,12 +345,13 @@ export function search(items, { q = '', service, place, maxPrice, minBeds, guest
     if (maxPrice > 0 && p && p > maxPrice) continue;
     if (minBeds > 0 && it.bedrooms != null && it.bedrooms < minBeds) continue;
     if (guests > 0 && it.guests != null && it.guests < guests) continue;
+    if (driver && it.kind === 'car' && !it.extra?.chauffeur) continue;
     let s = 0;
+    const hay = {
+      title: slugify(it.title), place: slugify(it.location + ' ' + (it.place?.country?.name || '')),
+      type: slugify(it.type || ''), amen: slugify(it.amenities.join(' ')), host: slugify(it.host || ''),
+    };
     if (words.length) {
-      const hay = {
-        title: slugify(it.title), place: slugify(it.location + ' ' + (it.place?.country?.name || '')),
-        type: slugify(it.type || ''), amen: slugify(it.amenities.join(' ')), host: slugify(it.host || ''),
-      };
       let missed = 0;
       for (const w of words) {
         const hit = (hay.place.includes(w) ? 4 : 0) + (hay.title.includes(w) ? 3 : 0) + (hay.type.includes(w) ? 2 : 0) +
@@ -342,8 +361,15 @@ export function search(items, { q = '', service, place, maxPrice, minBeds, guest
       }
       if (missed > Math.floor(words.length / 3)) continue;
     }
+    for (const w of prefer) if (hay.type.includes(w) || hay.title.includes(w) || hay.amen.includes(w)) s += 4;
     s += (it.quality.score / 50) + (it.featured ? 1 : 0) + Math.min(2, (it.reviews || 0) / 5);
-    scored.push({ it, s });
+    scored.push({ it, s, p });
+  }
+  /* "Cheap" and "luxury" are a lean, not a filter. */
+  if (ask.price) {
+    const ps = scored.map(x => x.p).filter(v => v > 0);
+    const lo = Math.min(...ps), hi = Math.max(...ps);
+    if (ps.length > 1 && hi > lo) for (const x of scored) if (x.p > 0) x.s += 3 * (ask.price === 'low' ? (hi - x.p) / (hi - lo) : (x.p - lo) / (hi - lo));
   }
   return scored.sort((a, b) => b.s - a.s).slice(0, limit).map(x => x.it);
 }

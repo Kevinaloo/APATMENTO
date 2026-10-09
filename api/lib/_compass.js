@@ -39,6 +39,7 @@
 import { select, insert, update as dbUpdate } from './_db.js';
 import { authenticatedUser, consumeRateLimit, requestIp, setCors } from './_security.js';
 import { resolvePlace, slugify } from './_places.js';
+import { parseQuery } from './_search-terms.js';
 import { keyOf, priceUsd, inPlace, FAMILY_KIND, KIND_SERVICE } from './_catalogue.js';
 import { img, priceLine } from './_seo-render.js';
 
@@ -534,16 +535,20 @@ export function enrich(raw, items, page) {
     if (kind) e.kind = kind;
   }
   if (type === 'search' || type === 'filter') {
-    const placeText = String(d.place || d.q || '').slice(0, 80);
+    /* What they typed, read the way they meant it: "airbnb diani for 4"
+       is a stay, in Diani, for four, whichever page the box was on. */
+    const ask = parseQuery(d.q || '');
+    if (!item && ask.service && !d.service) e.service = ask.service;
+    const placeText = String(d.place || ask.words.join(' ') || d.q || '').slice(0, 80);
     const r = placeText ? resolvePlace({ area: placeText, city: placeText }) : null;
     if (r?.key && !r.area?.synthetic && !r.city?.synthetic) e.place = { area: r.area?.id || null, city: r.city?.id || null, country: r.country?.id || null };
     e.q = String(d.q || '').slice(0, 80) || null;
-    const g = Number(d.guests); if (g > 0 && g < 40) e.guests = g;
-    const b = Number(d.beds); if (b > 0 && b < 20) e.bedrooms = b;
+    const g = Number(d.guests) || ask.guests; if (g > 0 && g < 40) e.guests = g;
+    const b = Number(d.beds) || ask.beds; if (b > 0 && b < 20) e.bedrooms = b;
     const ci = Date.parse(d.checkin || ''), co = Date.parse(d.checkout || '');
     if (Number.isFinite(ci)) e.lead_days = Math.round((ci - Date.now()) / DAY);
     if (Number.isFinite(ci) && Number.isFinite(co) && co > ci) e.nights = Math.round((co - ci) / DAY);
-    const max = Number(d.max_price); if (max > 0) e.price_usd = Math.round(max * 0.0077 * 100) / 100;
+    const max = Number(d.max_price) || ask.maxPrice; if (max > 0) e.price_usd = Math.round(max * 0.0077 * 100) / 100;
   }
   if ((type === 'checkout_start' || type === 'booking') && Number(d.guests) > 0) e.guests = Number(d.guests);
   if (type === 'hub_view' && d.place) e.place = { area: String(d.place).slice(0, 60), city: null, country: null };

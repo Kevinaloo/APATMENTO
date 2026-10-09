@@ -24,6 +24,9 @@ const BEACON = {
 };
 const REPORT = {
   ok: true, sitemap: 7,
+  vocabulary: { brand_terms: true,
+    services: [{ service: 'stays', intent: ['airbnb', 'bnb', 'shortlet'], kinds: ['cottage'], measured: [{ q: 'airbnb nairobi', market: 'KE', volume: 8100, service: 'stays' }] }],
+    local: [{ country: 'kenya', term: 'BnB', title: ['Airbnbs, BnBs & Apartments', 'Airbnbs & BnBs'] }] },
   items: [
     { kind: 'stay', key: '65ef1d11', title: 'The Jets Nest', path: '/stay/the-jets-nest-obama-estate-65ef1d11', url: 'https://cabana.africa/stay/the-jets-nest-obama-estate-65ef1d11', location: 'Obama Estate, Nairobi', price: 1560, currency: 'KES', unit: 'night', updated_at: '2026-08-28T15:05:19Z',
       quality: { indexable: true, score: 72, issues: ['short description'] }, serp: { title: 'The Jets Nest, Obama Estate | Cabana', description: 'Apartment in Obama Estate…' }, badge: '<a href="#">badge</a>' },
@@ -40,6 +43,7 @@ const COMPASS = {
   services: [{ key: 'stays', count: 40 }], budget: [{ key: '20-50', count: 22 }], purpose: [{ key: 'beach-holiday', count: 9 }],
   hours: [{ h: 20, count: 30 }, { h: 9, count: 10 }],
   demand: [{ place: 'diani', service: 'stays', people: 14, signals: 30, searches: 20, views: 10, supply: 0 }, { place: 'syokimau', service: 'stays', people: 6, signals: 9, searches: 3, views: 6, supply: 3 }],
+  queries: [{ q: 'bnb thika', service: 'stays', people: 9, searches: 12 }],
   hot: [{ id: '0f0e0d0c-0000-4000-8000-000000000001', member: false, country: 'GB', city: 'London', device: 'mobile', intent: 78, lifecycle: 'ready', segments: ['stay-seekers'], top_place: 'diani', top_service: 'stays', budget: '50-100', last_seen: '2026-10-09T09:00:00Z' }],
 };
 const APA = {
@@ -75,7 +79,7 @@ function ctx(w, q = {}) {
 test('the search engine view renders every tab', async () => {
   const { w, views } = boot();
   assert.ok(views.search, 'search view registered');
-  for (const tab of [undefined, 'fix', 'changes', 'places', 'brand']) {
+  for (const tab of [undefined, 'fix', 'changes', 'places', 'words', 'brand']) {
     const v = ctx(w, tab ? { tab } : {});
     await views.search.render(v);
     const text = v.el.textContent;
@@ -85,6 +89,7 @@ test('the search engine view renders every tab', async () => {
     if (tab === 'changes') assert.match(text, /accepted 202/i);
     if (tab === 'places') assert.match(v.el.innerHTML, /\/syokimau-apartments/);
     if (tab === 'brand') assert.match(text, /Google Business Profile/);
+    if (tab === 'words') { assert.match(text, /airbnb nairobi/); assert.match(text, /8,100/); assert.match(text, /Airbnbs, BnBs & Apartments in/); }
   }
   w.close();
 });
@@ -97,7 +102,7 @@ test('the intelligence view renders every tab, and keeps internal lists off the 
     await views.intelligence.render(v);
     const text = v.el.textContent;
     if (!tab) { assert.match(text, /Closest to booking/); assert.match(text, /London/); }
-    if (tab === 'demand') { assert.match(text, /onboard here/i); assert.match(text, /Diani/); }
+    if (tab === 'demand') { assert.match(text, /onboard here/i); assert.match(text, /Diani/); assert.match(text, /bnb thika/); }
     if (tab === 'audiences') {
       const table = v.el.querySelector('table').textContent;
       assert.match(table, /Looking for a stay/);

@@ -23,6 +23,7 @@
    ══════════════════════════════════════════════════════════════════════ */
 import { SITE, FAMILY, KIND_SERVICE, priceUsd } from './_catalogue.js';
 import { hubFor, placeById } from './_places.js';
+import { brandTermsOn, titleTerm, descriptionLead, descriptionClose, summaryAka, entityQuestion, hubCopy, hubQuestions, isHomeStay, countrySlugOf } from './_search-terms.js';
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const json = v => JSON.stringify(v).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
@@ -110,18 +111,21 @@ function eventDate(s) {
 export function seoTitle(item) {
   const where = item.place?.area?.name || item.place?.city?.name || '';
   const has = where && item.title.toLowerCase().includes(where.toLowerCase());
-  let core = item.title + (where && !has ? `, ${where}` : '');
-  if (item.kind === 'event') {
-    const s = item.extra?.starts_at;
-    if (s) core += ` · ${new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Nairobi' })}`;
-  }
+  const place = where && !has ? `, ${where}` : '';
+  const s = item.kind === 'event' ? item.extra?.starts_at : null;
+  const date = s ? ` · ${new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Nairobi' })}` : '';
+  /* The word people search with ("BnB", "Car hire", "Tickets") rides along
+     when there is room for it. */
+  const term = titleTerm(item);
+  const tail = term ? ` · ${term}` : '';
   const brand = ' | Cabana';
-  /* Too long with the place appended: drop the place before cutting the
-     name. A cut title is cut at a word, never with an ellipsis; search
+  /* Longest first; what gives way first is the search word, then the
+     place. A cut title is cut at a word, never with an ellipsis; search
      engines add their own. */
-  if (core.length + brand.length > 64) core = item.title + (item.kind === 'event' && core.includes(' · ') ? core.slice(core.lastIndexOf(' · ')) : '');
-  if (core.length + brand.length > 64) core = core.slice(0, 64 - brand.length).replace(/[\s,.;:@·–-]+\S*$/, '');
-  return core + brand;
+  for (const core of [item.title + place + date + tail, item.title + place + date, item.title + date + tail, item.title + date]) {
+    if (core.length + brand.length <= 64) return core + brand;
+  }
+  return (item.title + date).slice(0, 64 - brand.length).replace(/[\s,.;:@·–-]+\S*$/, '') + brand;
 }
 
 export function metaDescription(item, d = {}) {
@@ -129,19 +133,22 @@ export function metaDescription(item, d = {}) {
   const f = facts(item, d);
   const amen = (item.amenities || []).slice(0, 3).join(', ');
   const price = item.price > 0 ? `${priceLine(item)}, all-in` : '';
-  const who = item.host ? ` with ${item.host}` : '';
-  const lead = {
-    stay: `${item.type || 'Stay'} in ${where}`,
-    room: `Room to rent in ${where}`,
-    tour: `${item.type || 'Tour'} from ${where}`,
-    event: `${item.type || 'Event'} in ${where}`,
-    car: `${item.type || 'Car'} for hire in ${where}`,
-    food: `Order from ${item.title} in ${where}`,
-    shop: `${item.title}, ${where}`,
-  }[item.kind] || item.title;
-  const parts = [lead + (f.length ? ` · ${f.join(' · ')}` : '') + '.', amen ? `${amen}.` : '', price ? `${price}.` : '',
-                 `Book direct${who} on Cabana. Zero commission.`];
-  return clip(parts.filter(Boolean).join(' '), 158);
+  /* Opens and closes in the words people search with: "BnB apartment in
+     Obama Estate", "Car rental direct from …, self-drive". The price
+     comes before the amenities: it is what a searcher compares. */
+  const lead = descriptionLead(item, where, d);
+  const close = descriptionClose(item, d);
+  /* What gives way when it is too long, in order: the amenities, then the
+     bathrooms, then the finer facts. The price and the call to book stay,
+     so a description never ends mid-sentence. */
+  const ranked = [...f.filter(x => !/bathroom/.test(x)), ...f.filter(x => /bathroom/.test(x))];
+  const build = (facts, withAmen) => [lead + (facts.length ? ` · ${facts.join(' · ')}` : '') + '.', price ? `${price}.` : '',
+    withAmen && amen ? `${amen}.` : '', close].filter(Boolean).join(' ');
+  for (const [n, withAmen] of [[f.length, true], [f.length, false], [ranked.length - 1, false], [2, false]]) {
+    const text = build(n === f.length ? f : ranked.slice(0, Math.max(0, n)), withAmen);
+    if (text.length <= 158) return text;
+  }
+  return clip(build(ranked.slice(0, 2), false), 158);
 }
 
 /* Questions people actually type, answered only from what the data says.
@@ -163,6 +170,8 @@ export function faqFor(item, d = {}) {
     const baths = item.baths > 0 ? ` and ${plural(item.baths, 'bathroom')}` : '';
     q.push([`How many guests can stay at ${name}?`, `Up to ${item.guests}${rooms}${baths}.`]);
   }
+  const asked = entityQuestion(item, d);
+  if (asked) q.push(asked);
   const wifi = lists(/wi-?fi|internet/i), parking = lists(/parking/i);
   if (wifi.length || parking.length) {
     const both = [...wifi, ...parking].slice(0, 2).join(' and ');
@@ -185,13 +194,17 @@ export function faqFor(item, d = {}) {
   if (where && item.kind !== 'event') {
     q.push([`Where is ${name}?`, `In ${where}${item.place?.country?.name && !where.includes(item.place.country.name) ? `, ${item.place.country.name}` : ''}. The exact location is shared once you have booked.`]);
   }
-  q.push([`How do I book ${name}?`, `Choose your dates on Cabana and pay by M-Pesa or card. Cabana takes no commission from ${item.host || 'the host'}, so you pay their own price, and APA, Cabana's assistant, is in the chat if you need anything.`]);
+  if (item.kind === 'event') {
+    q.push([`How do I get tickets for ${name}?`, `Choose a ticket on Cabana and pay by M-Pesa or card. Cabana takes no commission from ${item.host || 'the organiser'}, so you pay their own price, and APA, Cabana's assistant, is in the chat if you need anything.`]);
+  } else {
+    q.push([`How do I book ${name}?`, `Choose your dates on Cabana and pay by M-Pesa or card. Cabana takes no commission from ${item.host || 'the host'}, so you pay their own price, and APA, Cabana's assistant, is in the chat if you need anything.`]);
+  }
   return q;
 }
 
 /* ── Structured data ────────────────────────────────────────────────── */
 
-const ORG = { '@type': 'Organization', '@id': `${SITE}/#organization`, name: 'Cabana', url: `${SITE}/`, logo: `${SITE}/cabana-icon-512.png` };
+const ORG = { '@type': 'Organization', '@id': `${SITE}/#organization`, name: 'Cabana', alternateName: ['Cabana Africa', 'Cabana Travel', 'Cabana App', 'cabana.africa'], url: `${SITE}/`, logo: `${SITE}/cabana-icon-512.png` };
 const WEBSITE = { '@type': 'WebSite', '@id': `${SITE}/#website`, url: `${SITE}/`, name: 'Cabana', publisher: { '@id': `${SITE}/#organization` } };
 
 function address(item) {
@@ -462,13 +475,16 @@ function crumbsHtml(crumbs) {
   }).join('')}</nav>`;
 }
 
-function footer() {
+/* Pages that use another company's name as the everyday word for a thing
+   say so plainly, once, where a reader looks for the small print. */
+const TRADEMARK = 'Airbnb is a trademark of Airbnb, Inc. Cabana is independent and is not affiliated with, endorsed by or sponsored by Airbnb.';
+function footer({ trademark = false } = {}) {
   const svc = [['Stays', '/apartments'], ['Tours & safaris', '/tours'], ['Car hire', '/carhire'], ['Events', '/events'], ['Rides', '/rides'], ['Food', '/food'], ['Flights', '/flights'], ['Rooms', '/roommates']];
   const more = [['Destinations', '/destinations'], ['List your property', '/become-partner'], ['Become a driver', '/become-driver'], ['About Cabana', '/cabana'], ['Help', '/help'], ['Terms', '/terms'], ['Privacy', '/privacy']];
   return `<footer class="foot"><div class="wrap">
 <div><h3>Book on Cabana</h3><nav>${svc.map(([t, h]) => `<a href="${h}">${t}</a>`).join('')}</nav></div>
 <div><h3>Cabana</h3><nav>${more.map(([t, h]) => `<a href="${h}">${t}</a>`).join('')}</nav></div>
-<small>Cabana is Africa's zero-commission travel platform. Hosts and operators keep 100% of their price; guests see one all-in price before they pay.</small>
+<small>Cabana is Africa's zero-commission travel platform. Hosts and operators keep 100% of their price; guests see one all-in price before they pay.${trademark ? ` ${TRADEMARK}` : ''}</small>
 </div></footer>`;
 }
 
@@ -490,6 +506,8 @@ export function summarise(item, d = {}, where = placePhrase(item), unit = UNIT_L
   const acronym = /^(suv|mpv|bnb|4x4)$/i.test(item.type || '');
   const type = acronym ? String(item.type).toUpperCase() : (item.type || '').toLowerCase();
   const a = /^[aeiou]/i.test(type) || /^(SUV|MPV)$/.test(type) ? 'an' : 'a';
+  const said = summaryAka(item, d);
+  const aka = said ? ` ${said}` : '';
   switch (item.kind) {
     case 'event': {
       const when = d.starts_at || item.extra?.starts_at;
@@ -499,15 +517,15 @@ export function summarise(item, d = {}, where = placePhrase(item), unit = UNIT_L
     }
     case 'tour':
       return `${item.title} is ${type ? `${a} ${type.replace(/-/g, ' ')}` : 'a tour'}${where ? ` from ${where}` : ''}${f.length ? `: ${f.join(', ')}` : ''}.${price}` +
-        (item.host ? ` Run by ${item.host}${verified}.` : '');
+        (item.host ? ` Run by ${item.host}${verified}.` : '') + aka;
     case 'car':
       return `${item.title} is ${type ? `${a} ${type}` : 'a car'} for hire${where ? ` in ${where}` : ''}${f.length ? `: ${f.join(', ')}` : ''}.${price}` +
-        (item.host ? ` Offered by ${item.host}${verified}.` : '');
+        (item.host ? ` Offered by ${item.host}${verified}.` : '') + aka;
     case 'food':
       return `${item.title} serves ${f.length ? f.join(', ') : 'food'}${where ? ` in ${where}` : ''}. Order on Cabana and pay the kitchen its own price.`;
     default:
       return `${item.title} is ${type ? `${a} ${type}` : 'a place to stay'}${where ? ` in ${where}` : ''}${f.length ? `: ${f.join(', ')}` : ''}.${price}` +
-        (item.host ? ` Hosted by ${item.host}${verified}.` : '');
+        (item.host ? ` Hosted by ${item.host}${verified}.` : '') + aka;
   }
 }
 
@@ -628,7 +646,7 @@ ${item.price > 0 ? `<div class="price">${esc(money(item.price, item.currency))} 
 ${related.length ? `<section class="sec" style="margin-top:20px"><h2>More ${esc((SERVICE[item.service] || svc).noun.toLowerCase())}${item.place?.city ? ` in ${esc(item.place.city.name)}` : ''}</h2><div class="grid">${related.map(cardHtml).join('')}</div></section>` : ''}
 </main>
 <div class="mbar">${item.price > 0 ? `<div><b>${esc(money(item.price, item.currency))}</b> <small style="color:var(--ink2)">/ ${esc(unit)} · all-in</small></div>` : '<div></div>'}<a class="btn btn-p" href="${esc(book)}" rel="nofollow">${esc(svc.verb)}</a></div>
-${footer()}
+${footer({ trademark: isHomeStay(item) && brandTermsOn() })}
 <script type="application/json" id="cbn-entity">${json(entityJson)}</script>
 ${SCRIPTS}
 </body></html>`;
@@ -656,10 +674,15 @@ export function renderHub({ place, service, items, siblings = [], parentHub = nu
   const cur = items[0]?.currency || 'KES';
   const unit = UNIT_LABEL[items[0]?.unit] || 'night';
   const band = prices.length ? (prices[0] === prices[prices.length - 1] ? money(prices[0], cur) : `${money(prices[0], cur)}–${money(prices[prices.length - 1], cur)}`) : '';
-  const nounLower = svc.noun.toLowerCase();
-  const title = clip(`${svc.noun} in ${full}`, 54) + ' | Cabana';
   const count = items.length;
-  const description = clip(`${plural(count, svc.one)} live on Cabana in ${full}${band ? `, from ${money(prices[0], cur)} per ${unit} all-in` : ''}. Book direct with local hosts and operators. Zero commission, M-Pesa and card.`, 158);
+  /* Said the way people search for it there: "Airbnbs & BnBs in
+     Kilimani", "Shortlet apartments in Lekki", "Car hire & car rental in
+     Westlands". Only what the items on the page make true. */
+  const countrySlug = countrySlugOf(place);
+  const copy = hubCopy(service, { name, full, countrySlug, items });
+  const title = `${copy.title} | Cabana`;
+  const description = clip(`${copy.count} in ${full}, live now.${band ? ` From ${money(prices[0], cur)} per ${unit}, all-in.` : ''} Book direct with ${service === 'events' ? 'the organiser' : service === 'food' ? 'the kitchen' : 'the host'}: zero commission, M-Pesa or card.`, 158);
+  const trademark = service === 'stays' && brandTermsOn();
   const robots = hubIndexable(items) ? 'index, follow, max-snippet:-1, max-image-preview:large' : 'noindex, follow';
   const amen = new Map();
   for (const it of items) for (const a of it.amenities) amen.set(a, (amen.get(a) || 0) + 1);
@@ -668,11 +691,7 @@ export function renderHub({ place, service, items, siblings = [], parentHub = nu
   if (parentHub) crumbs.push({ name: parentHub.name, href: parentHub.path });
   crumbs.push({ name: full, href: canonicalPath });
 
-  const faq = [
-    [`How many ${nounLower} are there in ${full} on Cabana?`, `${plural(count, svc.one)} ${count === 1 ? 'is' : 'are'} live right now. This page updates itself as hosts publish, so it always shows what you can actually book.`],
-    ...(band ? [[`How much do ${nounLower} in ${full} cost?`, `From ${band} per ${unit} on Cabana, all-in. Hosts set their own prices and keep all of them.`]] : []),
-    [`How do I book in ${full}?`, `Open any listing above, pick your dates and pay by M-Pesa or card. APA, Cabana's assistant, can also find and book one for you in the chat.`],
-  ];
+  const faq = hubQuestions(service, { name, full, countrySlug, items, band, unit, copy });
   const schema = {
     '@context': 'https://schema.org', '@graph': [ORG, WEBSITE,
       { '@type': 'CollectionPage', '@id': `${url}#webpage`, url, name: title, description, isPartOf: { '@id': WEBSITE['@id'] }, inLanguage: 'en',
@@ -688,8 +707,8 @@ ${nav(svc, `<a class="btn btn-p btn-s" href="${esc(svc.hub)}?q=${encodeURICompon
 <main class="wrap">
 ${crumbsHtml(crumbs)}
 <header class="hero"><div class="eyebrow">${esc(svc.noun)} · Live on Cabana</div>
-<h1>${esc(svc.noun)} in ${esc(full)}</h1>
-<p class="sub">${esc(`${plural(count, svc.one)} you can book right now in ${full}${band ? `, from ${band} per ${unit}, all-in` : ''}. Every one is booked direct with the host or operator, who keeps 100% of the price.`)}</p>
+<h1>${esc(copy.h1)}</h1>
+<p class="sub">${esc(`${copy.lead}${band ? ` From ${band} per ${unit}, all-in.` : ''} Every one is booked direct with the ${service === 'events' ? 'organiser' : service === 'food' ? 'kitchen' : 'host or operator'}, who keeps 100% of the price.`)}</p>
 <div class="chips"><div class="chip"><b>${count}</b><span>live now</span></div>${band ? `<div class="chip"><b>${esc(band)}</b><span>per ${esc(unit)}, all-in</span></div>` : ''}<div class="chip"><b>0%</b><span>commission</span></div></div></header>
 <section class="sec" style="border:0"><div class="grid">${items.map(cardHtml).join('')}</div></section>
 ${topAmen.length ? `<section class="sec"><h2>What places here commonly offer</h2><ul class="am">${topAmen.map(a => `<li>${esc(a)}</li>`).join('')}</ul></section>` : ''}
@@ -697,7 +716,7 @@ ${siblings.length ? `<section class="sec"><h2>Nearby on Cabana</h2><div class="l
 <section class="sec faq"><h2>Questions people ask</h2>${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</section>
 <section class="sec"><div class="note">Have a place or a service in ${esc(name)}? <a href="/become-partner" style="color:var(--v);font-weight:700">List it on Cabana</a>. It is free, you keep 100% of every booking, and it appears on this page the moment it goes live.</div></section>
 </main>
-${footer()}
+${footer({ trademark })}
 <script type="application/json" id="cbn-entity">${json({ kind: 'hub', service, place: place.id, count })}</script>
 ${SCRIPTS}
 </body></html>`;

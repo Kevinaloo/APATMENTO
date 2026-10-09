@@ -95,7 +95,7 @@
           </div>
           ${n(ver.pending) ? html`<div class="callout warn mt">${icon('clock')}<div class="grow">${num(ver.pending)} change(s) waiting to be announced. The scheduler sends them within a minute.</div></div>` : ''}
           ${rep.error ? html`<div class="callout bad mt">${icon('alert')}<div class="grow">The page report could not load: ${rep.error}</div></div>` : ''}
-          <div class="mt">${CX.tabs([['pages', 'Pages', items.length], ['fix', 'Fix list', fixes.length, true], ['changes', 'Changes', (o.changes || []).length], ['places', 'Places', (o.places || []).length], ['brand', 'Brand', BRAND.length - brandDone, true]], tab)}</div>`;
+          <div class="mt">${CX.tabs([['pages', 'Pages', items.length], ['fix', 'Fix list', fixes.length, true], ['changes', 'Changes', (o.changes || []).length], ['places', 'Places', (o.places || []).length], ['words', 'Search words'], ['brand', 'Brand', BRAND.length - brandDone, true]], tab)}</div>`;
 
         var body;
         if (tab === 'fix') {
@@ -125,6 +125,24 @@
             return html`<tr><td><div class="t-main">${p.name || human(p.place)}</div><div class="t-sub">${human(p.kind || '')}${p.country ? ' · ' + p.country : ''}</div></td><td>${human(p.service)}</td><td class="num"><b>${num(p.count)}</b></td><td class="num">${usd(p.low_usd)}</td><td class="num">${usd(p.high_usd)}</td>
               <td>${suffix && p.kind !== 'country' ? html`<a class="link-btn" href="/${p.place}-${suffix}" target="_blank" rel="noopener">/${p.place}-${suffix}</a>` : '—'}</td></tr>`;
           })}</tbody></table></div>` : CX.empty('No place supply yet', 'Filled by the scheduler from the live catalogue.', 'map');
+        } else if (tab === 'words') {
+          var voc = rep.vocabulary || { services: [], local: [] };
+          var SVC = { stays: 'Stays', roommates: 'Rooms', tours: 'Tours & safaris', events: 'Events', carhire: 'Car hire', rides: 'Rides', food: 'Food', shopping: 'Shopping', flights: 'Flights' };
+          var measured = [];
+          voc.services.forEach(function (s) { (s.measured || []).forEach(function (m) { measured.push(m); }); });
+          measured.sort(function (a, b) { return b.volume - a.volume; });
+          body = html`<p class="muted mt-s" style="font-size:13px;max-width:820px">The words people type, and where Cabana uses them. Every live page and hub is titled in these words (a stay in Kilimani is a "BnB"; the Kilimani hub is "Airbnbs, BnBs & Apartments"), and APA and the search box understand all of them. Brand word "Airbnb": ${voc.brand_terms ? html`<b>on</b>, always beside a line saying Cabana is independent. Set CABANA_SEO_BRAND_TERMS=off to remove it everywhere.` : html`<b>off</b> (CABANA_SEO_BRAND_TERMS=off).`}</p>
+            <div class="split mt"><div class="card flush"><div class="card-hd" style="padding:14px 18px"><div><div class="card-t">Measured searches</div><div class="card-s">Monthly estimates · Serpstat (Kenya) and Semrush (Nigeria)</div></div></div>
+              <table class="tbl"><thead><tr><th>Search</th><th>Market</th><th>Service</th><th class="num">Per month</th></tr></thead><tbody>${measured.map(function (m) {
+                return html`<tr><td class="t-main">${m.q}</td><td>${m.market}</td><td class="t-sub">${SVC[m.service] || m.service}</td><td class="num"><b>${num(m.volume)}</b></td></tr>`;
+              })}</tbody></table></div>
+            <div class="col" style="gap:14px"><div class="card flush"><div class="card-hd" style="padding:14px 18px"><div><div class="card-t">The local word for a stay</div><div class="card-s">Titles and headings follow the country</div></div></div>
+              <table class="tbl"><thead><tr><th>Country</th><th>Listing title says</th><th>Hub title says</th></tr></thead><tbody>${voc.local.map(function (l) {
+                return html`<tr><td class="t-main">${human(l.country)}</td><td>${l.term}</td><td class="t-sub">${(l.title || [])[0] || ''} in …</td></tr>`;
+              })}</tbody></table></div>
+              <div class="card"><div class="card-t">Words understood, per service</div><div class="col mt-s" style="gap:10px">${voc.services.map(function (s) {
+                return html`<div><div class="strong" style="font-size:13px">${SVC[s.service] || s.service}</div><div class="mt-s" style="display:flex;flex-wrap:wrap;gap:5px">${s.intent.concat(s.kinds || []).slice(0, 28).map(function (w) { return html`<span class="tag">${w}</span>`; })}</div></div>`;
+              })}</div></div></div></div>`;
         } else if (tab === 'brand') {
           body = html`<p class="muted mt-s" style="font-size:13px;max-width:780px">"cabana" on its own is a dictionary word, so Google reads it as a question about poolside shelters. What moves it is a verified business entity and people searching for Cabana by name. Tick each item as it is done; the console keeps the count.</p>
             <div class="col mt" style="gap:10px">${BRAND.map(function (b) {
@@ -203,7 +221,11 @@
               var gap = n(d.supply) === 0;
               return html`<tr><td><b>${human(d.place)}</b></td><td>${human(d.service)}</td><td class="num"><b>${num(d.people)}</b></td><td class="num">${num(d.searches)}</td><td class="num">${num(d.views)}</td>
                 <td class="num ${gap ? 'bad-t' : ''}">${gap ? 'none' : num(d.supply)}</td><td>${gap ? CX.pill('onboard here', 'p-warn') : ''}</td></tr>`;
-            })}</tbody></table>${demand.length ? '' : CX.empty('No demand recorded yet', 'Fills as people search and browse.', 'map')}</div>`;
+            })}</tbody></table>${demand.length ? '' : CX.empty('No demand recorded yet', 'Fills as people search and browse.', 'map')}</div>
+            <div class="card flush mt"><div class="card-hd" style="padding:14px 18px"><div><div class="card-t">What people type into Cabana</div><div class="card-s">Their own words, by how many people used them. Write pages and onboard in these words. Phone numbers and emails are never shown.</div></div></div>
+              <table class="tbl"><thead><tr><th>Search</th><th>Read as</th><th class="num">People</th><th class="num">Searches</th></tr></thead><tbody>${(c.queries || []).map(function (q) {
+                return html`<tr><td class="t-main">${q.q}</td><td class="t-sub">${q.service ? human(q.service) : '—'}</td><td class="num"><b>${num(q.people)}</b></td><td class="num">${num(q.searches)}</td></tr>`;
+              })}</tbody></table>${(c.queries || []).length ? '' : CX.empty('No searches yet', 'Fills as people use the search boxes.', 'search')}</div>`;
         } else if (tab === 'audiences') {
           var segs = (c.segments || []).filter(function (s) { return !(meta[s.id] && meta[s.id].internal); });
           var internal = (c.segments || []).filter(function (s) { return meta[s.id] && meta[s.id].internal; });

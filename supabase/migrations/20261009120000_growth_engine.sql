@@ -234,7 +234,8 @@ begin
       'extra', jsonb_strip_nulls(jsonb_build_object(
         'make', f.make, 'model', f.model, 'year', f.year, 'seats', f.seats,
         'transmission', f.transmission, 'fuel', f.fuel, 'drive', f.drive, 'body', f.body,
-        'instant_book', f.instant_book, 'delivery', f.delivery_ok))
+        'instant_book', f.instant_book, 'delivery', f.delivery_ok,
+        'chauffeur', coalesce(f.chauffeur_uplift_metro, 0) > 0))
     )) as j
     from public.car_fleet f
     join public.car_operators o on o.id = f.operator_id
@@ -416,7 +417,8 @@ begin
                'min_days', f.min_hire_days, 'min_age', f.min_driver_age, 'cross_border', f.cross_border_ok,
                'fuel_policy', f.fuel_policy, 'deposit', f.deposit, 'delivery', f.delivery_ok,
                'instant_book', f.instant_book, 'weekly_discount_pct', f.weekly_discount_pct,
-               'monthly_discount_pct', f.monthly_discount_pct, 'colour', f.colour)),
+               'monthly_discount_pct', f.monthly_discount_pct, 'colour', f.colour,
+               'chauffeur', coalesce(f.chauffeur_uplift_metro, 0) > 0)),
              'rating', nullif(o.rating, 0), 'reviews', 0,
              'updated_at', coalesce(f.updated_at, f.created_at), 'created_at', f.created_at,
              'host', o.name, 'host_verified', coalesce(o.verified, false),
@@ -952,6 +954,18 @@ begin
                 from (select extract(hour from created_at at time zone 'Africa/Nairobi')::int h, count(*) n
                         from public.compass_events where created_at > v_since group by 1) s),
     'demand', public.compass_demand(p_days),
+    /* What people type into Cabana's own search boxes: the vocabulary to
+       write pages in, and the gaps to onboard for. Anything that looks
+       like a phone number or an email address is left out. */
+    'queries', (select coalesce(jsonb_agg(jsonb_build_object('q', q, 'service', svc, 'people', people, 'searches', n)
+                                          order by people desc, n desc), '[]'::jsonb)
+                  from (select lower(btrim(props ->> 'q')) q, mode() within group (order by service) svc,
+                               count(distinct coalesce(profile_id::text, visitor_id)) people, count(*) n
+                          from public.compass_events
+                         where created_at > v_since and type = 'search'
+                           and length(btrim(coalesce(props ->> 'q', ''))) between 2 and 60
+                           and props ->> 'q' !~ '[0-9]{7,}|@'
+                         group by 1 order by 3 desc, 4 desc limit 40) s),
     'hot', (select coalesce(jsonb_agg(jsonb_build_object(
                'id', id, 'member', user_id is not null, 'country', country, 'city', city, 'device', device,
                'intent', intent, 'lifecycle', lifecycle, 'segments', segments,

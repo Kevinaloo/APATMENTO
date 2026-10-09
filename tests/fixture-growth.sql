@@ -105,7 +105,7 @@ create table public.car_operators (
 create table public.car_fleet (
   id uuid primary key default gen_random_uuid(), operator_id uuid, make text, model text, variant text, year int,
   plate text, class text, body text, seats int, ground_clearance_mm int, drive text, transmission text, fuel text,
-  aircon boolean, day_rate int, deposit int, fuel_policy text, mileage_cap_km int, min_hire_days int,
+  aircon boolean, day_rate int, chauffeur_uplift_metro int, chauffeur_uplift_upcountry int, deposit int, fuel_policy text, mileage_cap_km int, min_hire_days int,
   min_driver_age int, cross_border_ok boolean, extras jsonb, photos jsonb, status text,
   created_at timestamptz default now(), weekly_discount_pct numeric, monthly_discount_pct numeric, colour text,
   description text, features text[], instant_book boolean, delivery_ok boolean, updated_at timestamptz default now()

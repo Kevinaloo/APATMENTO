@@ -64,11 +64,11 @@ insert into public.car_operators (id, name, city, country_code, verified) values
   ('66666666-6666-6666-6666-666666666666', 'Drive KE', 'Nairobi', 'KE', true),
   ('77777777-7777-7777-7777-777777777777', 'Paused Co', 'Mombasa', 'KE', true);
 update public.car_operators set paused_until = now() + interval '2 days' where id = '77777777-7777-7777-7777-777777777777';
-insert into public.car_fleet (id, operator_id, make, model, day_rate, status, photos, seats, features)
+insert into public.car_fleet (id, operator_id, make, model, day_rate, status, photos, seats, features, chauffeur_uplift_metro)
 values ('88888888-8888-8888-8888-888888888888', '66666666-6666-6666-6666-666666666666', 'Toyota', 'Prado', 9000,
-        'active', '["https://x/car.jpg"]', 7, array['4x4']),
+        'active', '["https://x/car.jpg"]', 7, array['4x4'], 250000),
        ('99999999-9999-9999-9999-999999999999', '77777777-7777-7777-7777-777777777777', 'Nissan', 'Note', 3000,
-        'active', '[]', 5, null);
+        'active', '[]', 5, null, 0);
 
 -- ── Catalogue ─────────────────────────────────────────────────────────
 do $$
@@ -84,6 +84,8 @@ begin
   perform ok(jsonb_array_length(s -> 'photos') = 2, 'only https photos are published');
   perform ok(s ->> 'host' = 'Wanjiru' and c::text !~ 'Kamau', 'hosts appear by first name only');
   perform ok((s ->> 'guests')::int = 2 and (s ->> 'bedrooms')::int = 1, 'text columns are read as numbers');
+  select x into s from jsonb_array_elements(c) x where x ->> 'kind' = 'car';
+  perform ok((s -> 'extra' ->> 'chauffeur')::boolean, 'a car with a priced driver says it comes with one');
 end $$;
 
 -- ── Entity lookup ─────────────────────────────────────────────────────
@@ -205,6 +207,14 @@ begin
   perform set_config('test.admin', 'yes', false);
   perform ok(public.admin_beacon_overview() ? 'live', 'an operator gets the search console');
   perform ok(public.admin_compass_overview(30) ? 'demand', 'an operator gets the intelligence console');
+  insert into public.compass_events (visitor_id, type, service, props) values
+    ('v1', 'search', 'stays', '{"q":"airbnb diani"}'), ('v2', 'search', 'stays', '{"q":"Airbnb Diani "}'),
+    ('v3', 'search', null, '{"q":"call me 0712345678"}'), ('v4', 'search', null, '{"q":"me@example.com"}');
+  perform ok((public.admin_compass_overview(30) -> 'queries' -> 0 ->> 'q') = 'airbnb diani'
+             and (public.admin_compass_overview(30) -> 'queries' -> 0 ->> 'people')::int = 2,
+             'the console lists what people type, by how many people typed it');
+  perform ok((public.admin_compass_overview(30) -> 'queries')::text !~ '0712345678|example\.com',
+             'a search that looks like a phone number or an email is never shown');
   perform ok(public.admin_apa_overview(30) ? 'threads', 'an operator gets the APA console');
   perform ok((public.admin_growth_setting('growth.brand.gbp', 'done') ->> 'ok')::boolean, 'growth settings are writable');
   begin

@@ -33,6 +33,7 @@ import {
   SITE, FAMILY, FAMILY_KIND, KIND_SERVICE, createCatalogue, normalise, parsePath, keyOf, inPlace, placeSupply, priceUsd,
 } from './_catalogue.js';
 import { hubFor, parseHub, placeById, HUB_SUFFIX } from './_places.js';
+import { hubAnchor, vocabulary } from './_search-terms.js';
 import {
   renderEntity, renderHub, renderGone, renderMissing, renderSitemap, hubIndexable, SERVICE, money, esc, seoTitle, metaDescription,
 } from './_seo-render.js';
@@ -84,14 +85,14 @@ function nearbyHubs(item, items) {
   for (const lvl of [item.place?.area, item.place?.city]) {
     if (!lvl) continue;
     const h = liveHub(lvl, item.service, items);
-    if (h) add(h.path, `${svc.noun} in ${lvl.name}`);
+    if (h) add(h.path, hubAnchor(item.service, lvl));
   }
   const city = item.place?.city;
   if (city) {
     for (const s of Object.keys(HUB_SUFFIX)) {
       if (s === item.service) continue;
       const h = liveHub(city, s, items);
-      if (h && !h.staticPage) add(h.path, `${SERVICE[s].noun} in ${city.name}`);
+      if (h && !h.staticPage) add(h.path, hubAnchor(s, city));
     }
     if (city.pages?.guide) add(city.pages.guide, `${city.name} travel guide`);
   }
@@ -181,7 +182,7 @@ export function hubModel(path, items) {
       if (!a || seen.has(a.id) || (a.parent || '') !== parent.id) continue;
       seen.add(a.id);
       const hub = hubFor(a, h.service);
-      if (hub) siblings.push({ path: hub.path, label: `${SERVICE[h.service].noun} in ${a.name}` });
+      if (hub) siblings.push({ path: hub.path, label: hubAnchor(h.service, a) });
     }
     const up = hubFor(parent, h.service);
     if (up) siblings.unshift({ path: up.path, label: `All of ${parent.name}` });
@@ -444,6 +445,7 @@ export async function consoleReport(req, res) {
       badge: badgeSnippet(it),
     })),
     sitemap: sitemapEntries(cat.items).length,
+    vocabulary: vocabulary(),
   });
 }
 
