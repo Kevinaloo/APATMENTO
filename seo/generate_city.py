@@ -28,17 +28,24 @@ E = lambda s: html.escape(str(s), quote=True)
 VERTICALS = {
  "safaris": dict(
     label="Safaris & Tours", og="og-tours.jpg", hub="/tours", back="All tours",
-    title=lambda c: f"{c} Safaris & Tours: Book Direct | Cabana",
+    # Titles in the words people search with ("safari packages kenya",
+    # "car rental nairobi", "airport taxi"), longest first; the first that
+    # fits 62 characters wins, so a long city name never cuts a word.
+    title=lambda c: [f"{c} Safari Packages, Tours & Day Trips | Cabana",
+                     f"{c} Safari Packages & Tours | Cabana", f"{c} Safaris & Tours | Cabana"],
     band=lambda lo, hi: (max(25, lo), hi * 6),
     schema="trip"),
  "car-hire": dict(
     label="Car Hire", og="og-carhire.jpg", hub="/carhire", back="All car hire",
-    title=lambda c: f"Car Hire {c}: Self-Drive & Chauffeur | Cabana",
+    title=lambda c: [f"Car Hire & Car Rental {c}: Self-Drive & Chauffeur | Cabana",
+                     f"Car Hire & Car Rental {c}: Self-Drive & Chauffeur",
+                     f"Car Hire & Car Rental in {c} | Cabana", f"Car Hire {c} | Cabana"],
     band=lambda lo, hi: (max(18, int(lo * 0.8)), max(90, int(hi * 1.2))),
     schema="rental"),
  "airport-transfers": dict(
     label="Airport Transfers", og="og-rides.jpg", hub="/rides", back="All rides",
-    title=lambda c: f"{c} Airport Transfers & Rides | Cabana",
+    title=lambda c: [f"{c} Airport Transfers, Taxis & Rides | Cabana",
+                     f"{c} Airport Transfers & Taxis | Cabana", f"{c} Airport Transfers | Cabana"],
     band=lambda lo, hi: (max(4, int(lo * 0.2)), max(45, int(hi * 0.5))),
     schema="taxi"),
 }
@@ -55,11 +62,11 @@ def build(city, vert):
     slug = f"{name.lower().replace(' ', '-').replace('’', '')}-{vert}"
     url = f"{SITE}/{slug}"
     plo, phi = v["band"](lo, hi)
-    title = v["title"](name)[:62]
+    title = next((t for t in v["title"](name) if len(t) <= 62), v["title"](name)[-1][:62])
     hl = ctry["highlights"]
 
     if vert == "safaris":
-        desc = (f"Book {name} safaris, game drives and guided tours direct with licensed "
+        desc = (f"Book {name} safari packages, game drives and day trips direct with licensed "
                 f"{ctry['name']} operators. Zero commission — operators keep 100%.")[:158]
         sub = (f"Game drives, day trips and guided tours out of {E(name)}, booked direct with "
                f"the operator running them. Cabana takes no commission, so the price the "
@@ -117,8 +124,8 @@ def build(city, vert):
                f"direct with the operator.", f"/tours?q={name.replace(' ', '+')}")
 
     elif vert == "car-hire":
-        desc = (f"Hire a car in {name}, {ctry['name']} — self-drive or with a driver, direct "
-                f"from local operators. Zero commission, no platform markup.")[:158]
+        desc = (f"Car hire and car rental in {name}, {ctry['name']} — self-drive or with a driver, "
+                f"direct from local operators. Zero commission, no platform markup.")[:158]
         sub = (f"Self-drive and chauffeur-driven vehicles in {E(name)}, rented direct from the "
                f"operators who own them. No platform markup sitting on top of the daily rate.")
         chips = [(f"US${plo}–{phi}", "per day, typical"),
@@ -161,8 +168,8 @@ def build(city, vert):
                f"{E(name)}, direct from the operator.", f"/carhire?q={name.replace(' ', '+')}")
 
     else:  # airport-transfers
-        desc = (f"Book {name} airport transfers and city rides direct with vetted drivers. "
-                f"Fixed prices, zero commission, no surge pricing.")[:158]
+        desc = (f"Book {name} airport transfers, airport taxis and city rides direct with vetted "
+                f"drivers. Fixed prices, zero commission, no surge pricing.")[:158]
         sub = (f"Airport pick-ups, city rides and intercity runs in {E(name)}, booked ahead "
                f"with a named driver at a price agreed before you travel.")
         chips = [(f"US${plo}–{phi}", "typical transfer"), ("Fixed", "price, agreed up front"),

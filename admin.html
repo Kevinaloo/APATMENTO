@@ -29,12 +29,12 @@
 <body class="cx">
 
 <!-- Opening splash: shown until the session is known -->
-<div class="boot" id="boot" aria-hidden="true"><div class="boot-in"><div class="boot-mark"><img src="/cabana-emblem.png" alt=""/></div><div class="boot-bar"></div></div></div>
+<div class="boot" id="boot" aria-hidden="true"><div class="boot-in"><div class="boot-mark"><img src="/cabana-emblem.png" alt="" fetchpriority="high" decoding="async"/></div><div class="boot-bar"></div></div></div>
 
 <!-- ─── SIGN-IN GATE ─────────────────────────────────────────────── -->
 <div class="gate hide" id="gate">
   <div class="gate-card">
-    <div class="gate-mark"><img src="/cabana-emblem.png" alt="Cabana"/></div>
+    <div class="gate-mark"><img src="/cabana-emblem.png" alt="Cabana" loading="lazy" decoding="async"/></div>
     <h1>Cabana Console</h1>
     <p class="gate-sub">The operations office for Cabana. Sign in with your operator account.</p>
     <form id="gate-form" autocomplete="on" novalidate>
@@ -55,7 +55,7 @@
 <div class="app hide" id="app">
   <aside class="side" aria-label="Console navigation">
     <div class="side-brand">
-      <span class="brand-mark"><img src="/cabana-emblem.png" alt=""/></span>
+      <span class="brand-mark"><img src="/cabana-emblem.png" alt="" loading="lazy" decoding="async"/></span>
       <div><div class="brand-t">Cabana</div><div class="brand-s">Operations</div></div>
     </div>
     <nav class="side-nav" id="nav"></nav>
@@ -114,6 +114,8 @@
 <script src="/cabana-people.js?v=2-living"></script>
 <script src="/admin-views-people.js?v=1"></script>
 <script src="/admin-views-clearance.js?v=1"></script>
+<!-- Growth: the live search engine (Beacon) and who is on Cabana (Compass, APA). -->
+<script src="/admin-views-growth.js?v=1"></script>
 <!-- Advertising room: the placement registry, the site's own ad engine
      (preview only here), secret ads and the welcome poster (preview only). -->
 <script src="/apa-ad-registry.js?v=2026.09.26"></script>

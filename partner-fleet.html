@@ -163,6 +163,12 @@ textarea.in { min-height: 84px; resize: vertical; }
 .cal-intro small { color: var(--mute); font-weight: 650; font-size: 13px; }
 </style>
 <link rel="stylesheet" href="/cabana-calendar.css?v=1">
+
+  <link rel="canonical" href="https://cabana.africa/partner-fleet"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="dns-prefetch" href="//www.googletagmanager.com"/>
 </head>
 <body>
 <header class="top"><div class="top-in">
@@ -421,7 +427,7 @@ textarea.in { min-height: 84px; resize: vertical; }
     var h = '<div class="sec"><h2>Your cars</h2><button class="btn dark sm" data-addcar>+ Add a car</button></div>';
     h += B.fleet.length ? '<div class="grid two">' + B.fleet.map(function (v) {
       var ph = Array.isArray(v.photos) && v.photos[0];
-      return '<div class="card"><div class="veh"><div class="art">' + (ph ? '<img src="' + esc(ph) + '" alt="" loading="lazy">' : CAR_SVG) + '</div><div>' +
+      return '<div class="card"><div class="veh"><div class="art">' + (ph ? '<img src="' + esc(ph) + '" alt="" loading="lazy" fetchpriority="high" decoding="async"/>' : CAR_SVG) + '</div><div>' +
         '<div class="row"><div class="grow"><div class="title" style="margin:0">' + esc([v.make, v.model].join(' ')) + '</div><div class="meta">' + esc([v.year, v.plate, v.transmission].filter(Boolean).join(' · ')) + '</div></div>' + statusTag(v.status) + '</div>' +
         '<div class="meta" style="color:var(--ink);font-weight:800">' + esc(money(v.day_rate)) + ' / day' + (v.instant_book ? ' · <span class="tag amber">Instant</span>' : '') + '</div></div></div>' +
         '<div class="acts"><button class="btn ghost sm" data-edit="' + v.id + '">Edit</button>' +

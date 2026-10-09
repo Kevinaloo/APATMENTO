@@ -20,7 +20,7 @@ Hreflang is intentionally omitted until distinct localized URL versions exist.
 
 Usage: python3 seo/sitemaps.py
 """
-import os, re, glob, html, datetime
+import os, re, glob, html, json, hashlib, subprocess, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = "https://cabana.africa"
@@ -31,7 +31,8 @@ NOINDEX = {
     "profile", "add-listing", "agent-dashboard", "driver", "offline",
     "partner-listings", "partner-bookings", "partner-calendar", "partner-agents",
     "partner-analytics", "partner-earnings", "partner-reviews", "partner-settings",
-    "partner-cabana",
+    "partner-cabana", "404", "order", "person", "rider", "tours-studio",
+    "partner-fleet", "partner-orders", "partner-rooms",
 }
 
 CORE = {"index": 1.0, "apartments": 0.95, "tours": 0.95, "flights": 0.9, "events": 0.9,
@@ -39,16 +40,52 @@ CORE = {"index": 1.0, "apartments": 0.95, "tours": 0.95, "flights": 0.9, "events
         "destinations": 0.95, "world": 0.95, "become-partner": 0.9, "become-agent": 0.85,
         "become-driver": 0.85, "cabana": 0.9, "rewards": 0.7, "guides": 0.8,
         "press": 0.6, "terms": 0.3, "privacy": 0.3, "cookies": 0.3,
-        "influencers": 0.9, "agents": 0.9, "ambassadors": 0.9}
+        "influencers": 0.9, "agents": 0.9, "ambassadors": 0.9,
+        "tours-catalogue": 0.9, "tour-guides": 0.8}
 
 
 def url_for(stem):
     return SITE + "/" if stem == "index" else f"{SITE}/{stem}"
 
 
-def entry(stem, priority, changefreq):
+# <lastmod> is the day a page's content last changed, not the day the build
+# ran. A sitemap that says every page changed today is one search engines
+# learn to ignore, and a build whose output depends on the date can never be
+# checked for drift. The page's hash is remembered in seo/data/lastmod.json;
+# a page whose hash is unchanged keeps its date. A page seen for the first
+# time takes the date of its last commit, or today.
+LASTMOD_PATH = os.path.join(ROOT, "seo", "data", "lastmod.json")
+
+
+def load_lastmod():
+    try:
+        return json.load(open(LASTMOD_PATH, encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def committed_date(path):
+    try:
+        out = subprocess.run(["git", "log", "-1", "--format=%cs", "--", path], cwd=ROOT,
+                             capture_output=True, text=True, timeout=10).stdout.strip()
+        return out if re.match(r"^\d{4}-\d{2}-\d{2}$", out) else None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def lastmod_for(state, stem, src, path):
+    sha = hashlib.sha1(src.encode("utf-8")).hexdigest()[:16]
+    known = state.get(stem)
+    if known and known.get("sha") == sha:
+        return known["date"]
+    date = TODAY if known else (committed_date(path) or TODAY)
+    state[stem] = {"sha": sha, "date": date}
+    return date
+
+
+def entry(stem, priority, changefreq, lastmod):
     u = url_for(stem)
-    return (f"  <url>\n    <loc>{u}</loc>\n    <lastmod>{TODAY}</lastmod>\n"
+    return (f"  <url>\n    <loc>{u}</loc>\n    <lastmod>{lastmod}</lastmod>\n"
             f"    <changefreq>{changefreq}</changefreq>\n"
             f"    <priority>{priority}</priority>\n  </url>")
 
@@ -92,7 +129,10 @@ def classify(stem):
 
 def main():
     buckets = {k: [] for k in ("core", "countries", "cities", "stays", "guides")}
+    newest = {k: "" for k in buckets}
     img_entries = []
+    state = load_lastmod()
+    seen = set()
 
     for f in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
         stem = os.path.basename(f)[:-5]
@@ -107,7 +147,10 @@ def main():
                "cities": 0.8, "stays": 0.8, "guides": 0.7}[b]
         freq = {"core": "daily", "countries": "weekly", "cities": "weekly",
                 "stays": "weekly", "guides": "monthly"}[b]
-        buckets[b].append(entry(stem, pri, freq))
+        lm = lastmod_for(state, stem, src, f)
+        seen.add(stem)
+        newest[b] = max(newest[b], lm)
+        buckets[b].append(entry(stem, pri, freq, lm))
 
         # image sitemap: the OG image is the page's canonical visual
         m = re.search(r'property="og:image"\s+content="([^"]+)"', src)
@@ -120,33 +163,45 @@ def main():
                 f"      <image:title>{cap}</image:title>\n"
                 f"    </image:image>\n  </url>")
 
+    for stem in [k for k in state if k not in seen]:
+        del state[stem]
+    with open(LASTMOD_PATH, "w", encoding="utf-8") as fh:
+        json.dump(dict(sorted(state.items())), fh, indent=1, sort_keys=True)
+        fh.write("\n")
+
     files = []
     for b, items in buckets.items():
         path = os.path.join(ROOT, f"sitemap-{b}.xml")
         if items:
-            files.append((f"sitemap-{b}.xml", len(items)))
+            files.append((f"sitemap-{b}.xml", len(items), newest[b]))
             write(f"sitemap-{b}.xml", "\n".join(items))
         elif os.path.exists(path):
             os.remove(path)
     write("sitemap-images.xml", "\n".join(img_entries), HEAD_IMG)
-    files.append(("sitemap-images.xml", len(img_entries)))
+    files.append(("sitemap-images.xml", len(img_entries), max(newest.values())))
+
+    # The live sitemap is served by /api/growth from the database (every
+    # listing, tour, event and car page, and every live place hub). It is
+    # not on disk, so it is listed here by name; its own <lastmod> lives in
+    # its entries, which is where search engines read it.
+    files.append(("sitemap-live.xml", 0, None))
 
     idx = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
            "  <!-- Cabana — master sitemap index. Generated by seo/sitemaps.py -->"]
-    for name, _ in files:
-        idx.append(f"  <sitemap>\n    <loc>{SITE}/{name}</loc>\n"
-                   f"    <lastmod>{TODAY}</lastmod>\n  </sitemap>")
+    for name, _, lm in files:
+        idx.append(f"  <sitemap>\n    <loc>{SITE}/{name}</loc>\n" +
+                   (f"    <lastmod>{lm}</lastmod>\n" if lm else "") + "  </sitemap>")
     idx.append("</sitemapindex>")
     open(os.path.join(ROOT, "sitemap-index.xml"), "w", encoding="utf-8").write("\n".join(idx) + "\n")
 
     # sitemap.xml kept as an alias of the index for any legacy reference.
     open(os.path.join(ROOT, "sitemap.xml"), "w", encoding="utf-8").write("\n".join(idx) + "\n")
 
-    total = sum(n for _, n in files if not _.endswith("images.xml"))
+    total = sum(n for name, n, _ in files if not name.endswith(("images.xml", "live.xml")))
     print("Cabana sitemaps rebuilt")
     print("-" * 40)
-    for name, n in files:
+    for name, n, _ in files:
         print(f"  {name:26} {n:>4} urls")
     print(f"\n  indexable URLs: {total}")
 

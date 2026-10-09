@@ -1151,7 +1151,7 @@ function renderListings(list){
     else if(r.kind==='onboarded')tag='<span class="lcard-tag">'+ic('users',12)+'Listed by you · now run by the owner</span>';
     else if(OWN[l.id]&&OWN[l.id].pending_transfer_id)tag='<span class="lcard-tag warn">'+ic('share',12)+'Transfer waiting</span>';
     return `<div class="lcard" role="button" tabindex="0" data-id="${esc(l.id)}" aria-label="Manage ${esc(l.title||'listing')}">
-      <div class="lcard-media">${photo?`<img src="${esc(photo)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:esc(svc[0])}<span class="lcard-dot ${st.dot}" title="${esc(st.txt)}"></span></div>
+      <div class="lcard-media">${photo?`<img src="${esc(photo)}" alt="" loading="lazy" decoding="async" onerror="this.remove()" fetchpriority="high"/>`:esc(svc[0])}<span class="lcard-dot ${st.dot}" title="${esc(st.txt)}"></span></div>
       <div class="lcard-body">
         <span class="lcard-svc">${esc(svc)}</span>
         <div class="lcard-name">${esc(l.title||'Untitled listing')}</div>
@@ -1248,7 +1248,7 @@ function openManage(id){
   }
 
   const body=document.getElementById('ms-body');
-  document.getElementById('ms-img').innerHTML=photo?'<img src="'+esc(photo)+'" alt="">':esc((SVC_LABELS[svc]||'S')[0]);
+  document.getElementById('ms-img').innerHTML=photo?'<img src="'+esc(photo)+'" alt="" loading="lazy" decoding="async"/>':esc((SVC_LABELS[svc]||'S')[0]);
   document.getElementById('ms-title').textContent=l.title||'Untitled listing';
   document.getElementById('ms-sub').textContent=[SVC_LABELS[svc]||'Stay',loc].filter(Boolean).join(' · ');
   document.getElementById('ms-badge').className='badge '+st.cls;

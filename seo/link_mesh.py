@@ -154,8 +154,8 @@ def destinations_page():
 {''.join(body)}
 </main>
 <script src="/cabana-call.js" defer></script>
-<script src="/cabana-support.js" defer></script>
-<script src="/cabana-lifecycle.js" defer></script>
+<script src="/apa-location.js" defer></script><script src="/cabana-sos.js" defer></script><script src="/cabana-support.js" defer></script>
+<script src="/cabana-calm.js" defer></script><script src="/cabana-lifecycle.js" defer></script>
 </body>
 </html>"""
 

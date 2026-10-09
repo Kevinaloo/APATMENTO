@@ -826,12 +826,12 @@ $('remit').addEventListener('click', function(e){
   var btn = e.target, err = $('rm-err'), raw = ($('rm-phone').value||'').trim();
   var d = raw.replace(/\D/g,'').replace(/^254/,'').replace(/^0/,'');
   if(!/^[17]\d{8}$/.test(d)){ err.textContent = 'Enter the Safaricom number that will pay.'; err.style.display='block'; return; }
-  if(!window.ApatmentoPay || !ApatmentoPay.start){ err.textContent = 'Payments are loading. Try again in a moment.'; err.style.display='block'; return; }
+  if(!window.CabanaPay || !CabanaPay.start){ err.textContent = 'Payments are loading. Try again in a moment.'; err.style.display='block'; return; }
   btn.disabled = true;
   rpc('ride_remit_start').then(function(x){
     btn.disabled = false;
     try{ localStorage.setItem('drv:remit-phone', raw); }catch(_){}
-    ApatmentoPay.start({ amount:Number(x.amount), phone:'254'+d, reference:x.reference, service:'remit',
+    CabanaPay.start({ amount:Number(x.amount), phone:'254'+d, reference:x.reference, service:'remit',
       description:'Cabana trips · '+(x.covers||'')+' trip'+(x.covers===1?'':'s'),
       trip:{ property:'Cabana trip balance', whenText:(x.covers||'')+' completed trip'+(x.covers===1?'':'s') },
       onSuccess:function(){ $('remit').removeAttribute('data-sig'); setTimeout(loadDriverAgain, 1200); },

@@ -410,6 +410,10 @@
     },
     "api/email.js": {
       "maxDuration": 15
+    },
+    "api/growth.js": {
+      "maxDuration": 30,
+      "includeFiles": "cabana-world-atlas.json"
     }
   },
   "rewrites": [
@@ -568,6 +572,26 @@
     {
       "source": "/api/didit-webhook",
       "destination": "/api/agents?action=didit-webhook"
+    },
+    {
+      "source": "/:family(stay|room|eat|shop|tour|event|car)/:slug([a-z0-9-]{1,140})",
+      "destination": "/api/growth?op=page&family=:family&slug=:slug"
+    },
+    {
+      "source": "/sitemap-live.xml",
+      "destination": "/api/growth?op=sitemap"
+    },
+    {
+      "source": "/llms-live.txt",
+      "destination": "/api/growth?op=llms"
+    },
+    {
+      "source": "/badge/:family(stay|room|eat|shop|tour|event|car)/:key([a-z0-9]{1,15}).svg",
+      "destination": "/api/growth?op=badge&family=:family&key=:key"
+    },
+    {
+      "source": "/:hub((?:[a-z0-9]+-)+(?:apartments|safaris|car-hire|events|restaurants|rooms))",
+      "destination": "/api/growth?op=hub&hub=:hub"
     },
     {
       "source": "/events/:path+",

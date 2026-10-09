@@ -116,6 +116,7 @@ def main():
     inv = load_inventory()
     promote, demote, hold, by_family = [], [], [], collections.defaultdict(
         lambda: {"indexed": 0, "gated": 0})
+    decided = {"index": [], "noindex": []}
 
     for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
         stem = os.path.basename(path)[:-5]
@@ -128,6 +129,7 @@ def main():
         units = supply(inv, place, service)
         want = "index" if units >= THRESHOLD else "noindex"
         by_family[suffix]["indexed" if want == "index" else "gated"] += 1
+        decided[want].append(stem)
 
         if now == want:
             hold.append((stem, units))
@@ -158,8 +160,10 @@ def main():
                    "_note": "Written by seo/index_gate.py. Indexability is derived "
                             "from real inventory, never hand-edited.",
                    "threshold": THRESHOLD,
-                   "indexed": sorted(s for s, _ in hold) + sorted(s for s, _, _ in promote),
-                   "gated": sorted(s for s, _, _ in demote)},
+                   # What each page is, not what changed this run: a page held
+                   # back last time and still held back is gated, not indexed.
+                   "indexed": sorted(decided["index"]),
+                   "gated": sorted(decided["noindex"])},
                   open(STATE, "w", encoding="utf-8"), indent=1)
         print(f"\n  wrote {os.path.relpath(STATE, ROOT)}")
         print("  next: python3 seo/sitemaps.py && python3 seo/indexnow.py --changed")

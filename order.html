@@ -156,6 +156,8 @@ details.more[open] summary{border-bottom:1px solid var(--rule);}
 .ping button{margin-left:auto;}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:999;}
 </style>
+
+  <link rel="canonical" href="https://cabana.africa/order"/>
 </head>
 <body>
 <div class="room" aria-hidden="true"><div class="coal coal-1"></div><div class="coal coal-2"></div></div>
@@ -165,7 +167,7 @@ details.more[open] summary{border-bottom:1px solid var(--rule);}
     <a href="/food" class="top-back" aria-label="Back to the food">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 12H4.6M11 5.6 4.6 12 11 18.4"/></svg>
     </a>
-    <img src="/cabana-emblem.png" class="top-em" alt="" decoding="async" onerror="this.style.display='none'"/>
+    <img src="/cabana-emblem.png" class="top-em" alt="" decoding="async" onerror="this.style.display='none'" fetchpriority="high"/>
     <span class="top-t" id="topT">Your order</span>
   </div>
   <div class="top-r">
@@ -413,7 +415,7 @@ function render(soft){
     h+='<nav class="tabs" aria-label="Your orders in this basket">'+TABS.map(function(r){
       var x=ORDERS[r]; if(!x) return '';
       return '<button class="tab'+(r===CUR?' on':'')+'" type="button" data-tab="'+attr(r)+'">'
-        +(x.kitchen.photo?'<img src="'+attr(x.kitchen.photo)+'" alt=""/>':ph())
+        +(x.kitchen.photo?'<img src="'+attr(x.kitchen.photo)+'" alt="" loading="lazy" decoding="async"/>':ph())
         +'<span><b>'+esc(x.kitchen.name)+'</b><small>'+esc(Orders.say(x.status,x.mode))+'</small></span></button>';
     }).join('')+'</nav>';
   }
@@ -430,7 +432,7 @@ function render(soft){
     +'<span class="hint">'+o.item_count+(o.item_count===1?' item':' items')+'</span></div>'
     +'<div class="lines">'+o.items.map(function(i){
       var off=(o.decline_items||[]).indexOf(i.id)>-1;
-      return '<div class="ln'+(off?' gone':'')+'">'+(i.photo?'<img class="ln-ph" src="'+attr(i.photo)+'" alt="" loading="lazy"/>':'<span class="ln-ph ph">'+mk('cloche',1.2)+'</span>')
+      return '<div class="ln'+(off?' gone':'')+'">'+(i.photo?'<img class="ln-ph" src="'+attr(i.photo)+'" alt="" loading="lazy" decoding="async"/>':'<span class="ln-ph ph">'+mk('cloche',1.2)+'</span>')
         +'<span class="ln-q">'+i.qty+'&times;</span><div class="ln-b"><div class="ln-n">'+esc(i.name)+'</div>'
         +'<div class="ln-u">'+(off?'Finished for today':esc(money(i.unit,o.currency))+' each')+'</div></div>'
         +'<div class="ln-p">'+esc(money(i.line,o.currency))+'</div></div>';
@@ -655,7 +657,7 @@ function payCard(o){
 }
 function kitchenCard(o){
   var k=o.kitchen;
-  var h='<section class="card"><div class="card-body"><div class="kit">'+(k.photo?'<img src="'+attr(k.photo)+'" alt=""/>':ph())
+  var h='<section class="card"><div class="card-body"><div class="kit">'+(k.photo?'<img src="'+attr(k.photo)+'" alt="" loading="lazy" decoding="async"/>':ph())
     +'<div><b>'+esc(k.name)+'</b><small>'+esc([k.area,k.city].filter(Boolean).join(', '))+'</small></div></div><div class="acts">';
   if(k.phone) h+='<a class="btn btn-line" href="'+attr(tel(k.phone))+'">'+mk('phone',1.6)+'Call</a>';
   if(k.whatsapp) h+='<a class="btn btn-line" href="'+attr(wa(k.whatsapp,'Hello '+k.name+', about my Cabana order '+o.ref+': '))+'" target="_blank" rel="noopener">'+mk('wa',1.6)+'Message</a>';
@@ -834,7 +836,7 @@ function showList(list){
     h+='<div class="void" style="margin-top:26px"><div class="void-i">'+mk('cloche',.9)+'</div><h2>No orders yet</h2><p>When you send an order it appears here, live, until it is in your hands.</p><a class="btn btn-fire" href="/food">Find something to eat '+mk('east',1.8)+'</a></div>';
   }
   var card=function(o){
-    return '<a class="oc" href="/order?ref='+encodeURIComponent(o.ref)+'">'+(o.kitchen.photo?'<img src="'+attr(o.kitchen.photo)+'" alt=""/>':ph())
+    return '<a class="oc" href="/order?ref='+encodeURIComponent(o.ref)+'">'+(o.kitchen.photo?'<img src="'+attr(o.kitchen.photo)+'" alt="" loading="lazy" decoding="async"/>':ph())
       +'<div class="b"><b>'+esc(o.kitchen.name)+'</b><small>'+o.items.map(function(i){return i.qty+'× '+i.name;}).join(', ')+'</small></div>'
       +'<div class="r"><span class="stt '+o.status+'"><i></i>'+esc(Orders.say(o.status,o.mode))+'</span><div class="m">'+esc(money(o.total,o.currency))+'</div></div></a>';
   };

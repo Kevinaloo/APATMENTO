@@ -9,11 +9,16 @@ const utilities = read('api/utilities.js');
 const matchGuest = read('api/lib/_match-guest.js');
 const scheduler = read('supabase/migrations/20260908190000_free_tier_match_offer_scheduler.sql');
 
-test('Vercel stays below the 12-function Hobby ceiling', () => {
+test('Vercel stays within the 12-function Hobby ceiling', () => {
   const entries = readdirSync(new URL('../api', import.meta.url))
     .filter(file => file.endsWith('.js'))
     .map(file => 'api/' + file);
-  assert.equal(entries.filter(file => !ignored.has(file)).length, 11);
+  /* Twelve, and full. The last slot went to api/growth.js (Beacon pages
+     and Compass tracking): high-volume public traffic that must not share
+     a cold start or a concurrency pool with SOS in api/utilities.js.
+     Anything new from here folds into an existing function as an action. */
+  assert.equal(entries.filter(file => !ignored.has(file)).length, 12);
+  assert.ok(entries.includes('api/growth.js'));
 });
 
 test('scraping keeps its public route while sharing utilities capacity', () => {

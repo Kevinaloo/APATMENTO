@@ -73,6 +73,12 @@
   var outbox = [];       // messages the network refused; retried on the next send
   var callActive = false;
   var nextContext = null;
+  /* Conversations end. After this long away, or on "New chat", the next
+     message starts a fresh one; earlier ones fold away above it. Kept in
+     step with EPISODE_IDLE_MS in api/lib/_support.js. */
+  var EPISODE_IDLE_MS = 45 * 60 * 1000;
+  var episodeIdle = false;
+  var showEarlier = false;
 
   /* ══════════════════════════════════════════════════════════════════
      STORAGE. Every access is guarded: Safari private mode throws on
@@ -166,7 +172,9 @@
       return fetch(API, {
         method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/json' }, auth),
-        body: JSON.stringify(Object.assign({ op: op, guestKey: guestKey() }, payload || {})),
+        /* visitorId lets APA read what this browser's own browsing shows
+           (Compass); it is the same first-party id the page already holds. */
+        body: JSON.stringify(Object.assign({ op: op, guestKey: guestKey(), visitorId: ls('apt_vid') || undefined }, payload || {})),
         signal: ctrl ? ctrl.signal : undefined,
       }).then(function (r) {
         clearTimeout(timer);
@@ -191,6 +199,7 @@
     micOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20M9 9v2a3 3 0 0 0 4.6 2.5M15 10V5a3 3 0 0 0-5.7-1.3M5 10a7 7 0 0 0 10.7 6M19 10a7 7 0 0 1-.6 2.8M12 19v3"/></svg>',
     end:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 9c-1.9 0-3.7.3-5.4.9v3.6c0 .5-.3.9-.7 1.1-1.2.6-2.3 1.4-3.3 2.3-.2.2-.5.3-.8.3s-.6-.1-.8-.3l-1.6-1.6a1 1 0 0 1 0-1.5C2.9 10.7 7.2 9 12 9s9.1 1.7 12.6 4.8a1 1 0 0 1 0 1.5L23 16.9c-.2.2-.5.3-.8.3s-.6-.1-.8-.3c-1-.9-2.1-1.7-3.3-2.3a1.2 1.2 0 0 1-.7-1.1V9.9C15.7 9.3 13.9 9 12 9z"/></svg>',
     person:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    fresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
     sos:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 3.2v5.4c0 4.6-3.1 8.8-7.5 10.1-4.4-1.3-7.5-5.5-7.5-10.1V6.2L12 3Z"/><path d="M12 8.6v4"/><path d="M12 15.8h.01"/></svg>',
   };
 
@@ -457,6 +466,7 @@
       +       '</div>'
       +       '<div class="cbn-sup-acts">'
       +         '<button class="cbn-sup-ico cbn-sup-sos" id="cbn-sup-sos" type="button" data-cbn-sos aria-label="Emergency help" title="Emergency">' + SVG.sos + '</button>'
+      +         '<button class="cbn-sup-ico" id="cbn-sup-new" type="button" aria-label="Start a new conversation" title="New conversation">' + SVG.fresh + '</button>'
       +         '<button class="cbn-sup-ico" id="cbn-sup-call" type="button" aria-label="Call the Cabana team in-app" title="Call us in the app">' + SVG.phone + '</button>'
       +         '<button class="cbn-sup-ico" id="cbn-sup-close" type="button" aria-label="Close support">' + SVG.close + '</button>'
       +       '</div>'
@@ -500,6 +510,7 @@
     el.input   = doc.getElementById('cbn-sup-input');
     el.send    = doc.getElementById('cbn-sup-send');
     el.close   = doc.getElementById('cbn-sup-close');
+    el.fresh   = doc.getElementById('cbn-sup-new');
     el.callBtn = doc.getElementById('cbn-sup-call');
     el.human   = doc.getElementById('cbn-sup-human');
     el.badge   = doc.getElementById('cbn-sup-badge');
@@ -560,33 +571,86 @@
     catch (e) { el.body.scrollTop = el.body.scrollHeight; }
   }
 
+  function isDivider(m) { return m && m.role === 'system' && m.meta && m.meta.episode_start; }
+  function spoken(list) { return list.some(function (m) { return m.role === 'user' || m.role === 'apa' || m.role === 'agent'; }); }
+
+  /* Where the current conversation begins: just after the last "New
+     conversation" divider, or nowhere at all if the person has been away
+     long enough that their next message will start one. */
+  function split() {
+    var start = 0;
+    for (var i = messages.length - 1; i >= 0; i--) if (isDivider(messages[i])) { start = i; break; }
+    var last = messages[messages.length - 1];
+    var lastAt = last ? Date.parse(last.at) : NaN;
+    var idle = !isDivider(last) && (episodeIdle || (Number.isFinite(lastAt) && Date.now() - lastAt > EPISODE_IDLE_MS)) &&
+      thread && thread.status !== 'queued' && thread.status !== 'assigned' && thread.status !== 'waiting';
+    if (idle) return { earlier: messages, current: [], idle: true };
+    return { earlier: messages.slice(0, start), current: messages.slice(start), idle: false };
+  }
+
+  function dayHtml(list) {
+    var html = '', lastDay = '';
+    list.forEach(function (m) {
+      var day = '';
+      try { day = new Date(m.at).toDateString(); } catch (e) { /* undated */ }
+      if (day && day !== lastDay && !isDivider(m)) {
+        lastDay = day;
+        var today = new Date().toDateString();
+        var label = day === today ? 'Today' : new Date(m.at).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+        html += '<div class="cbn-sup-day">' + esc(label) + '</div>';
+      }
+      html += isDivider(m)
+        ? '<div class="cbn-sup-ep" role="separator"><span>New conversation' + (m.at ? ' · ' + esc(clockOf(m.at)) : '') + '</span></div>'
+        : messageHtml(m);
+    });
+    return html;
+  }
+
   function paint(keepScroll) {
     if (!el.body) return;
     var stick = keepScroll ? atBottom() : true;
 
     if (!messages.length) { paintIntro(); return; }
 
+    var parts = split();
     var html = '';
-    var lastDay = '';
-    messages.forEach(function (m) {
-      var day = '';
-      try { day = new Date(m.at).toDateString(); } catch (e) { /* undated */ }
-      if (day && day !== lastDay) {
-        lastDay = day;
-        var today = new Date().toDateString();
-        var label = day === today ? 'Today' : new Date(m.at).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
-        html += '<div class="cbn-sup-day">' + esc(label) + '</div>';
-      }
-      html += messageHtml(m);
-    });
+    if (spoken(parts.earlier)) {
+      var first = parts.earlier.find(function (m) { return m.role === 'user'; }) || parts.earlier[0];
+      var when = '';
+      try { when = new Date(first.at).toLocaleDateString([], { day: 'numeric', month: 'short' }); } catch (e) { /* undated */ }
+      html += '<button type="button" class="cbn-sup-earlier" data-cbn-earlier aria-expanded="' + (showEarlier ? 'true' : 'false') + '">'
+        + (showEarlier ? 'Hide earlier conversations' : 'Earlier conversations' + (when ? ' · since ' + esc(when) : '')) + '</button>';
+      if (showEarlier) html += '<div class="cbn-sup-past">' + dayHtml(parts.earlier) + '</div>';
+    }
+    if (parts.idle) html += '<div class="cbn-sup-ep" role="separator"><span>New conversation</span></div>';
+    html += dayHtml(parts.current);
+    if (parts.idle || !spoken(parts.current)) html += introHtml(true);
     el.body.innerHTML = html;
 
-    /* Chips belong to the newest APA line only. Older ones are history. */
-    var last = messages[messages.length - 1];
-    if (last && last.role === 'apa' && last.meta && last.meta.chips && last.meta.chips.length) {
+    /* Chips belong to the newest APA line of the current conversation only. */
+    var last = parts.current[parts.current.length - 1];
+    if (!parts.idle && last && last.role === 'apa' && last.meta && last.meta.chips && last.meta.chips.length) {
       paintChips(last.meta.chips);
     }
     if (stick) toBottom(false);
+  }
+
+  /* "New chat": the conversation so far is summarised and filed on the
+     server, and the panel opens clean. APA still knows the person; she
+     just does not answer the new question as if it were the old one. */
+  function newConversation() {
+    if (sending) return;
+    showEarlier = false;
+    var current = split().current;
+    if (!thread || !spoken(current)) { episodeIdle = false; paint(false); if (el.input) el.input.focus(); return; }
+    var mark = function (n) {
+      messages.push({ role: 'system', body: 'New conversation', at: new Date().toISOString(), meta: { episode_start: n || 1 } });
+      episodeIdle = false; cacheWrite(); paint(false); if (el.input) el.input.focus();
+    };
+    api('new', { threadId: thread.id }).then(function (d) {
+      if (d && d.ok === false) { toast(d.message || 'The team is still on this one.', 'ℹ️'); return; }
+      mark(d && d.episode);
+    }, function () { mark(0); });
   }
 
   function messageHtml(m) {
@@ -629,10 +693,16 @@
   };
 
   function paintIntro() {
+    el.body.innerHTML = introHtml(false);
+  }
+
+  function introHtml(returning) {
     var opener = PAGE_OPENER[pageKey()] || 'What do you need?';
     var html = '<div class="cbn-sup-intro">'
-      + '<h3>' + esc(greeting()) + ' ' + esc(opener) + '</h3>'
-      + '<p>I’m APA — the same one that plans your trip and the one that fixes it when something breaks. I can see live prices, your bookings and what’s actually available, so you get the real answer, not a help article. If it needs a person, I hand you over without you starting again.</p>'
+      + '<h3>' + esc(returning ? greeting().replace(/\.$/, '') + ' — good to see you again.' : greeting()) + ' ' + esc(opener) + '</h3>'
+      + (returning
+          ? '<p>Fresh conversation. I still remember what matters from last time, so you will not have to repeat yourself.</p>'
+          : '<p>I’m APA — the same one that plans your trip and the one that fixes it when something breaks. I can see live prices, your bookings and what’s actually available, so you get the real answer, not a help article. If it needs a person, I hand you over without you starting again.</p>')
       + '<div class="cbn-sup-sugs">';
     suggestions.forEach(function (s) {
       html += '<button class="cbn-sug" type="button" data-q="' + esc(s.question) + '">'
@@ -646,7 +716,7 @@
         + SVG.mic + '<span>Or just talk to me — hands-free</span></button>';
     }
     html += '</div>';
-    el.body.innerHTML = html;
+    return html;
   }
 
   function paintChips(chips) {
@@ -767,6 +837,10 @@
   function wire() {
     el.launch.addEventListener('click', function () { open ? closePanel() : openPanel(); });
     el.close.addEventListener('click', closePanel);
+    if (el.fresh) el.fresh.addEventListener('click', newConversation);
+    el.body.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('[data-cbn-earlier]')) { showEarlier = !showEarlier; paint(true); }
+    });
 
     doc.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && open && !callActive) closePanel();
@@ -873,6 +947,7 @@
       .then(function (d) {
         signedIn = !!(d.caller && d.caller.signedIn);
         callerName = d.caller && d.caller.name;
+        episodeIdle = !!(d.episode && d.episode.idle);
         suggestions = d.suggestions || [];
 
         /* ── Reconciliation, deliberately conservative ────────────────
@@ -983,6 +1058,7 @@
       clientData: clientData || undefined,
     };
     nextContext = null;
+    try { global.dispatchEvent(new CustomEvent('cabana:apa-message')); } catch (e) { /* Compass is optional */ }
 
     api('send', payload)
       .then(function (d) {
@@ -993,6 +1069,20 @@
         if (d.threadId) {
           thread = Object.assign(thread || {}, { id: d.threadId, status: d.status || 'apa' });
           reflectStatus();
+        }
+
+        /* The server started a new conversation with this message (they
+           had been away a while, or said "new question"). Show the same
+           divider it filed, just above the line they sent. */
+        if (d.newEpisode) {
+          for (var k = messages.length - 1; k >= 0; k--) {
+            if (messages[k].role === 'user') {
+              messages.splice(k, 0, { role: 'system', body: 'New conversation', at: messages[k].at, meta: { episode_start: d.episode || 1 } });
+              break;
+            }
+          }
+          episodeIdle = false;
+          paint(true);
         }
 
         if (d.handedOver) {
@@ -1934,6 +2024,18 @@
     get thread() { return thread; },
     get isOpen() { return open; },
   };
+
+  /* Compass rides along with the widget, so every page that has APA also
+     understands what its visitor is looking for, without 400 pages each
+     carrying another script tag. Idle-loaded: never on the critical path. */
+  function loadCompass() {
+    if (global.CabanaCompass || doc.querySelector('script[src^="/cabana-compass.js"]')) return;
+    var sc = doc.createElement('script');
+    sc.src = '/cabana-compass.js';
+    sc.defer = true;
+    doc.head.appendChild(sc);
+  }
+  (global.requestIdleCallback || function (fn) { return setTimeout(fn, 1500); })(loadCompass);
 
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init);
   else init();
