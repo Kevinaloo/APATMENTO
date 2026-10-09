@@ -76,15 +76,9 @@ Unit tests: 959 of 959 pass (8 new). Syntax and routing preflight is clean.
 
 `tests/battery-heat.test.mjs` pins: GPS never starts on load, passive watch lease and release, driver-only continuous watch, frame loops stand down when unseen, paced loops, `cabana-calm.js` rules and its absence of polling, and that every page loading the shared lifecycle script also loads the calm guard.
 
-## 6. Follow-up: location journey rebuilt (15 s, lag-proof)
+## 6. Follow-up: location journey (reverted to 30 s by request)
 
-The 30-second journey existed to absorb lag. It now runs on a media clock instead (each frame adds a capped step, so a hitch or slow tile never skips a scene), which makes 15 s a real 15 s.
-
-- One continuous camera: great-circle path with log-scale zoom; a glowing beacon follows the property down the globe, over the map, to the arrival circle.
-- The street map is warmed invisibly at the zoom matching the globe, so the crossfade lines up. The handoff waits for its tiles (verified: tiles 9 s late made the journey pause about 0.8 s, then continue).
-- One fly-in lands at 12.6 s, leaving about 2.4 s to look around. The area circle appears only on arrival (previously a zoom animation inflated it into a full-screen violet blob).
-- Quality governor steps the globe down if frames drop; a device that still cannot keep up gets the still arrival instead of a stuttering flight.
-- Measured: stages at 3.0 / 6.0 / 9.1 / 12.0 s, total 15.1 s; globe draw 6 ms median at full quality.
+A 15-second rebuild (media-time clock, great-circle camera, matched-zoom handoff, quality governor) was tried and **reverted at the owner's request**: it felt less smooth and zoomed to the location too quickly. The journey is back to the original 30-second timeline (stages at 5.4 / 10.8 / 16.2 / 21.6 s), with only the earlier heat protections kept (frame pacing, still version under battery saver, cheaper globe draw). The rebuild remains in git history (`6ff3429`) if parts are wanted later, for example the arrival-only area circle, which fixes the full-screen violet blob during the zoom.
 
 ## 7. Pre-merge fixes (all done, 975 of 975 tests pass)
 
