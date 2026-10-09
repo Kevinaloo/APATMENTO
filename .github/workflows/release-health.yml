@@ -47,16 +47,31 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
+      - name: Check release QA is configured
+        id: configured
+        env:
+          QA_VERCEL_TOKEN: ${{ secrets.QA_VERCEL_TOKEN }}
+          QA_VERCEL_PROJECT_ID: ${{ vars.QA_VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$QA_VERCEL_TOKEN" ] || [ -z "$QA_VERCEL_PROJECT_ID" ]; then
+            echo "::warning title=Release QA not configured::Add the QA_VERCEL_TOKEN secret and QA_VERCEL_PROJECT_ID variable to the cabana-qa environment to switch the live release checks on. Skipping, not failing."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Preserve trusted failure reporter for older deployment commits
+        if: steps.configured.outputs.run == 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/cabana-qa-bootstrap"
           cp scripts/qa/*.mjs "$RUNNER_TEMP/cabana-qa-bootstrap/"
       - uses: actions/setup-node@v4
+        if: steps.configured.outputs.run == 'true'
         with:
           node-version: 22
           cache: npm
       - name: Verify deployment source and project before releasing credentials
         id: trust
+        if: steps.configured.outputs.run == 'true'
         uses: actions/github-script@v7
         env:
           QA_VERCEL_TOKEN: ${{ secrets.QA_VERCEL_TOKEN }}
@@ -84,18 +99,23 @@ jobs:
             if (deployment.readyState !== 'READY') throw new Error(`Deployment state: ${deployment.readyState}`);
             core.setOutput('verified', 'true');
       - uses: actions/checkout@v4
+        if: steps.configured.outputs.run == 'true'
         with:
           ref: ${{ env.QA_SHA }}
           persist-credentials: false
       - run: npm ci
+        if: steps.configured.outputs.run == 'true'
       - run: npx playwright install --with-deps chromium
+        if: steps.configured.outputs.run == 'true'
       - name: Write private QA fixture configuration
+        if: steps.configured.outputs.run == 'true'
         env:
           QA_CONFIG_JSON: ${{ secrets.QA_CONFIG_JSON }}
         run: |
           node --input-type=module -e "import fs from 'node:fs'; fs.mkdirSync('qa',{recursive:true}); fs.writeFileSync('qa/config.local.json', JSON.stringify(JSON.parse(process.env.QA_CONFIG_JSON || '{}')));"
       - name: Run release QA
         id: qa
+        if: steps.configured.outputs.run == 'true'
         env:
           QA_CONFIG_PATH: qa/config.local.json
           QA_ALLOW_MUTATIONS: ${{ vars.QA_ALLOW_MUTATIONS }}
@@ -120,13 +140,13 @@ jobs:
           QA_INBOX_TOKEN: ${{ secrets.QA_INBOX_TOKEN }}
         run: npm run qa
       - name: Report setup failures
-        if: always() && steps.qa.outcome != 'success'
+        if: always() && steps.configured.outputs.run == 'true' && steps.qa.outcome != 'success'
         run: |
           if [ ! -f "artifacts/release-health/$QA_RUN_ID/release-health.json" ]; then
             node "$RUNNER_TEMP/cabana-qa-bootstrap/run.mjs" --report-only
           fi
       - name: Retain release evidence
-        if: always()
+        if: always() && steps.configured.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: cabana-release-health-${{ github.run_id }}-${{ github.run_attempt }}
