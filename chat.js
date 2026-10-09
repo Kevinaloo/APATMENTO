@@ -1658,6 +1658,7 @@ const CabanaChat = window.CabanaChat = (() => {
     } catch (_) { return 0; }
   }
   function setBell(n) {
+    window.CabanaAlerts?.setCount('messages', n);
     document.querySelectorAll('.apa-ico[data-apa="notif"]').forEach(btn => {
       const dot = btn.querySelector('.apa-ico-dot'); if (dot) dot.style.display = n > 0 ? 'block' : 'none';
       btn.setAttribute('data-unread', n > 0 ? '1' : '0');
@@ -1997,7 +1998,7 @@ const CabanaNotif = (() => {
     try {
       const { count } = await s.from('notifications')
         .select('id', { count:'exact', head:true })
-        .eq('user_id', _uid).eq('read', false);
+        .eq('user_id', _uid).eq('read', false).neq('kind', 'message');
       return count || 0;
     } catch (_) { return 0; }
   }
@@ -2027,6 +2028,8 @@ const CabanaNotif = (() => {
       getUnreadNotifCount(),
     ]);
     const total = msgs + notifs;
+    window.CabanaAlerts?.setCount('notifications', notifs);
+    window.CabanaAlerts?.setCount('messages', msgs);
     updateAllBadges(total, msgs, notifs);
     return total;
   }
@@ -2095,6 +2098,7 @@ const CabanaNotif = (() => {
   }
 
   function playMessageChime() {
+    if (window.CabanaAlerts?.play('message')) return;
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;

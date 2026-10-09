@@ -40,6 +40,7 @@
 
   /* ── AUDIO SYNTHESIZER (Polite Chime for Alerts) ── */
   function playAlertChime() {
+    if (window.CabanaAlerts && window.CabanaAlerts.play('notification')) return;
     try {
       var ctx = new (window.AudioContext || window.webkitAudioContext)();
       if (!ctx) return;
@@ -936,7 +937,10 @@
 
             <div class="cp-notif-actions">
               <span class="cp-section-title" style="margin:0;">Recent Activity</span>
-              <button class="cp-mark-all" onclick="CabanaPulse.markAllAsRead()">Mark all as read</button>
+              <span style="display:flex;gap:14px;align-items:center;">
+                <button class="cp-mark-all" onclick="window.CabanaAlerts && CabanaAlerts.openSoundBoard()">🔊 Alert sounds</button>
+                <button class="cp-mark-all" onclick="CabanaPulse.markAllAsRead()">Mark all as read</button>
+              </span>
             </div>
 
             <div class="cp-notif-list" id="cp-notif-list">

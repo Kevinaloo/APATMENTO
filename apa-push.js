@@ -67,6 +67,27 @@
     return true;
   }
 
+  /* ── CABANA ALERTS: the chimes and the count badges ──────────────── */
+  var _alertsP = null;
+  function loadAlerts() {
+    if (global.CabanaAlerts) return Promise.resolve(global.CabanaAlerts);
+    if (_alertsP) return _alertsP;
+    _alertsP = new Promise(function (resolve) {
+      var el = document.querySelector('script[src^="/cabana-alerts.js"]');
+      if (!el) {
+        el = document.createElement('script');
+        el.src = '/cabana-alerts.js?v=1';
+        el.async = true;
+        el.onerror = function () { _alertsP = null; resolve(null); };
+        (document.head || document.documentElement).appendChild(el);
+      }
+      var t = setInterval(function () { if (global.CabanaAlerts) { clearInterval(t); resolve(global.CabanaAlerts); } }, 60);
+      setTimeout(function () { clearInterval(t); resolve(global.CabanaAlerts || null); }, 8000);
+    });
+    return _alertsP;
+  }
+  loadAlerts();
+
   /* ── CABANA MATCH, ON DEMAND ─────────────────────────────────────── */
   var _matchP = null;
   function loadMatch() {
@@ -196,16 +217,16 @@
   /* ── BELL BADGE ──────────────────────────────────────────────── */
   function setUnread(n) {
     _unread = Math.max(0, n);
+    /* The alerts layer draws the count on every bell, and carries the
+       combined notifications + messages count to the app icon. Until it
+       has loaded, the bell shows the number itself. */
+    if (global.CabanaAlerts) { global.CabanaAlerts.setCount('notifications', _unread); return; }
     var b = document.querySelector('.apa-bell-badge');
     if (b) {
-      b.textContent = _unread > 9 ? '9+' : String(_unread);
+      b.textContent = _unread > 99 ? '99+' : String(_unread);
       b.classList.toggle('on', _unread > 0);
     }
-    /* The installed app's icon carries the same count. */
-    try {
-      if (_unread > 0 && navigator.setAppBadge) navigator.setAppBadge(_unread);
-      else if (!_unread && navigator.clearAppBadge) navigator.clearAppBadge();
-    } catch (e) {}
+    loadAlerts().then(function (A) { if (A) A.setCount('notifications', _unread); });
   }
 
   function mountBell() {
@@ -219,7 +240,7 @@
     btn.setAttribute('aria-label', 'Notifications');
     btn.innerHTML =
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-      ICONS.general + '</svg><span class="apa-bell-badge"></span>';
+      ICONS.general + '</svg><span class="apa-bell-badge cab-badge" data-kind="notifications"></span>';
     btn.addEventListener('click', function () {
       if (global.CabanaPulse) global.CabanaPulse.open('notifs');
       else location.href = '/dashboard.html#notifications';
@@ -295,7 +316,7 @@
     if (n.kind === 'match') {
       loadMatch().then(function (m) {
         var handled = m && (via === 'push' ? m.onPush(n.__push || n) : m.onNotification(n));
-        if (!handled) toast(n);
+        if (!handled) { toast(n); if (document.visibilityState === 'visible') chime(n); }
       });
     } else if (document.visibilityState === 'visible') {
       toast(n);
@@ -310,11 +331,17 @@
             read: false,
             link: n.url,
           });
-          if (global.CabanaPulse.playChime) global.CabanaPulse.playChime();
         } catch (e) {}
       }
+      chime(n);
     }
-    if (via !== 'push') setUnread(_unread + 1);
+    /* Message counts belong to the messenger, which keeps its own tally. */
+    if (via !== 'push' && n.kind !== 'message') setUnread(_unread + 1);
+  }
+
+  /* The sound for this kind of news, once. */
+  function chime(n) {
+    loadAlerts().then(function (A) { if (A) A.play(A.kindFor(n)); });
   }
 
   function listen(userId) {
@@ -343,7 +370,7 @@
     if (!sb || !userId) return;
     var r = await sb.from('notifications')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId).eq('read', false);
+      .eq('user_id', userId).eq('read', false).neq('kind', 'message');
     if (!r.error) setUnread(r.count || 0);
   }
 
@@ -464,6 +491,7 @@
     subscribe: subscribe,
     toast: toast,
     setUnread: setUnread,
+    chime: chime,
     requireNotifications: requireNotifications,
     loadMatch: loadMatch,
     firstTime: firstTime,

@@ -336,8 +336,12 @@
       D.addEventListener(ev, function once() { primeAudio(); D.removeEventListener(ev, once, true); }, true);
     });
   }
+  /* The two sounds that mean "someone is waiting" and "an offer arrived"
+     are Cabana's signature chimes, shared with the rest of the app. */
+  var SIGNATURE = { alert: 'match', offer: 'offer' };
   function play(name) {
     if (!soundOn()) return;
+    if (SIGNATURE[name] && global.CabanaAlerts && global.CabanaAlerts.play(SIGNATURE[name], { force: true })) return;
     var ac = audio(false);
     if (!ac || ac.state !== 'running') return;   // a queued chime that fires late is worse than none
     try { SOUNDS[name](ac, ac.currentTime + 0.02); } catch (e) {}

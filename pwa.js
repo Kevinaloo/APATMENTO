@@ -79,7 +79,7 @@ let swRegistration = null;
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    swRegistration = await navigator.serviceWorker.register('/sw.js?v=42-play', {
+    swRegistration = await navigator.serviceWorker.register('/sw.js?v=43-alerts', {
       scope: '/',
       updateViaCache: 'none',
     });
