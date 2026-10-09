@@ -6,7 +6,7 @@
    No more stale JS/CSS causing inconsistent behaviour.
 ════════════════════════════════════════════════════════════════ */
 
-const VERSION = 'cabana-v42-play';
+const VERSION = 'cabana-v43-alerts';
 const CACHE = `${VERSION}`;
 
 /* How long we will wait on the network before falling back to a cached
@@ -197,6 +197,10 @@ const VIBRATE = {
   message: [120, 70, 120, 70, 240],
   booking: [200, 100, 200],
   payment: [200, 100, 200],
+  /* The same personalities as the in-app chimes. */
+  offer: [40, 40, 40, 40, 40, 40, 260],
+  promo: [70, 60, 70, 60, 200],
+  general: [140],
 };
 
 function parsePush(e) {

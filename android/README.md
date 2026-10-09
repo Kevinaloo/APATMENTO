@@ -79,7 +79,7 @@ Then deny location twice and check the Settings dialog appears.
 
 Bump `appVersionCode` (and `appVersionName`/`appVersion`) in
 `twa-manifest.json` for every upload. Play rejects a version code it has
-seen before, on any track. Versions 1 to 4 have been uploaded to Play; this release is `1.3.0` (5).
+seen before, on any track. Versions 1 to 5 have been uploaded to Play; this release is `1.4.0` (6).
 
 ### Option A: GitHub Actions (recommended)
 
@@ -151,13 +151,13 @@ script; do not remove it.
 1. Deploy the website first (assetlinks, the Play install buttons and the
    permission flow all live there).
 2. Testing → Open testing → Create new release → Upload the `.aab`.
-3. Release name: `<version> (<code>)`, for example `1.3.0 (5)`. Release notes, for example:
+3. Release name: `<version> (<code>)`, for example `1.4.0 (6)`. Release notes, for example:
 
    ```
    <en-GB>
-   • Asks for notifications and location when you open the app, so alerts and pick-ups work straight away
-   • Tells you exactly which setting to change if either is off
-   • Fills the whole screen on Android 15 and later, and rotates on tablets and foldables
+   • New alert sounds: messages, notifications, Cabana Match, offers and promotions each have their own chime
+   • Unread counts on the bell, a new messages icon, and the app icon
+   • Day Pass tickets on stays that offer a daytime visit
    </en-GB>
    ```
 4. Review the release, then roll out.

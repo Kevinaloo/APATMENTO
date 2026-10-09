@@ -60,7 +60,7 @@ test('the build installs the launcher and refuses a bundle without it', () => {
   assert.match(sh, /cabana_native_permissions/, 'the marker the launcher keeps its state under');
   assert.match(sh, /uses-feature-not-required: name='android\.hardware\.location\.gps'/);
   assert.ok(read('android/LauncherActivity.java').includes('"cabana_native_permissions"'));
-  assert.ok(twa.appVersionCode >= 5, 'Play has seen 1 to 4; this release needs a new code');
+  assert.ok(twa.appVersionCode >= 6, 'Play has seen 1 to 5; this release needs a new code');
   assert.equal(twa.appVersion, twa.appVersionName);
 });
 

@@ -71,12 +71,12 @@ Cabana was formerly called Apatmento.
 Questions? Visit cabana.africa/help or email connect@cabana.africa.
 ```
 
-## Release notes for 1.3.0 (5)
+## Release notes for 1.4.0 (6)
 
 ```
 <en-GB>
-• Asks for notifications and location when you open the app, so alerts and pick-ups work straight away
-• Tells you exactly which setting to change if either is off
-• Fills the whole screen on Android 15 and later, and rotates on tablets and foldables
+• New alert sounds: messages, notifications, Cabana Match, offers and promotions each have their own chime, so you know what arrived before you look
+• Unread counts on the bell and a new messages icon, and on the app icon
+• Day Pass tickets on stays that offer a daytime visit, with the price and hours
 </en-GB>
 ```
