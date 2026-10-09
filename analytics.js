@@ -50,7 +50,13 @@ if(typeof supabase !== 'undefined' && supabase.createClient){
 const QUEUE = [];
 let   FLUSH_TIMER = null;
 
+/* Do Not Track and Cabana's own opt-out switch this tracker off too. */
+function optedOut(){
+  try { return localStorage.getItem('apa-no-track') === '1' || navigator.doNotTrack === '1'; } catch(e){ return false; }
+}
+
 function track(eventType, properties={}, city=null){
+  if(optedOut()) return;
   const event = {
     session_id:  SESSION_ID,
     anon_id:     ANON_ID,
@@ -288,6 +294,7 @@ function computeSegments(){
 }
 
 async function persistSegments(segments){
+  if(optedOut()) return;
   if(!segments.length) return;
   const payload = segments.map(s => ({
     anon_id:       ANON_ID,

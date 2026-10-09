@@ -225,13 +225,41 @@ li{margin-bottom:6px;}
 
   <!-- 9 -->
   <h2 id="cookies">9. Cookies &amp; Tracking</h2>
-  <p>We use minimal cookies necessary for the operation of the platform. We do not use advertising cookies, third-party tracking pixels, or behavioural profiling tools. For full details, see our <a href="cookies.html">Cookie Policy</a>.</p>
+  <p>We use minimal cookies necessary for the operation of the platform, and first-party analytics that never leave Cabana. We do not use advertising cookies or third-party tracking pixels. For full details, see our <a href="cookies.html">Cookie Policy</a>.</p>
   <p>In summary, we use:</p>
   <ul>
     <li><strong>Authentication cookies / local storage:</strong> Supabase session tokens to keep you logged in. These are strictly necessary and cannot be opted out of while using the Service</li>
     <li><strong>Preference storage:</strong> Local storage for UI preferences (dark mode, notification settings), no personal data is sent to third parties</li>
+    <li><strong>A first-party visitor identifier:</strong> a random id kept in your browser's local storage, used for the personalisation described below</li>
   </ul>
   <p>We do not use Google Analytics, Facebook Pixel, or any other third-party analytics or advertising tracking.</p>
+
+  <h3 id="personalisation">Personalisation and your browsing profile</h3>
+  <p>To show you places that fit you, and so that APA, our assistant, does not have to ask you the same questions twice, Cabana keeps a profile of what you do on Cabana: the listings, tours, events and cars you view, save, share or start booking; what you search for (places, dates, number of guests, budget); and roughly when and on what kind of device you use Cabana. From that we work out things like the places you are interested in, the price range you usually look at and whether you are planning a trip or ready to book. Interest you have not shown for a while fades automatically.</p>
+  <ul>
+    <li><strong>What we use for location:</strong> the country, region and city our hosting network reports for your connection. We do not store your IP address for this, and we do not use your device's GPS for it.</li>
+    <li><strong>Where it stays:</strong> on Cabana's own database. We do not sell it, and we do not give individual profiles to hosts, advertisers or anyone else.</li>
+    <li><strong>Advertising:</strong> advertisers on Cabana can be shown the size and general make-up of audiences (for example "travellers interested in the coast"), never who is in them. Your profile only counts towards advertising audiences if your choices allow it; a Global Privacy Control signal from your browser turns advertising use off.</li>
+    <li><strong>Your control:</strong> you can see what Cabana has inferred about you, erase it, or stop it being collected, at any time, with the buttons below. Browsers that send Do Not Track are not profiled at all.</li>
+  </ul>
+  <p class="cbn-privacy-controls" style="display:flex;flex-wrap:wrap;gap:10px;margin:14px 0">
+    <button type="button" data-compass="show" style="border:1px solid currentColor;background:none;border-radius:999px;padding:9px 16px;font:inherit;cursor:pointer">Show what Cabana has inferred</button>
+    <button type="button" data-compass="forget" style="border:1px solid currentColor;background:none;border-radius:999px;padding:9px 16px;font:inherit;cursor:pointer">Erase it and stop</button>
+  </p>
+  <pre data-compass-out hidden style="white-space:pre-wrap;font-size:13px;background:rgba(127,127,127,.08);padding:12px;border-radius:10px"></pre>
+  <script>
+  (function () {
+    function out(t) { var o = document.querySelector('[data-compass-out]'); o.hidden = false; o.textContent = t; }
+    function ready(fn) { if (window.CabanaCompass) return fn(window.CabanaCompass); var s = document.createElement('script'); s.src = '/cabana-compass.js'; s.onload = function () { fn(window.CabanaCompass); }; document.head.appendChild(s); }
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-compass]'); if (!b) return;
+      ready(function (C) {
+        if (b.getAttribute('data-compass') === 'show') C.profile().then(function (r) { out(r && r.profile ? JSON.stringify(r.profile, null, 2) : 'Nothing has been inferred about this browser.'); }).catch(function () { out('Could not load it just now. Please try again.'); });
+        else C.forget().then(function () { out('Erased. This browser will not be profiled again unless you turn it back on.'); }).catch(function () { out('Could not reach Cabana just now. Please try again.'); });
+      });
+    });
+  })();
+  </script>
 
   <!-- 10 -->
   <h2 id="push-notifications">10. Push Notifications</h2>

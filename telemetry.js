@@ -27,6 +27,12 @@ const ApatmentoPulse = (() => {
     return vid;
   }
 
+  /* Do Not Track and Cabana's own opt-out (set by the privacy page's
+     "Erase it and stop") switch every tracker off, this one included. */
+  function optedOut() {
+    try { return localStorage.getItem('apa-no-track') === '1' || navigator.doNotTrack === '1'; } catch { return false; }
+  }
+
   /* ── Context collectors ── */
   function deviceContext() {
     const ua = navigator.userAgent;
@@ -107,6 +113,7 @@ const ApatmentoPulse = (() => {
       ...trafficContext(),
       occasion: window._apatmentoOccasion?.id || null,
     };
+    if (optedOut()) return;
     try {
       await fetch(`${SUPA_URL}/rest/v1/site_visits`, {
         method: 'POST',
@@ -119,7 +126,7 @@ const ApatmentoPulse = (() => {
 
   /* ── Record engagement on leave (sendBeacon = reliable) ── */
   function recordEngagement() {
-    if (sent) return;
+    if (sent || optedOut()) return;
     sent = true;
     const payload = JSON.stringify({
       visitor_id: visitorId(),

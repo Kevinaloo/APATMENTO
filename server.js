@@ -120,6 +120,20 @@ app.get(/^\/s\/([A-Za-z0-9_-]{6,64})$/, async (req, res) => {
   return share({ query: { id: req.params[0], tour: req.query.tour } }, res);
 });
 
+/* Beacon: one live page per bookable thing, the live sitemap, the live
+   catalogue for AI assistants and host badges. Mirrors the vercel.json
+   rewrites onto /api/growth. */
+function growth(req, res, query) {
+  req.url = `/api/growth?${new URLSearchParams(query)}`;
+  return handleApi('growth', req, res);
+}
+app.get(/^\/(stay|room|eat|shop|tour|event|car)\/([a-z0-9-]{1,140})$/, (req, res) =>
+  growth(req, res, { op: 'page', family: req.params[0], slug: req.params[1] }));
+app.get('/sitemap-live.xml', (req, res) => growth(req, res, { op: 'sitemap' }));
+app.get('/llms-live.txt', (req, res) => growth(req, res, { op: 'llms' }));
+app.get(/^\/badge\/(stay|room|eat|shop|tour|event|car)\/([a-z0-9]{1,15})\.svg$/, (req, res) =>
+  growth(req, res, { op: 'badge', family: req.params[0], key: req.params[1] }));
+
 /* Public profile links. Mirrors the vercel.json rewrite /u/:handle. */
 app.get(/^\/u\/([A-Za-z0-9._]{3,24})$/, (req, res) => {
   res.sendFile(join(__dirname, 'person.html'));
@@ -159,6 +173,11 @@ app.use(express.static(__dirname, {
   extensions: ['html'],
   index: 'index.html'
 }));
+
+/* Live place hubs. After the static files on purpose: a hand-built page
+   always wins, exactly as Vercel checks the filesystem before rewrites. */
+app.get(/^\/((?:[a-z0-9]+-)+(?:apartments|safaris|car-hire|events|restaurants|rooms))$/, (req, res) =>
+  growth(req, res, { op: 'hub', hub: req.params[0] }));
 
 // Cabana uses real pages. Unknown URLs must not masquerade as the homepage.
 app.use((req, res) => {

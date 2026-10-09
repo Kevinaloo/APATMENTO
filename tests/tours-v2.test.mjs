@@ -133,7 +133,10 @@ test('sitemap lists the catalogue and guides; the studio stays out', () => {
 });
 
 test('Vercel Hobby cap: still twelve serverless functions or fewer', () => {
-  const fns = readdirSync(new URL('../api/', import.meta.url)).filter(f => f.endsWith('.js'));
+  /* Files listed in .vercelignore are not deployed, so they do not count
+     towards the ceiling (api/ambassadors.js is kept only as a rewrite). */
+  const ignored = new Set(read('.vercelignore').split(/\r?\n/).map(l => l.trim()).filter(Boolean));
+  const fns = readdirSync(new URL('../api/', import.meta.url)).filter(f => f.endsWith('.js') && !ignored.has('api/' + f));
   assert.ok(fns.length <= 12, fns.join(', '));
 });
 

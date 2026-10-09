@@ -50,10 +50,15 @@ test('the signed-in app is blocked, public pages and shared links are not', () =
 
 test('every sitemap it advertises exists', () => {
   const maps = lines.filter(l => /^sitemap:/i.test(l)).map(l => l.split(/:\s*/).slice(1).join(':'));
-  assert.ok(maps.length >= 7);
+  assert.ok(maps.length >= 8);
+  /* The live sitemap is served from the database by /api/growth; it exists
+     as a rewrite rather than a file, and that rewrite must be there. */
+  const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  const served = new Set(vercel.rewrites.map(r => r.source));
   for (const m of maps) {
     const u = new URL(m);
     assert.equal(u.host, 'cabana.africa');
-    assert.ok(existsSync(new URL('..' + u.pathname, import.meta.url)), u.pathname);
+    assert.ok(existsSync(new URL('..' + u.pathname, import.meta.url)) || served.has(u.pathname), u.pathname);
   }
+  assert.ok(maps.includes('https://cabana.africa/sitemap-live.xml'), 'the live sitemap is advertised');
 });

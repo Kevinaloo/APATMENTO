@@ -829,7 +829,9 @@
     { g: 'Growth', items: [
       { id: 'ads', label: 'Advertising', icon: 'megaphone' },
       { id: 'comms', label: 'Messaging', icon: 'send', keys: 'g m' },
-      { id: 'insights', label: 'Audience', icon: 'chart' }
+      { id: 'insights', label: 'Audience', icon: 'chart' },
+      { id: 'search', label: 'Search engine', icon: 'globe' },
+      { id: 'intelligence', label: 'Intelligence', icon: 'sparkles' }
     ] },
     { g: 'System', items: [
       { id: 'health', label: 'System health', icon: 'activity', tone: 'hot', badge: function () { return c('ops'); } },
