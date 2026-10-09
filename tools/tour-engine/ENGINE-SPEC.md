@@ -166,7 +166,8 @@ that never cover the middle of the view, everything collapsible on phones.
 ## TOURS (src/tours/<slug>)
 
 Port from `tools/<slug>-source` (jets-nest → `tools/jets-nest-source`, shikaz-homes → `tools/shikaz-source`,
-kileleshwa-elegant → `tools/kileleshwa-source`). Copy the scene files, remove React/UI code, and produce
+kileleshwa-elegant → `tools/kileleshwa-source`). (Those folders have since left the working tree; they are in git history, and each
+`verify.mjs` unpacks them from there through `src/tours/old-source.mjs`.) Copy the scene files, remove React/UI code, and produce
 `index.ts` exporting the `TourDefinition`:
 
 - `build(manager, quality)`: build + furnish exactly as the old viewer did, then orient (scale/position on root and

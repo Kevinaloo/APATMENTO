@@ -1160,6 +1160,15 @@ function share(){
   /* The shared link is /s/<id>: a real preview card in chats, then this exact menu. */
   if(window.CabanaShare && R && R.id){ window.CabanaShare.open({id:String(R.id),title:R.title,text:'The menu at '+R.title+' on Cabana'}); return; }
   var d={title:(R&&R.title)||'Cabana',text:R?('The menu at '+R.title):'',url:location.href};
+  /* A restaurant is a listing, so its /s/ link previews with the
+     kitchen's own photo in a chat; the sheet covers desktop. */
+  if(window.CabanaShare&&R){
+    CabanaShare.share({title:d.title,text:d.text,heading:'Share this restaurant',
+      url:CabanaShare.listingUrl({id:R.id,service:'food'})||d.url,
+      subtitle:[R.area,R.city].filter(Boolean).join(', ')||R.location||'',
+      imageUrl:(R.photos&&R.photos[0])||''});
+    return;
+  }
   if(navigator.share) navigator.share(d).catch(function(){});
   else if(navigator.clipboard) navigator.clipboard.writeText(location.href).then(function(){toast('Link copied');});
 }

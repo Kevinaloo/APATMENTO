@@ -38,7 +38,8 @@ test('Jets Nest walkthrough source, viewer, test and room photos remain present'
     'cabana-property-tour.css',
     'cabana-property-tour.js',
     'tests/property-tour.test.mjs',
-    'tools/jets-nest-source/app/page.tsx',
+    'tools/tour-engine/src/tours/jets-nest/index.ts',
+    'tools/tour-engine/src/tours/jets-nest/scene-details.ts',
     'tours/jets-nest/index.html',
     ...Array.from({ length: 17 }, (_, index) => `tours/jets-nest/photos/${index + 1}.jpg`),
   ]) assert.ok(existsSync(file(path)), path);

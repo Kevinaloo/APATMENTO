@@ -117,7 +117,7 @@ app.get(/^\/k\/([A-Za-z0-9]{6})$/, (req, res) => {
 /* Shared listing links. Mirrors the vercel.json rewrite /s/:id. */
 app.get(/^\/s\/([A-Za-z0-9_-]{6,64})$/, async (req, res) => {
   const { default: share } = await import('./api/lib/_listing-share.js');
-  return share({ query: { id: req.params[0] } }, res);
+  return share({ query: { id: req.params[0], tour: req.query.tour } }, res);
 });
 
 /* Public profile links. Mirrors the vercel.json rewrite /u/:handle. */

@@ -661,6 +661,9 @@
 
   L.share = function (title, text, url) {
     url = url || location.href;
+    /* The site-wide sheet when it is on the page: the same choices on a
+       desktop as a phone gets, and a QR code for the one on the desk. */
+    if (global.CabanaShare) { global.CabanaShare.share({ title: title, text: text, url: url, heading: 'Share this event' }); return; }
     if (navigator.share) { navigator.share({ title: title, text: text, url: url }).catch(function () {}); return; }
     if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { L.toast('Link copied'); }, function () { L.toast(url); });
     else L.toast(url);

@@ -10,6 +10,9 @@
    ════════════════════════════════════════════════════════════════════ */
 const SITE = 'https://cabana.africa';
 const ID = /^[A-Za-z0-9_-]{6,64}$/;
+/* The exact-view token of a 3D tour (tools/tour-engine/src/share-code.ts).
+   Only this alphabet and length ever rides along, never free text. */
+const TOUR = /^[a-z0-9~.\-]{1,120}$/i;
 
 /* Where each service opens its own listing. Keep in step with the pages. */
 const DEST = {
@@ -58,11 +61,21 @@ export async function buildShare(id, { env = process.env, fetchImpl = fetch } = 
   };
 }
 
-export function renderShare(info, { id } = {}) {
-  const dest = info ? `${SITE}${info.dest}${info.dest.includes('?') ? '&' : '?'}utm_source=share&utm_medium=link` : SITE;
-  const title = info ? `${info.title}${info.place ? ' · ' + info.place : ''}` : 'Cabana';
-  const desc = info ? [info.priceLine, 'Book direct with the host on Cabana. Zero commission.'].filter(Boolean).join(' · ') : 'Book direct with local hosts across Africa.';
-  const img = info?.photo || `${SITE}/og-stays.jpg`;
+/* A link preview wants a landscape 1200x630. Photos on our storage are
+   cut to that by the image renderer; anything else is used as it is. */
+export function previewImage(url) {
+  const m = /^(https:\/\/[^/]+\/storage\/v1\/)object\/(public\/.+?)(\?.*)?$/.exec(url || '');
+  return m ? `${m[1]}render/image/${m[2]}?width=1200&height=630&resize=cover&quality=80` : url;
+}
+
+export function renderShare(info, { id, tour } = {}) {
+  const view = info && tour && TOUR.test(tour) && /^\/apartments\?/.test(info.dest) ? tour : '';
+  const to = info ? `${info.dest}${view ? '&tour=' + encodeURIComponent(view) : ''}` : '';
+  const dest = info ? `${SITE}${to}${to.includes('?') ? '&' : '?'}utm_source=share&utm_medium=link` : SITE;
+  const place = info?.place ? ' · ' + info.place : '';
+  const title = info ? (view ? `Step inside ${info.title} in 3D` : `${info.title}${place}`) : 'Cabana';
+  const desc = info ? [view ? 'Cabana 3D tour' : '', info.priceLine, 'Book direct with the host on Cabana. Zero commission.'].filter(Boolean).join(' · ') : 'Book direct with local hosts across Africa.';
+  const img = (info?.photo && previewImage(info.photo)) || `${SITE}/og-stays.jpg`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} | Cabana</title><meta name="robots" content="noindex,follow"><link rel="canonical" href="${esc(dest)}">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Cabana"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">
@@ -78,5 +91,5 @@ export default async function listingShareHandler(req, res) {
   const info = await buildShare(id).catch(() => null);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
-  return res.status(200).send(renderShare(info, { id }));
+  return res.status(200).send(renderShare(info, { id, tour: String(req.query?.tour || '') }));
 }

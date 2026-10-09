@@ -554,6 +554,9 @@ body.lb-open #agent-ref{display:none!important;}
 
 .drawer-close{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(252,252,253,.92);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);z-index:10;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 10px rgba(10,10,20,.1);}
 .drawer-close:hover{transform:scale(1.08);}
+/* Beside the close button: the gallery's slideshow toggle owns the
+   top-right corner. */
+.drawer-share{position:absolute;top:16px;left:64px;right:auto;z-index:10;}
 
 /* ── Scrollable body ── */
 .dl-body{padding:24px 22px 120px;}
@@ -3180,6 +3183,10 @@ function wireCards() {
   }, true);   // capture: scroll does not bubble
 
   grid.addEventListener('click', e => {
+    /* Share is handled by cabana-share.js's delegated listener (capture
+       phase); step aside so the tap does not also open the stay. */
+    if (e.target.closest('[data-cbn-share],[data-cabana-share]')) return;
+
     const heart = e.target.closest('[data-heart]');
     if (heart) {
       e.stopPropagation();
@@ -6368,12 +6375,29 @@ loadListings().then(async () => {
     cmApplyStay({ checkin: qp.get('checkin'), checkout: qp.get('checkout'), guests: parseInt(qp.get('guests'), 10) || 0 });
     applyAndRender();
   }
+  /* &tour=<token> (or tour=1) arrives from a shared 3D view: the stay
+     opens as usual and its walkthrough opens on top, at the exact spot
+     the sender was standing. The token belongs to the tour engine
+     (tools/tour-engine/src/share-code.ts); here it is only checked for
+     shape and handed over. */
+  const tourToken = qp.get('tour') || '';
+  const wantsTour = /^[a-z0-9~.\-]{1,120}$/i.test(tourToken);
   // Try immediately, then retry while listings are still populating
   const tryOpen = (attempts) => {
     const apt = currentListings.find(a =>
       a.id === openId || a._dbId === openId || String(a._dbId) === String(openId)
     );
-    if (apt) { openDrawer(apt.id); return; }
+    if (apt) {
+      openDrawer(apt.id);
+      const tourId = String(apt._dbId || apt.id);
+      if (wantsTour && window.CabanaPropertyTour?.has(tourId)) {
+        /* The recipient came for the room, not the thirty-second flight
+           to the neighbourhood the drawer opens with. */
+        window.CabanaLocationFlight?.close();
+        window.CabanaPropertyTour.open(tourId, tourToken === '1' ? undefined : tourToken);
+      }
+      return;
+    }
     if (attempts > 0) { setTimeout(() => tryOpen(attempts - 1), 300); return; }
     openSharedListing(openId);
   };
