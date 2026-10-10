@@ -21,7 +21,7 @@ lanes.
 ## Environment
 
 Server only, in Vercel (Production and Preview):
-`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN`, `R2_ACCESS_KEY_ID`,
+`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN`, `R2_ACCOUNT_ID` (optional, falls back to the former), `R2_ACCESS_KEY_ID`,
 `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`.
 Optional: `CLOUDFLARE_AI_MODEL`, `APA_VOICE_SPEAKER`, `AI_HEDGE_MS`.
 

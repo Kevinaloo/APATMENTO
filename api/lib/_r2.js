@@ -15,7 +15,7 @@
  *
  * Signing is AWS Signature V4 with Node's crypto, so there is no SDK
  * dependency. Environment (all server-side only):
- *   CLOUDFLARE_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
+ *   R2_ACCOUNT_ID (or CLOUDFLARE_ACCOUNT_ID), R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
  *   R2_BUCKET_NAME, R2_PUBLIC_URL
  */
 import { createHash, createHmac, randomUUID } from 'node:crypto';
@@ -47,10 +47,19 @@ function env(name) {
   return v && String(v).trim() ? String(v).trim() : '';
 }
 
+/* R2_ACCOUNT_ID wins; the Workers AI variable is the same Cloudflare
+   account, so it is an acceptable fallback. */
+function accountId() {
+  return env('R2_ACCOUNT_ID') || env('CLOUDFLARE_ACCOUNT_ID');
+}
+
+/* A template value that was never replaced must not count as a credential. */
+const real = (v) => Boolean(v) && !/^(?:PASTE|YOUR|CHANGE|REPLACE|TODO|XXX)/i.test(v);
+
 export function r2Configured() {
   return Boolean(
-    /^[a-f0-9]{32}$/i.test(env('CLOUDFLARE_ACCOUNT_ID')) &&
-    env('R2_ACCESS_KEY_ID') && env('R2_SECRET_ACCESS_KEY') &&
+    /^[a-f0-9]{32}$/i.test(accountId()) &&
+    real(env('R2_ACCESS_KEY_ID')) && real(env('R2_SECRET_ACCESS_KEY')) &&
     env('R2_BUCKET_NAME') && publicBase()
   );
 }
@@ -92,7 +101,7 @@ export function presignPut({ kind, ownerId, contentType, size, now = new Date(),
   const { prefix, owner } = media;
   const key = `${prefix}/${owner}/${media.id}.${ext}`;
 
-  const account = env('CLOUDFLARE_ACCOUNT_ID');
+  const account = accountId();
   const bucket = env('R2_BUCKET_NAME');
   const host = `${account}.r2.cloudflarestorage.com`;
   const path = `/${bucket}/${key.split('/').map(rfc3986).join('/')}`;

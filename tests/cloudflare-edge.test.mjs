@@ -7,7 +7,7 @@ import { presignPut, r2Configured, newMediaKey, isR2PublicUrl, PUBLIC_MEDIA_KIND
 const ACCOUNT = '0123456789abcdef0123456789abcdef';
 const OWNER = '11111111-2222-3333-4444-555555555555';
 const KEYS = ['GROQ_API_KEY', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_AI_API_TOKEN', 'CLOUDFLARE_AI_MODEL', 'AI_GATEWAY_API_KEY',
-  'AI_GATEWAY_ENABLED', 'GEMINI_API_KEY', 'OPENAI_API_KEY', 'AI_PROVIDER_ORDER', 'AI_HEDGE_MS', 'R2_ACCESS_KEY_ID',
+  'AI_GATEWAY_ENABLED', 'R2_ACCOUNT_ID', 'GEMINI_API_KEY', 'OPENAI_API_KEY', 'AI_PROVIDER_ORDER', 'AI_HEDGE_MS', 'R2_ACCESS_KEY_ID',
   'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME', 'R2_PUBLIC_URL'];
 
 function sandbox(t, env = {}, fetchImpl) {
@@ -181,4 +181,17 @@ test('only URLs under our own R2 public base count as R2 media', (t) => {
   assert.equal(isR2PublicUrl('https://media.example.com/listings/x.jpg'), true);
   assert.equal(isR2PublicUrl('https://media.example.com.evil.io/x.jpg'), false);
   assert.equal(isR2PublicUrl('https://elsewhere.io/x.jpg'), false);
+});
+
+test('R2_ACCOUNT_ID is accepted, and unreplaced PASTE_ placeholders count as not configured', (t) => {
+  sandbox(t, { ...R2ENV, R2_ACCOUNT_ID: '21129ae699ac62690fff7a4001327802' });
+  delete process.env.CLOUDFLARE_ACCOUNT_ID;
+  assert.equal(r2Configured(), true);
+  const out = presignPut({ kind: 'listing', ownerId: OWNER, contentType: 'image/png', size: 5000 });
+  assert.match(out.uploadUrl, /^https:\/\/21129ae699ac62690fff7a4001327802\.r2\.cloudflarestorage\.com\/cabana-media\//);
+  process.env.R2_ACCESS_KEY_ID = 'PASTE_YOUR_R2_ACCESS_KEY_ID';
+  assert.equal(r2Configured(), false);
+  process.env.R2_ACCESS_KEY_ID = 'AKIDEXAMPLE';
+  process.env.R2_SECRET_ACCESS_KEY = 'PASTE_YOUR_R2_SECRET_ACCESS_KEY';
+  assert.equal(r2Configured(), false);
 });
