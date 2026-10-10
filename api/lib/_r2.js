@@ -30,6 +30,7 @@ export const PUBLIC_MEDIA_KINDS = Object.freeze({
   car: 'cars',
   avatar: 'avatars',
   place: 'places',
+  ad: 'ads',
 });
 
 export const MEDIA_TYPES = Object.freeze({
@@ -37,9 +38,15 @@ export const MEDIA_TYPES = Object.freeze({
   'image/png': 'png',
   'image/webp': 'webp',
   'image/avif': 'avif',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
 });
 
-export const MAX_MEDIA_BYTES = 6 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+/* Kept for callers that report one number: the image ceiling. */
+export const MAX_MEDIA_BYTES = MAX_IMAGE_BYTES;
 const URL_TTL_SECONDS = 300;
 
 function env(name) {
@@ -64,6 +71,8 @@ export function r2Configured() {
   );
 }
 
+export function publicMediaBase() { return publicBase(); }
+
 function publicBase() {
   const raw = env('R2_PUBLIC_URL').replace(/\/+$/, '');
   return /^https:\/\/[a-z0-9.-]+(?::\d+)?(?:\/[A-Za-z0-9._~/-]*)?$/i.test(raw) ? raw : '';
@@ -86,21 +95,10 @@ export function newMediaKey({ kind, ownerId, id = randomUUID() }) {
   return { prefix, owner, id };
 }
 
-/* Presigned PUT. content-type and content-length are SIGNED: R2 rejects an
-   upload whose type or size differs from what was approved here. */
-export function presignPut({ kind, ownerId, contentType, size, now = new Date(), id }) {
-  if (!r2Configured()) throw Object.assign(new Error('r2_not_configured'), { status: 503 });
-  const ext = MEDIA_TYPES[contentType];
-  if (!ext) throw Object.assign(new Error('unsupported_type'), { status: 415 });
-  const bytes = Math.floor(Number(size));
-  if (!Number.isFinite(bytes) || bytes < 200 || bytes > MAX_MEDIA_BYTES) {
-    throw Object.assign(new Error('bad_size'), { status: 413 });
-  }
-
-  const media = newMediaKey({ kind, ownerId, id });
-  const { prefix, owner } = media;
-  const key = `${prefix}/${owner}/${media.id}.${ext}`;
-
+/* SigV4 query-string presign for one object. For PUT, content-type and
+   content-length are SIGNED, so R2 rejects an upload whose type or size
+   differs from what was approved here. */
+function signUrl({ method, key, contentType, size, now = new Date() }) {
   const account = accountId();
   const bucket = env('R2_BUCKET_NAME');
   const host = `${account}.r2.cloudflarestorage.com`;
@@ -109,7 +107,8 @@ export function presignPut({ kind, ownerId, contentType, size, now = new Date(),
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
   const day = amzDate.slice(0, 8);
   const scope = `${day}/auto/s3/aws4_request`;
-  const signedHeaders = 'content-length;content-type;host';
+  const withBody = method === 'PUT';
+  const signedHeaders = withBody ? 'content-length;content-type;host' : 'host';
 
   const query = {
     'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
@@ -120,23 +119,66 @@ export function presignPut({ kind, ownerId, contentType, size, now = new Date(),
   };
   const canonicalQuery = Object.keys(query).sort()
     .map(k => `${rfc3986(k)}=${rfc3986(query[k])}`).join('&');
-  const canonicalHeaders = `content-length:${bytes}\ncontent-type:${contentType}\nhost:${host}\n`;
-  const canonicalRequest = ['PUT', path, canonicalQuery, canonicalHeaders, signedHeaders, 'UNSIGNED-PAYLOAD'].join('\n');
+  const canonicalHeaders = withBody
+    ? `content-length:${size}\ncontent-type:${contentType}\nhost:${host}\n`
+    : `host:${host}\n`;
+  const canonicalRequest = [method, path, canonicalQuery, canonicalHeaders, signedHeaders, 'UNSIGNED-PAYLOAD'].join('\n');
   const stringToSign = ['AWS4-HMAC-SHA256', amzDate, scope, sha256hex(canonicalRequest)].join('\n');
 
   const kDate = hmac('AWS4' + env('R2_SECRET_ACCESS_KEY'), day);
   const signingKey = hmac(hmac(hmac(kDate, 'auto'), 's3'), 'aws4_request');
   const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
+  return `https://${host}${path}?${canonicalQuery}&X-Amz-Signature=${signature}`;
+}
 
+export function presignPut({ kind, ownerId, contentType, size, now = new Date(), id }) {
+  if (!r2Configured()) throw Object.assign(new Error('r2_not_configured'), { status: 503 });
+  const ext = MEDIA_TYPES[contentType];
+  if (!ext) throw Object.assign(new Error('unsupported_type'), { status: 415 });
+  const isVideo = contentType.startsWith('video/');
+  /* Avatars are small stills; a clip there is a mistake or an abuse. */
+  if (isVideo && kind === 'avatar') throw Object.assign(new Error('unsupported_type'), { status: 415 });
+  const bytes = Math.floor(Number(size));
+  const ceiling = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+  if (!Number.isFinite(bytes) || bytes < 200 || bytes > ceiling) {
+    throw Object.assign(new Error('bad_size'), { status: 413 });
+  }
+
+  const media = newMediaKey({ kind, ownerId, id });
+  const key = `${media.prefix}/${media.owner}/${media.id}.${ext}`;
   return {
-    uploadUrl: `https://${host}${path}?${canonicalQuery}&X-Amz-Signature=${signature}`,
+    uploadUrl: signUrl({ method: 'PUT', key, contentType, size: bytes, now }),
     publicUrl: `${publicBase()}/${key}`,
     key,
     method: 'PUT',
     headers: { 'Content-Type': contentType },
     expiresIn: URL_TTL_SECONDS,
-    maxBytes: MAX_MEDIA_BYTES,
+    maxBytes: ceiling,
   };
+}
+
+/* The object key behind one of our public URLs, or null. The key must sit
+   under a known prefix, and (unless `admin`) under the caller's own folder,
+   so nobody can delete someone else's media or anything outside media. */
+export function keyForOwnedUrl(url, ownerId, { admin = false } = {}) {
+  const base = publicBase();
+  if (!base || typeof url !== 'string' || !url.startsWith(base + '/')) return null;
+  let key;
+  try { key = decodeURIComponent(url.slice(base.length + 1).split(/[?#]/)[0]); } catch { return null; }
+  if (key.includes('..') || key.includes('//')) return null;
+  const [prefix, owner, file, ...rest] = key.split('/');
+  if (rest.length || !file || !Object.values(PUBLIC_MEDIA_KINDS).includes(prefix)) return null;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(owner)) return null;
+  if (!admin && owner !== String(ownerId || '').toLowerCase()) return null;
+  return key;
+}
+
+export async function deleteObject(key) {
+  if (!r2Configured()) throw Object.assign(new Error('r2_not_configured'), { status: 503 });
+  const response = await fetch(signUrl({ method: 'DELETE', key }), { method: 'DELETE' });
+  /* S3 semantics: deleting a missing key is a success. */
+  if (!response.ok && response.status !== 404) throw new Error(`r2_delete_${response.status}`);
+  return true;
 }
 
 /* Only URLs under our own public base are treated as R2 media. */

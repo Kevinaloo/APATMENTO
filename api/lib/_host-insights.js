@@ -1,12 +1,18 @@
 import { createHash, createHmac } from 'node:crypto';
 import { select, one, rpc } from './_db.js';
 import { callAi } from './_ai-gateway.js';
+import { publicMediaBase } from './_r2.js';
 
 const fingerprint = photos => createHash('sha256').update(JSON.stringify(photos)).digest('hex');
 
 export function publicPhotoUrl(raw, storageUrl = process.env.SUPABASE_URL) {
   try {
-    const url = new URL(raw), storage = new URL(storageUrl);
+    const url = new URL(raw);
+    /* Public photos on our own R2 media domain are as readable as Supabase ones. */
+    const media = publicMediaBase();
+    if (media && url.protocol === 'https:' && !url.username && !url.password &&
+        url.origin === new URL(media).origin && url.pathname.startsWith('/') && !url.pathname.includes('..')) return url.href;
+    const storage = new URL(storageUrl);
     return url.protocol === 'https:' && url.origin === storage.origin && !url.username && !url.password &&
       url.pathname.startsWith('/storage/v1/object/public/') ? url.href : null;
   } catch { return null; }

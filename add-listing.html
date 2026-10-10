@@ -2850,6 +2850,7 @@ async function compressForUpload(file){
   }catch(e){ console.warn('[upload] compression skipped:',e&&e.message); return file; }
 }
 
+function loadR2(){if(window.CabanaR2)return Promise.resolve(window.CabanaR2);return new Promise(function(r){var s=document.createElement('script');s.src='/cabana-r2.js';s.onload=function(){r(window.CabanaR2||null)};s.onerror=function(){r(null)};document.head.appendChild(s);});}
 async function publish(){
   /* These services have moderated or regulated catalogues of their own.
      Refuse a hand-edited generic form as well as routing the visible UI;
@@ -2868,6 +2869,14 @@ async function publish(){
     const tell=()=>{const t='Uploading photos '+doneN+' of '+jobs.length;if(label)label.textContent=t;else btn.setAttribute('data-progress',t);};
     const upOne=async i=>{
       const blob=await compressForUpload(F.photoFiles[i]);
+      /* Public listing photos live on Cloudflare R2 (Supabase storage is
+         kept for private files). Any failure falls through to Supabase. */
+      const R2=await loadR2();
+      if(R2){
+        const kind=F.svc==='food'?'food':F.svc==='shopping'?'shop':F.svc==='carhire'?'car':F.svc==='tours'?'tour':F.svc==='events'?'event':'listing';
+        const u=await R2.putOrNull(blob,{kind,sb});
+        if(u){finalPhotos[i]=u;doneN++;tell();return;}
+      }
       const path=CU.id+'/'+Date.now()+'-'+i+'-'+Math.random().toString(36).slice(2,7)+'.jpg';
       let lastErr=null;
       for(let attempt=0;attempt<3;attempt++){

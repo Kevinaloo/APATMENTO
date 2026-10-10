@@ -1609,6 +1609,17 @@
     try { input.click(); } catch (e) { input.remove(); systemLine('I could not open the picker here.'); }
   }
 
+  function loadR2() {
+    if (global.CabanaR2) return Promise.resolve(global.CabanaR2);
+    return new Promise(function (resolve) {
+      var sc = doc.createElement('script');
+      sc.src = '/cabana-r2.js';
+      sc.onload = function () { resolve(global.CabanaR2 || null); };
+      sc.onerror = function () { resolve(null); };
+      doc.head.appendChild(sc);
+    });
+  }
+
   function uploadPhotos(files) {
     var sb = supa();
     if (!sb) return Promise.resolve([]);
@@ -1616,13 +1627,18 @@
     return Promise.all(files.map(function (f) {
       var ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
       var path = 'apa/' + Date.now() + '-' + Math.random().toString(36).slice(2, 10) + '.' + ext;
-      return sb.storage.from(bucket).upload(path, f, { cacheControl: '3600', upsert: false })
-        .then(function (r) {
-          if (r.error) return null;
-          var pub = sb.storage.from(bucket).getPublicUrl(path);
-          return (pub && pub.data && pub.data.publicUrl) || null;
-        })
-        .catch(function () { return null; });
+      /* Listing photos are public, so they live on R2; Supabase only on failure. */
+      return loadR2().then(function (R2) {
+        return R2 ? R2.putOrNull(f, { kind: 'listing', sb: sb }) : null;
+      }).then(function (url) {
+        if (url) return url;
+        return sb.storage.from(bucket).upload(path, f, { cacheControl: '3600', upsert: false })
+          .then(function (r) {
+            if (r.error) return null;
+            var pub = sb.storage.from(bucket).getPublicUrl(path);
+            return (pub && pub.data && pub.data.publicUrl) || null;
+          });
+      }).catch(function () { return null; });
     })).then(function (urls) { return urls.filter(Boolean); });
   }
 

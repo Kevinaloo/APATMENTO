@@ -607,6 +607,7 @@
           drop.ondragleave = function () { drop.classList.remove('over'); };
           drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove('over'); upload(e.dataTransfer.files); };
         }
+        function loadR2() { if (global.CabanaR2) return Promise.resolve(global.CabanaR2); return new Promise(function (r) { var sc = document.createElement('script'); sc.src = '/cabana-r2.js'; sc.onload = function () { r(global.CabanaR2 || null); }; sc.onerror = function () { r(null); }; document.head.appendChild(sc); }); }
         function upload(files) {
           files = Array.prototype.slice.call(files || []).filter(function (f) { return /^image\//.test(f.type); });
           if (!files.length) return;
@@ -618,9 +619,14 @@
               shrink.then(function (blob) {
                 var ext = (blob.type || f.type || 'image/jpeg').split('/')[1].replace('jpeg', 'jpg').replace(/[^a-z0-9]/g, '') || 'jpg';
                 var path = uid + '/console-' + Date.now() + '-' + i + '-' + CX.uid() + '.' + ext;
-                return CX.client().storage.from('listings').upload(path, blob, { cacheControl: '31536000', contentType: blob.type || f.type, upsert: false }).then(function (r) {
-                  if (r.error) throw r.error;
-                  photos.push(CX.client().storage.from('listings').getPublicUrl(path).data.publicUrl);
+                return loadR2().then(function (R2) {
+                  return R2 ? R2.putOrNull(blob, { kind: 'listing', sb: CX.client() }) : null;
+                }).then(function (url) {
+                  if (url) { photos.push(url); return; }
+                  return CX.client().storage.from('listings').upload(path, blob, { cacheControl: '31536000', contentType: blob.type || f.type, upsert: false }).then(function (r) {
+                    if (r.error) throw r.error;
+                    photos.push(CX.client().storage.from('listings').getPublicUrl(path).data.publicUrl);
+                  });
                 });
               }).catch(function (e) { toast('Upload failed: ' + CX.friendly(e), 'bad'); }).then(function () { uploading--; paintPhotos(); });
             });

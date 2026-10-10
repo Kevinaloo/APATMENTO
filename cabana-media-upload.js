@@ -164,50 +164,21 @@
     });
   }
 
-  /* ── public photos go to Cloudflare R2 ────────────────────────────
-     Supabase's free storage is small. Public marketing photos are
-     uploaded straight to R2 with a short-lived signed URL from
-     /api/media-sign. Anything private never comes through here. If R2 is
-     not configured, or anything about the signed upload fails, the photo
-     goes to Supabase exactly as before, so an upload never just breaks. */
-  var r2State = null;   // null = unknown, true/false once asked
-  function r2Enabled() {
-    if (r2State !== null) return Promise.resolve(r2State);
-    return fetch('/api/media-sign', { method: 'GET' })
-      .then(function (r) { return r.ok ? r.json() : { enabled: false }; })
-      .then(function (j) { r2State = !!(j && j.enabled); return r2State; })
-      .catch(function () { r2State = false; return false; });
-  }
-
-  function putR2(file, kind, token, onProgress) {
-    return fetch('/api/media-sign', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ kind: kind, contentType: file.type, size: file.size }),
-    }).then(function (r) {
-      if (!r.ok) throw new Error('sign_' + r.status);
-      return r.json();
-    }).then(function (sig) {
-      return new Promise(function (resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('PUT', sig.uploadUrl, true);
-        Object.keys(sig.headers || {}).forEach(function (h) { xhr.setRequestHeader(h, sig.headers[h]); });
-        xhr.upload.onprogress = function (e) {
-          if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
-        };
-        xhr.onload = function () {
-          if (xhr.status >= 200 && xhr.status < 300) resolve(sig.publicUrl);
-          else reject(new Error('r2_' + xhr.status));
-        };
-        xhr.onerror = function () { reject(new Error('r2_network')); };
-        xhr.ontimeout = function () { reject(new Error('r2_timeout')); };
-        xhr.timeout = 120000;
-        xhr.send(file);
-      });
+  /* ── public photos and clips go to Cloudflare R2 ──────────────────
+     Supabase's free storage is small and is kept for private files. The
+     shared client lives in cabana-r2.js (loaded on demand). If R2 is off
+     or anything about the upload fails, the file goes to Supabase exactly
+     as before, so an upload never just breaks. */
+  function loadR2() {
+    if (window.CabanaR2) return Promise.resolve(window.CabanaR2);
+    return new Promise(function (resolve) {
+      var sc = document.createElement('script');
+      sc.src = '/cabana-r2.js';
+      sc.onload = function () { resolve(window.CabanaR2 || null); };
+      sc.onerror = function () { resolve(null); };
+      document.head.appendChild(sc);
     });
   }
-
-  var R2_TYPES = /^image\/(jpeg|png|webp|avif)$/;
 
   /* ── the component ───────────────────────────────────────────────── */
 
@@ -321,6 +292,7 @@
         // not leave orphans in the bucket.
         var path = it.url.split('/public/' + bucket + '/')[1];
         if (path) { try { sb.storage.from(bucket).remove([path]); } catch (e) {} }
+        else if (window.CabanaR2 && token) { window.CabanaR2.remove(it.url, { token: token }); }
       }
       if (it && it.preview) { try { URL.revokeObjectURL(it.preview); } catch (e) {} }
       items = items.filter(function (i) { return i.id !== id; });
@@ -366,14 +338,10 @@
           if (bar) bar.style.width = Math.round(p * 100) + '%';
         };
         var toSupabase = function () { return put(out, path, token, progress, bucket); };
-        if (isVid || !useR2 || !R2_TYPES.test(out.type || '')) return toSupabase();
-        return r2Enabled().then(function (on) {
-          if (!on) return toSupabase();
-          return putR2(out, mediaKind, token, progress).catch(function (e) {
-            console.warn('[media] R2 upload failed, using Supabase:', e && e.message);
-            return toSupabase();
-          });
-        });
+        if (!useR2) return toSupabase();
+        return loadR2().then(function (R2) {
+          return R2 ? R2.putOrNull(out, { kind: mediaKind, token: token, onProgress: progress }) : null;
+        }).then(function (url) { return url || toSupabase(); });
       }).then(function (url) {
         item.url = url; item.busy = false; item.pct = 1;
         paint();

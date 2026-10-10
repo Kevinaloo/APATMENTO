@@ -129,6 +129,13 @@ test('recommendation card escapes listing text and writes only after a click', a
 
 test('photo assessment accepts only public project images and validates its ranking', async () => {
   assert.equal(publicPhotoUrl('https://evil.example/photo.jpg', 'https://project.supabase.co'), null);
+  {
+    const keep = { u: process.env.R2_PUBLIC_URL, a: process.env.CLOUDFLARE_ACCOUNT_ID, k: process.env.R2_ACCESS_KEY_ID, s: process.env.R2_SECRET_ACCESS_KEY, b: process.env.R2_BUCKET_NAME };
+    Object.assign(process.env, { R2_PUBLIC_URL: 'https://media.example.com', CLOUDFLARE_ACCOUNT_ID: '0123456789abcdef0123456789abcdef', R2_ACCESS_KEY_ID: 'k', R2_SECRET_ACCESS_KEY: 's', R2_BUCKET_NAME: 'b' });
+    assert.equal(publicPhotoUrl('https://media.example.com/listings/u/p.jpg', 'https://project.supabase.co'), 'https://media.example.com/listings/u/p.jpg');
+    assert.equal(publicPhotoUrl('https://media.example.com.evil.io/p.jpg', 'https://project.supabase.co'), null);
+    for (const [name, v] of [['R2_PUBLIC_URL', keep.u], ['CLOUDFLARE_ACCOUNT_ID', keep.a], ['R2_ACCESS_KEY_ID', keep.k], ['R2_SECRET_ACCESS_KEY', keep.s], ['R2_BUCKET_NAME', keep.b]]) { if (v === undefined) delete process.env[name]; else process.env[name] = v; }
+  }
   assert.equal(publicPhotoUrl('https://project.supabase.co/storage/v1/object/sign/photos/private.jpg', 'https://project.supabase.co'), null);
   const publicUrl = 'https://project.supabase.co/storage/v1/object/public/photos/room.jpg';
   assert.equal(publicPhotoUrl(publicUrl, 'https://project.supabase.co'), publicUrl);

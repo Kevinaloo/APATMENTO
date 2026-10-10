@@ -3,11 +3,11 @@
  *
  * Hands a signed-in user a short-lived URL to upload ONE public image
  * straight to R2. See _r2.js for what may and may not be stored there.
- *   body:  { kind, contentType, size }
+ *   body:  { kind, contentType, size }   or   { op: 'delete', url }
  *   reply: { uploadUrl, publicUrl, headers, expiresIn, maxBytes }
  */
-import { setCors, requireUser, consumeRateLimit } from './_security.js';
-import { presignPut, r2Configured, PUBLIC_MEDIA_KINDS, MEDIA_TYPES, MAX_MEDIA_BYTES } from './_r2.js';
+import { setCors, requireUser, consumeRateLimit, isAdminUser } from './_security.js';
+import { presignPut, r2Configured, keyForOwnedUrl, deleteObject, publicMediaBase, PUBLIC_MEDIA_KINDS, MEDIA_TYPES, MAX_IMAGE_BYTES, MAX_VIDEO_BYTES } from './_r2.js';
 
 export default async function mediaSignHandler(req, res) {
   setCors(req, res, 'POST, OPTIONS');
@@ -15,7 +15,7 @@ export default async function mediaSignHandler(req, res) {
   if (req.method === 'GET') {
     /* Lets the client ask once whether R2 is wired, without a login. */
     res.setHeader('Cache-Control', 'public, max-age=60');
-    return res.status(200).json({ enabled: r2Configured(), kinds: Object.keys(PUBLIC_MEDIA_KINDS), types: Object.keys(MEDIA_TYPES), maxBytes: MAX_MEDIA_BYTES });
+    return res.status(200).json({ enabled: r2Configured(), base: r2Configured() ? publicMediaBase() : null, kinds: Object.keys(PUBLIC_MEDIA_KINDS), types: Object.keys(MEDIA_TYPES), maxBytes: MAX_IMAGE_BYTES, maxVideoBytes: MAX_VIDEO_BYTES });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
@@ -28,6 +28,14 @@ export default async function mediaSignHandler(req, res) {
   let body;
   try { body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); }
   catch { return res.status(400).json({ error: 'invalid_json' }); }
+
+  /* Deleting your own media (a removed photo, an abandoned draft). */
+  if (body.op === 'delete') {
+    const key = keyForOwnedUrl(String(body.url || ''), user.id, { admin: await isAdminUser(user).catch(() => false) });
+    if (!key) return res.status(403).json({ error: 'not_yours' });
+    try { await deleteObject(key); return res.status(200).json({ ok: true }); }
+    catch { return res.status(502).json({ error: 'delete_failed' }); }
+  }
 
   try {
     const signed = presignPut({

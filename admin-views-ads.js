@@ -165,7 +165,23 @@
     });
   }
   /* XHR so the operator sees real progress; falls back to the SDK. */
+  function loadR2() {
+    if (global.CabanaR2) return Promise.resolve(global.CabanaR2);
+    return new Promise(function (resolve) {
+      var sc = document.createElement('script');
+      sc.src = '/cabana-r2.js';
+      sc.onload = function () { resolve(global.CabanaR2 || null); };
+      sc.onerror = function () { resolve(null); };
+      document.head.appendChild(sc);
+    });
+  }
+  /* Ad creatives are public by design, so they go to R2 first. */
   function upload(blob, key, onProgress) {
+    return loadR2().then(function (R2) {
+      return R2 ? R2.putOrNull(blob, { kind: 'ad', sb: CX.client(), onProgress: onProgress }) : null;
+    }).then(function (url) { return url || uploadSupabase(blob, key, onProgress); });
+  }
+  function uploadSupabase(blob, key, onProgress) {
     var sb = CX.client();
     return CX.token().then(function (tok) {
       var base = sb && (sb.supabaseUrl || (sb.storageUrl || '').replace(/\/storage\/v1\/?$/, ''));

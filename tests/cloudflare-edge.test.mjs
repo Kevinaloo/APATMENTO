@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { callAi, generateStructuredJson, __test } from '../api/lib/_ai-gateway.js';
 import { cloudflareSpeak, cloudflareConfigured } from '../api/lib/_cloudflare.js';
-import { presignPut, r2Configured, newMediaKey, isR2PublicUrl, PUBLIC_MEDIA_KINDS } from '../api/lib/_r2.js';
+import { presignPut, r2Configured, newMediaKey, isR2PublicUrl, keyForOwnedUrl, PUBLIC_MEDIA_KINDS } from '../api/lib/_r2.js';
 
 const ACCOUNT = '0123456789abcdef0123456789abcdef';
 const OWNER = '11111111-2222-3333-4444-555555555555';
@@ -147,10 +147,10 @@ test('only public media kinds, image types and sane sizes can be signed', (t) =>
     assert.throws(() => presignPut({ ...base, kind }), /unsupported_kind/, kind);
   }
   assert.ok(!Object.keys(PUBLIC_MEDIA_KINDS).some(k => /id|kyc|selfie|receipt|doc|contract|passport/.test(k)));
-  for (const contentType of ['application/pdf', 'text/html', 'image/svg+xml', 'video/mp4', 'application/octet-stream']) {
+  for (const contentType of ['application/pdf', 'text/html', 'image/svg+xml', 'video/x-msvideo', 'application/octet-stream']) {
     assert.throws(() => presignPut({ ...base, contentType }), /unsupported_type/, contentType);
   }
-  assert.throws(() => presignPut({ ...base, size: 7 * 1024 * 1024 }), /bad_size/);
+  assert.throws(() => presignPut({ ...base, size: 11 * 1024 * 1024 }), /bad_size/);
   assert.throws(() => presignPut({ ...base, size: 10 }), /bad_size/);
   assert.throws(() => presignPut({ ...base, size: 'NaN' }), /bad_size/);
 });
@@ -194,4 +194,30 @@ test('R2_ACCOUNT_ID is accepted, and unreplaced PASTE_ placeholders count as not
   process.env.R2_ACCESS_KEY_ID = 'AKIDEXAMPLE';
   process.env.R2_SECRET_ACCESS_KEY = 'PASTE_YOUR_R2_SECRET_ACCESS_KEY';
   assert.equal(r2Configured(), false);
+});
+
+test('short clips are allowed up to 100 MB, but never as an avatar or beyond the cap', (t) => {
+  sandbox(t, R2ENV);
+  const clip = presignPut({ kind: 'listing', ownerId: OWNER, contentType: 'video/mp4', size: 60 * 1024 * 1024 });
+  assert.match(clip.key, /\.mp4$/);
+  assert.equal(clip.maxBytes, 100 * 1024 * 1024);
+  assert.throws(() => presignPut({ kind: 'listing', ownerId: OWNER, contentType: 'video/mp4', size: 101 * 1024 * 1024 }), /bad_size/);
+  assert.throws(() => presignPut({ kind: 'avatar', ownerId: OWNER, contentType: 'video/webm', size: 5000 }), /unsupported_type/);
+  assert.ok(presignPut({ kind: 'ad', ownerId: OWNER, contentType: 'image/jpeg', size: 5000 }).key.startsWith('ads/'));
+});
+
+test('only your own R2 media can be deleted, and nothing outside the media prefixes', (t) => {
+  sandbox(t, R2ENV);
+  const mine = `https://media.example.com/listings/${OWNER}/abc.jpg`;
+  const theirs = 'https://media.example.com/listings/99999999-2222-3333-4444-555555555555/abc.jpg';
+  assert.equal(keyForOwnedUrl(mine, OWNER), `listings/${OWNER}/abc.jpg`);
+  assert.equal(keyForOwnedUrl(theirs, OWNER), null);
+  assert.equal(keyForOwnedUrl(theirs, OWNER, { admin: true }), 'listings/99999999-2222-3333-4444-555555555555/abc.jpg');
+  for (const bad of [
+    `https://media.example.com/secret/${OWNER}/abc.jpg`,
+    `https://media.example.com/listings/${OWNER}/../x/abc.jpg`,
+    `https://media.example.com/listings/${OWNER}/a/b.jpg`,
+    `https://media.example.com.evil.io/listings/${OWNER}/abc.jpg`,
+    'https://elsewhere.io/x.jpg', '', null,
+  ]) assert.equal(keyForOwnedUrl(bad, OWNER, { admin: true }), null, String(bad));
 });

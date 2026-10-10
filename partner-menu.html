@@ -914,6 +914,7 @@ function pickPhoto(){
   input.onchange=function(){ var f=input.files&&input.files[0]; if(f)uploadPhoto(f); };
   input.click();
 }
+function loadR2(){if(window.CabanaR2)return Promise.resolve(window.CabanaR2);return new Promise(function(r){var s=document.createElement('script');s.src='/cabana-r2.js';s.onload=function(){r(window.CabanaR2||null)};s.onerror=function(){r(null)};document.head.appendChild(s);});}
 function uploadPhoto(file){
   if(!/^image\//.test(file.type)){ toast('Images only',true); return; }
   var box=document.getElementById('phBox');
@@ -924,13 +925,20 @@ function uploadPhoto(file){
     var path=ME.id+'/menu/'+Date.now()+'-'+Math.random().toString(36).slice(2,7)+'.'+ext;
     document.getElementById('phPct').textContent='Sending it up';
     document.getElementById('phBar').style.width='45%';
-    return SB.storage.from('listings').upload(path,blob,{cacheControl:'3600',upsert:false})
-      .then(function(r){
-        if(r.error) throw r.error;
-        _photo=SB.storage.from('listings').getPublicUrl(path).data.publicUrl;
-        box.innerHTML=photoBox();
-        toast('Photo added. Remember to save the dish.');
-      });
+    return loadR2().then(function(R2){
+      return R2?R2.putOrNull(blob,{kind:'food',sb:SB}):null;
+    }).then(function(url){
+      if(url) return url;
+      return SB.storage.from('listings').upload(path,blob,{cacheControl:'3600',upsert:false})
+        .then(function(r){
+          if(r.error) throw r.error;
+          return SB.storage.from('listings').getPublicUrl(path).data.publicUrl;
+        });
+    }).then(function(url){
+      _photo=url;
+      box.innerHTML=photoBox();
+      toast('Photo added. Remember to save the dish.');
+    });
   }).catch(function(e){
     box.innerHTML=photoBox();
     toast('Upload failed: '+(e.message||'try again'),true);

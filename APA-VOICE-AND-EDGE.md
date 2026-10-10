@@ -40,8 +40,8 @@ The API token needs the **Workers AI** permission. The R2 key needs
 [
   {
     "AllowedOrigins": ["https://cabana.africa", "https://www.cabana.africa"],
-    "AllowedMethods": ["PUT"],
-    "AllowedHeaders": ["content-type", "content-length"],
+    "AllowedMethods": ["GET", "HEAD", "PUT"],
+    "AllowedHeaders": ["Content-Type"],
     "MaxAgeSeconds": 3600
   }
 ]
@@ -49,14 +49,39 @@ The API token needs the **Workers AI** permission. The R2 key needs
 
 Until both are done, uploads quietly fall back to Supabase storage; nothing breaks.
 
-### What may be stored in R2
+### What goes to R2, and what stays in Supabase
 
-Public marketing media only: listing, tour, event, food, shop, car and place
-photos and public avatars. The allow-list is `PUBLIC_MEDIA_KINDS` in
-`api/lib/_r2.js`; a kind that is not on it cannot be signed for. Object keys are
-generated on the server (`<kind>/<user-id>/<uuid>.<ext>`), the URL expires in 5
-minutes, and content type and size are part of the signature. Never add a kind
-for documents, selfies, receipts or contracts.
+**Rule: anything that is fine for everyone to see goes to R2; Supabase storage is for private data.**
+
+Routed to R2 (Supabase only as a fallback if R2 is off or fails), all through
+`cabana-r2.js` and `/api/media-sign`:
+
+| Upload | Kind |
+| --- | --- |
+| Stays, roommates and every other listing photo (add-listing, admin console) | `listing` / `food` / `shop` / `car` / `tour` / `event` |
+| Food menu dish photos (partner-menu) | `food` |
+| Photos collected by APA in chat | `listing` |
+| Tours, events and places: photos **and video clips** (shared uploader, tours page admin) | `tour` / `event` / `place` |
+| Ad creatives | `ad` |
+
+Images up to 10 MB and clips (mp4, webm, mov) up to 100 MB. Deleting a photo
+in the uploader also deletes it from R2 (`op: "delete"`, owner or admin only).
+
+Stays in Supabase on purpose: identity documents, selfies, receipts, KYC,
+organisation documents, agent documents, evidence, pending profile photos
+(held for moderation), karaoke recordings and private immersive/live media.
+
+Not yet moved (public but written by server-side or resumable pipelines):
+profile avatars after moderation, immersive/live admin media. Existing files
+keep working from Supabase; nothing is migrated automatically.
+
+The database accepts R2 URLs where it validates photo hosts
+(`spotlight_media_ok`, `hotel_room_type_save`; migration
+`20261010100000_r2_public_media_urls.sql`, additive: the Supabase host is still accepted).
+
+Object keys are generated on the server (`<kind>/<user-id>/<uuid>.<ext>`), the
+URL expires in 5 minutes, and content type and size are part of the signature.
+Never add a kind for documents, selfies, receipts or contracts.
 
 ## Voice
 

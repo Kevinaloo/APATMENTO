@@ -216,6 +216,16 @@
   }
 
   /* ── upload (photos and films into the tours bucket) ─────────────── */
+  function loadR2() {
+    if (window.CabanaR2) return Promise.resolve(window.CabanaR2);
+    return new Promise(function (resolve) {
+      var sc = document.createElement('script');
+      sc.src = '/cabana-r2.js';
+      sc.onload = function () { resolve(window.CabanaR2 || null); };
+      sc.onerror = function () { resolve(null); };
+      document.head.appendChild(sc);
+    });
+  }
   function upload(file, kind) {
     var db = c();
     if (!db) return Promise.reject(new Error('Not connected'));
@@ -226,9 +236,14 @@
       return shrink.then(function (f) {
         var ext = (f.name.match(/\.([a-z0-9]+)$/i) || [0, kind === 'image' ? 'jpg' : 'mp4'])[1].toLowerCase();
         var path = uid + '/tours-page/' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-        return db.storage.from('tours').upload(path, f, { upsert: false, contentType: f.type || undefined, cacheControl: '31536000' }).then(function (r) {
-          if (r && r.error) throw new Error(r.error.message);
-          return db.storage.from('tours').getPublicUrl(path).data.publicUrl;
+        return loadR2().then(function (R2) {
+          return R2 ? R2.putOrNull(f, { kind: 'tour', sb: db }) : null;
+        }).then(function (url) {
+          if (url) return url;
+          return db.storage.from('tours').upload(path, f, { upsert: false, contentType: f.type || undefined, cacheControl: '31536000' }).then(function (r) {
+            if (r && r.error) throw new Error(r.error.message);
+            return db.storage.from('tours').getPublicUrl(path).data.publicUrl;
+          });
         });
       });
     });
