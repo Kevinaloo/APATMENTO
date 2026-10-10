@@ -1,7 +1,7 @@
 /*
  * CABANA AI GATEWAY
  *
- * One server-side contract for OpenAI, Gemini, and Groq. Providers are
+ * One server-side contract for OpenAI, Gemini, Groq and Cloudflare Workers AI. Providers are
  * ordered, not blended: the first healthy provider answers and the others
  * remain automatic fallbacks. Cabana's tools still validate every read and
  * write, so changing models never changes authorization or payment rules.
@@ -10,6 +10,9 @@ import { createHash } from 'node:crypto';
 import { retryAfterMs } from './_upstream.js';
 import { GoogleGenAI, Type } from '@google/genai';
 import { getVercelOidcToken } from '@vercel/oidc';
+import { cloudflareChat, cloudflareConfigured, CF_CHAT_MODELS } from './_cloudflare.js';
+
+const cloudflareChatModelIds = () => CF_CHAT_MODELS.map(model => model.id);
 
 const OPENAI_API = 'https://api.openai.com/v1/responses';
 const VERCEL_AI_GATEWAY_API = 'https://ai-gateway.vercel.sh/v1/responses';
@@ -38,8 +41,15 @@ const DEFAULT_GROQ_MODELS = [
   { id: 'openai/gpt-oss-20b',  timeout: 6_000 },
 ];
 
-const PROVIDERS = ['gateway', 'openai', 'gemini', 'groq'];
-const DEFAULT_PROVIDER_ORDER = ['gateway', 'groq', 'gemini', 'openai'];
+const PROVIDERS = ['gateway', 'openai', 'gemini', 'groq', 'cloudflare'];
+/* Groq answers fastest, Cloudflare Workers AI is the independent second
+   lane (different company, different failure domain), then the premium
+   cascades. */
+const DEFAULT_PROVIDER_ORDER = ['gateway', 'groq', 'cloudflare', 'gemini', 'openai'];
+/* If the lead provider has not answered in this long, the next healthy one
+   is raced against it and the first good answer wins. A slow provider
+   costs a duplicate request, never a slow guest. */
+const DEFAULT_HEDGE_MS = 2_500;
 const REASONING_EFFORTS = new Set(['none', 'low', 'medium', 'high', 'xhigh', 'max']);
 const MAX_TOOL_CALLS = 3;
 const MAX_TOOL_ARGUMENT_BYTES = 12_000;
@@ -51,8 +61,10 @@ let _geminiKey = null;
 // credential/model change resets its breaker; no key is stored in diagnostics.
 const providerCooldowns = new Map();
 function providerIdentity(provider) {
-  const prefix = { gateway: 'AI_GATEWAY', groq: 'GROQ', gemini: 'GEMINI', openai: 'OPENAI' }[provider];
-  return createHash('sha256').update(`${process.env[`${prefix}_API_KEY`] || 'oidc'}:${process.env[`${prefix}_MODEL`] || ''}`).digest('hex');
+  const prefix = { gateway: 'AI_GATEWAY', groq: 'GROQ', gemini: 'GEMINI', openai: 'OPENAI', cloudflare: 'CLOUDFLARE_AI' }[provider];
+  const key = provider === 'cloudflare' ? process.env.CLOUDFLARE_AI_API_TOKEN : process.env[`${prefix}_API_KEY`];
+  const model = provider === 'cloudflare' ? process.env.CLOUDFLARE_AI_MODEL : process.env[`${prefix}_MODEL`];
+  return createHash('sha256').update(`${key || 'oidc'}:${model || ''}`).digest('hex');
 }
 function cooldownRemaining(provider) {
   const state = providerCooldowns.get(provider);
@@ -114,6 +126,7 @@ function providerIsConfigured(provider) {
   if (provider === 'openai') return Boolean(process.env.OPENAI_API_KEY);
   if (provider === 'gemini') return Boolean(process.env.GEMINI_API_KEY);
   if (provider === 'groq') return Boolean(process.env.GROQ_API_KEY);
+  if (provider === 'cloudflare') return cloudflareConfigured();
   return false;
 }
 
@@ -665,6 +678,20 @@ async function callGroq(messages, options = {}) {
   throw new Error(lastError);
 }
 
+async function callCloudflare(messages, options = {}) {
+  const cleanMessages = cleanChatMessages(messages);
+  const data = await cloudflareChat({
+    messages: cleanMessages,
+    temperature: options.temperature ?? 0.4,
+    max_tokens: clampNumber(options.maxTokens, options.profile === 'fast' ? 500 : 900, 64, 4000),
+    ...(Array.isArray(options.tools) && options.tools.length ? {
+      tools: options.tools,
+      tool_choice: 'auto',
+    } : {}),
+  }, { onFailure: (status, retryAfter) => noteProviderFailure('cloudflare', status, retryAfter) });
+  return { ...data, provider: 'cloudflare' };
+}
+
 function safeAttemptCode(error) {
   return String(error?.message || 'provider_failed').replace(/[^a-zA-Z0-9_./:-]/g, '_').slice(0, 140);
 }
@@ -704,35 +731,76 @@ export async function callAi(messages, options = {}) {
   const startedAt = Date.now();
   const attempts = [];
   const order = providerOrder(options.providerOrder);
-  // The configured Groq text models cannot inspect images. Never silently
-  // discard pictures and present a text-only answer as a visual assessment.
+  // The configured Groq/Cloudflare text models cannot inspect images. Never
+  // silently discard pictures and present a text-only answer as a visual
+  // assessment.
   const vision = (messages || []).some(message => imageParts(message.content).length);
-  const available = order.filter(provider => providerIsConfigured(provider) && (!vision || provider !== 'groq'));
+  const available = order.filter(provider => providerIsConfigured(provider) &&
+    (!vision || (provider !== 'groq' && provider !== 'cloudflare')));
   if (!available.length) throw new Error('ai_gateway_unconfigured');
 
-  const callers = { gateway: callVercelGateway, openai: callOpenAi, gemini: callGemini, groq: callGroq };
+  const callers = {
+    gateway: callVercelGateway, openai: callOpenAi, gemini: callGemini,
+    groq: callGroq, cloudflare: callCloudflare,
+  };
+  const hedgeMs = clampNumber(options.hedgeMs ?? process.env.AI_HEDGE_MS, DEFAULT_HEDGE_MS, 0, 30_000);
+
+  const queue = [];
   for (const provider of available) {
-    const attemptStarted = Date.now();
     const retryInMs = cooldownRemaining(provider);
     if (retryInMs) {
       attempts.push({ provider, status: 'skipped', code: 'provider_cooldown', retryInMs, latencyMs: 0 });
       continue;
     }
-    try {
-      const data = await callers[provider](messages, options);
-      attempts.push({
-        provider,
-        status: 'ok',
-        model: data.model,
-        latencyMs: Date.now() - attemptStarted,
-      });
-      return finalizeResponse(data, options.tools, attempts, startedAt);
-    } catch (error) {
-      const code = safeAttemptCode(error);
-      attempts.push({ provider, status: 'failed', code, latencyMs: Date.now() - attemptStarted });
-      console.warn(`[ai-gateway] ${provider} failed; trying fallback`, code);
-    }
+    queue.push(provider);
   }
+
+  /* Run the queue as a relay with a hedge: start the lead provider; if it
+     fails, start the next straight away; if it is merely slow, start the
+     next alongside it after `hedgeMs`. First success wins. */
+  const winner = await new Promise((resolve) => {
+    let next = 0;
+    let inflight = 0;
+    let settled = false;
+    let hedgeTimer = null;
+
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(hedgeTimer);
+      resolve(value);
+    };
+    const launch = () => {
+      if (settled || next >= queue.length) return false;
+      const provider = queue[next++];
+      const attemptStarted = Date.now();
+      inflight += 1;
+      Promise.resolve().then(() => callers[provider](messages, options)).then((data) => {
+        inflight -= 1;
+        if (settled) return;
+        attempts.push({ provider, status: 'ok', model: data.model, latencyMs: Date.now() - attemptStarted });
+        finish(data);
+      }, (error) => {
+        inflight -= 1;
+        const code = safeAttemptCode(error);
+        attempts.push({ provider, status: 'failed', code, latencyMs: Date.now() - attemptStarted });
+        console.warn(`[ai-gateway] ${provider} failed; trying fallback`, code);
+        if (settled) return;
+        if (!launch() && inflight === 0) finish(null);
+      });
+      armHedge();
+      return true;
+    };
+    const armHedge = () => {
+      clearTimeout(hedgeTimer);
+      if (settled || !hedgeMs || next >= queue.length) return;
+      hedgeTimer = setTimeout(() => { if (!settled) launch(); }, hedgeMs);
+    };
+
+    if (!launch()) finish(null);
+  });
+
+  if (winner) return finalizeResponse(winner, options.tools, attempts, startedAt);
 
   const error = new Error('ai_gateway_unavailable');
   error.attempts = attempts;
@@ -818,6 +886,19 @@ async function structuredWithGroq(systemInstruction, userPrompt) {
   throw new Error(lastError);
 }
 
+async function structuredWithCloudflare(systemInstruction, userPrompt) {
+  const data = await cloudflareChat({
+    messages: [
+      { role: 'system', content: `${systemInstruction}\nReturn exactly one valid JSON object and no markdown.` },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0.4,
+    max_tokens: 1600,
+    response_format: { type: 'json_object' },
+  }, { onFailure: (status, retryAfter) => noteProviderFailure('cloudflare', status, retryAfter) });
+  return parseStructuredJson(data?.choices?.[0]?.message?.content);
+}
+
 export async function generateStructuredJson(systemInstruction, userPrompt) {
   const order = providerOrder();
   const callers = {
@@ -825,6 +906,7 @@ export async function generateStructuredJson(systemInstruction, userPrompt) {
     openai: structuredWithOpenAi,
     gemini: structuredWithGemini,
     groq: structuredWithGroq,
+    cloudflare: structuredWithCloudflare,
   };
   let attempted = false;
   for (const provider of order) {
@@ -859,5 +941,6 @@ export const __test = {
     openai: DEFAULT_OPENAI_MODELS.map(model => model.id),
     gemini: DEFAULT_GEMINI_MODELS.map(model => model.id),
     groq: DEFAULT_GROQ_MODELS.map(model => model.id),
+    cloudflare: cloudflareChatModelIds(),
   },
 };

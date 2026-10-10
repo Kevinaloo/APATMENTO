@@ -2,7 +2,7 @@
    APATMENTO  ·  Utilities  /api/utilities.js
    Routes: ?action=close-bookings | welcome-email | indexnow | music-search
            | reconcile-payments | geocode | atlas | sos-alert | carhire-terrain
-           | route | karaoke | fx | review-requests
+           | route | karaoke | fx | review-requests | media-sign
    Consolidates small utility handlers into 1 function
 ════════════════════════════════════════════════════════════════ */
 export const config = { maxDuration: 60 };
@@ -50,6 +50,7 @@ import karaokeHandler from './lib/_karaoke.js';
 import weatherHandler from './lib/_weather.js';
 import fxHandler from './lib/_fx.js';
 import listingShareHandler from './lib/_listing-share.js';
+import mediaSignHandler from './lib/_media-sign.js';
 import scrapeHandler from './lib/_scrape.js';
 import { reconcilePayments } from './lib/_reconcile-payments.js';
 import { settlementOf, endDayOf, todayNumber, PART_PAYMENT_TTL_HOURS,
@@ -876,6 +877,11 @@ export default async function handler(req, res) {
 
   if (action === 'fx') {
     return fxHandler(req, res);
+  }
+
+  /* Presigned upload URLs for public photos on Cloudflare R2. */
+  if (action === 'media-sign') {
+    return mediaSignHandler(req, res);
   }
 
   if (action === 'close-bookings') {

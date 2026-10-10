@@ -406,6 +406,7 @@
         client: client(),
         bucket: 'events',
         folder: 'cabana-' + (t ? t.id : Date.now().toString(36)),
+        mediaKind: 'event',
         maxVideos: 3,
         onChange: function (v) {
           var btn = host.querySelector('button[type="submit"]');

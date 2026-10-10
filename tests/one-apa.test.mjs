@@ -219,10 +219,10 @@ test('the console speaks into the same thread rather than forking a voice mode',
 
 test('APA speaks when spoken to, or when hands-free is running — never at a silent typist', () => {
   const s = read('cabana-support.js');
-  assert.match(s, /var wanted = spokeLast \|\| handsFree;/,
+  assert.match(s, /var wanted = handsFree \|\| viaVoice;/,
     'audio is volunteered only to someone who chose voice');
-  assert.match(s, /if \(!VOICE_OUT \|\| !wanted\)/,
-    'someone who typed, outside hands-free, must not be read aloud to');
+  assert.match(s, /if \(!wanted\) return;/,
+    'someone who typed, outside a voice conversation, must not be read aloud to');
 });
 
 test('closing the panel stops the microphone and the voice', () => {
