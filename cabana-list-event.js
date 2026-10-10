@@ -124,6 +124,7 @@
       client: sb,
       bucket: 'events',
       folder: 'draft-' + Date.now().toString(36),
+      mediaKind: 'event',
       maxVideos: 2,
       onChange: function (v) {
         var btn = $('e-submit');

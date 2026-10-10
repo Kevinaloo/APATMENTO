@@ -211,13 +211,30 @@
 
   /* ══════════════════════════════════════════════════════════════════
      VOICE
-     Dictation, not a separate voice assistant. What you say becomes a
-     message in the same thread, so speaking and typing are the same
-     conversation — and the transcript a human inherits on escalation
-     reads identically either way.
+     A conversation, not dictation. One tap on the microphone starts it:
 
-     Speech recognition needs a secure context to be offered at all;
-     browsers that do not have it simply never see the button.
+        listen  →  send  →  APA answers out loud  →  listen again
+
+     with nobody pressing anything in between. What you say lands in the
+     same thread as typed messages, so a human who inherits the chat reads
+     one transcript either way.
+
+     · SPEECH OUT. Replies are synthesised by a neural voice on the server
+       (sentence by sentence, fetched in parallel, so the first sentence is
+       playing while the rest are still being made). If that is slow or
+       unavailable, the best voice on the device takes over mid-reply. The
+       server sends the *spoken* form of every reply: no emoji, no markdown,
+       no links, no punctuation read aloud, currency said in words.
+     · HAND-BACK. When APA finishes, the microphone opens by itself with a
+       soft cue. She never listens while she is talking, so she cannot
+       answer her own sentence.
+     · TIMEOUT. Silence is handled like a person would: wait, then a gentle
+       nudge, then step back quietly. Nobody is left talking to a dead mic
+       and nothing records forever.
+     · BARGE-IN. Tap the mic (or type) while she talks and she stops at once.
+
+     Speech recognition needs a secure context; browsers without it never
+     see the button and still get typed chat and spoken replies are skipped.
   ══════════════════════════════════════════════════════════════════ */
   var SR = global.SpeechRecognition || global.webkitSpeechRecognition || null;
   var SECURE = (global.isSecureContext !== false) &&
@@ -227,10 +244,20 @@
 
   var recog = null;
   var listening = false;
-  var spokeLast = false;   // only read a reply aloud if the ask was spoken
-  var handsFree = false;   // the continuous loop: listen → send → speak → listen
+  var spokeLast = false;   // the message being sent was spoken, not typed
+  var handsFree = false;   // voice conversation is on
   var speaking  = false;
   var restartTimer = null;
+  var silentCycles = 0;    // consecutive listens that heard nothing
+  var speakToken = 0;      // bumps to cancel whatever is being said
+  var neuralDown = false;  // server voice failed: stay on-device for a while
+  var neuralDownAt = 0;
+  var audioEl = null, audioCtx = null, currentUrl = null;
+
+  var SILENT_NUDGE_AT = 2;      // second empty listen: a spoken nudge
+  var SILENT_END_AT   = 3;      // third: step back
+  var FIRST_AUDIO_MS  = 4200;   // neural voice must start this fast or the device voice takes over
+  var END_PHRASE = /^(?:stop|cancel|never ?mind|that'?s all|that is all|goodbye|bye(?: bye)?|stop (?:listening|talking)|thank you,? (?:that'?s|that is) all|thanks,? (?:that'?s|that is) all|i'?m done|we'?re done|asante(?: sana)?,? (?:basi|ni hayo tu))[\s.!]*$/i;
 
   function speechLang() {
     try { return (global.navigator.language || 'en-KE'); } catch (e) { return 'en-KE'; }
@@ -242,33 +269,225 @@
     el.mic.setAttribute('data-hf', handsFree ? '1' : '0');
     el.mic.setAttribute('aria-pressed', handsFree ? 'true' : 'false');
     el.mic.setAttribute('title', handsFree
-      ? 'Hands-free is on — tap to stop'
-      : 'Tap to speak · hold, or double-tap, for hands-free');
+      ? (speaking ? 'Tap to interrupt and speak' : 'Voice conversation on — tap to end')
+      : 'Tap to talk with APA');
+    el.mic.setAttribute('aria-label', handsFree ? 'End voice conversation' : 'Talk with APA');
+    if (el.root) el.root.classList.toggle('cbn-sup--listening', !!listening);
   }
 
+  function voiceStatus(text, tone) { if (handsFree) setStatus(text, tone || 'live'); }
+
+  /* ── audio plumbing ─────────────────────────────────────────────── */
+  /* Autoplay policies only allow sound after a user gesture. The tap that
+     starts the conversation unlocks one shared <audio> element and one
+     AudioContext, and every later sentence reuses them. */
+  var SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+  function unlockAudio() {
+    try {
+      if (!audioEl) { audioEl = new Audio(); audioEl.preload = 'auto'; audioEl.setAttribute('playsinline', ''); }
+      audioEl.src = SILENT_WAV;
+      var p = audioEl.play();
+      if (p && p.catch) p.catch(function () { /* locked until the next gesture */ });
+    } catch (e) { /* no audio element */ }
+    try {
+      var AC = global.AudioContext || global.webkitAudioContext;
+      if (AC && !audioCtx) audioCtx = new AC();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) { /* no web audio */ }
+  }
+
+  /* A short, soft tone when the microphone opens: "your turn". */
+  function cue(kind) {
+    try {
+      if (!audioCtx) return;
+      var t = audioCtx.currentTime, o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(kind === 'end' ? 520 : 760, t);
+      if (kind !== 'end') o.frequency.exponentialRampToValueAtTime(980, t + 0.09);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.05, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + 0.14);
+    } catch (e) { /* a cue is a nicety */ }
+  }
+
+  function stopSpeech() {
+    speakToken++;
+    try { if (audioEl) { audioEl.onended = null; audioEl.onerror = null; audioEl.pause(); } } catch (e) { /* idle */ }
+    if (currentUrl) { try { URL.revokeObjectURL(currentUrl); } catch (e) { /* gone */ } currentUrl = null; }
+    try { if (VOICE_OUT) global.speechSynthesis.cancel(); } catch (e) { /* nothing playing */ }
+    speaking = false;
+    if (el.root) el.root.classList.remove('cbn-sup--speaking');
+    micState();
+  }
+
+  /* Fallback cleaner for text that arrives without the server's spoken
+     form (a payment confirmation, an offline notice). */
+  function plainSpeech(text) {
+    var s = String(text || '')
+      .replace(/\[\[[^\]]*\]\]/g, ' ')
+      .replace(/\[([^\]]{1,80})\]\([^)]*\)/g, '$1')
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/[*_`#>~|]+/g, ' ');
+    try { s = s.replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}‍︎️⃣]/gu, ' '); } catch (e) { /* old engine */ }
+    return s.replace(/[–—→←•·…]+/g, ', ').replace(/\s+/g, ' ').trim().slice(0, 700);
+  }
+  function sentencesOf(text) {
+    var out = (plainSpeech(text).match(/[^.!?]+[.!?]*/g) || []).map(function (x) { return x.trim(); }).filter(Boolean);
+    return out.slice(0, 6);
+  }
+
+  /* One sentence → a playable blob URL from the neural voice. */
+  function fetchSentenceAudio(sentence, ctrl) {
+    return authHeader().then(function (auth) {
+      return fetch(API, {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, auth),
+        body: JSON.stringify({ op: 'speak', text: sentence, guestKey: guestKey() }),
+        signal: ctrl ? ctrl.signal : undefined,
+      });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('speak_' + r.status);
+      return r.blob();
+    }).then(function (blob) {
+      if (!blob || blob.size < 200) throw new Error('speak_empty');
+      return URL.createObjectURL(blob);
+    });
+  }
+
+  function playUrl(url, token) {
+    return new Promise(function (resolve, reject) {
+      if (token !== speakToken) { try { URL.revokeObjectURL(url); } catch (e) { /* gone */ } return resolve(false); }
+      if (!audioEl) { audioEl = new Audio(); audioEl.setAttribute('playsinline', ''); }
+      currentUrl = url;
+      var done = function (ok, err) {
+        audioEl.onended = audioEl.onerror = null;
+        try { URL.revokeObjectURL(url); } catch (e) { /* gone */ }
+        if (currentUrl === url) currentUrl = null;
+        if (err) reject(err); else resolve(ok);
+      };
+      audioEl.onended = function () { done(true); };
+      audioEl.onerror = function () { done(false, new Error('playback')); };
+      audioEl.src = url;
+      var p = audioEl.play();
+      if (p && p.catch) p.catch(function (e) { done(false, e); });
+    });
+  }
+
+  /* ── device voice: the best one the browser has ─────────────────── */
+  var deviceVoices = null;
+  function loadVoices() {
+    try { deviceVoices = global.speechSynthesis.getVoices() || []; } catch (e) { deviceVoices = []; }
+  }
+  if (VOICE_OUT) {
+    loadVoices();
+    try { global.speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch (e) { /* older engine */ }
+  }
+  var PREFERRED = /natural|neural|online|premium|enhanced|siri|google|samantha|serena|karen|daniel|moira|aria|jenny|sonia|libby|ryan/i;
+  function pickVoice(lang) {
+    if (!deviceVoices || !deviceVoices.length) loadVoices();
+    var list = deviceVoices || [];
+    var base = String(lang || 'en-GB').split('-')[0].toLowerCase();
+    var same = list.filter(function (v) { return String(v.lang || '').toLowerCase().indexOf(base) === 0; });
+    if (!same.length) return null;
+    var exact = same.filter(function (v) { return String(v.lang || '').toLowerCase().replace('_', '-') === String(lang).toLowerCase(); });
+    var pool = exact.length ? exact : same;
+    var good = pool.filter(function (v) { return PREFERRED.test(v.name) && !/compact|espeak/i.test(v.name); });
+    return (good[0] || pool.filter(function (v) { return !v.localService; })[0] || pool[0]);
+  }
+
+  function speakOnDevice(sentences, lang, token) {
+    return new Promise(function (resolve) {
+      if (!VOICE_OUT || !sentences.length) return resolve();
+      var i = 0;
+      var voice = pickVoice(lang);
+      var next = function () {
+        if (token !== speakToken || i >= sentences.length) return resolve();
+        var u = new global.SpeechSynthesisUtterance(sentences[i++]);
+        u.lang = (voice && voice.lang) || lang || speechLang();
+        if (voice) u.voice = voice;
+        u.rate = 1.02; u.pitch = 1.0; u.volume = 1;
+        var settled = false;
+        var fin = function () { if (settled) return; settled = true; clearTimeout(guard); next(); };
+        var guard = setTimeout(fin, Math.min(15000, 2500 + u.text.length * 80));   // some engines never fire onend
+        u.onend = fin; u.onerror = fin;
+        try { global.speechSynthesis.speak(u); } catch (e) { fin(); }
+      };
+      try { global.speechSynthesis.cancel(); } catch (e) { /* idle */ }
+      next();
+    });
+  }
+
+  /* Speak a reply: neural first, device on any trouble. Resolves when the
+     last word has been said (or she was cut off). */
+  function speakReply(speech, fallbackText) {
+    var token = ++speakToken;
+    var sentences = (speech && speech.sentences && speech.sentences.length) ? speech.sentences : sentencesOf(fallbackText);
+    var lang = speech && speech.lang;
+    if (!sentences.length) return Promise.resolve();
+
+    speaking = true;
+    if (el.root) el.root.classList.add('cbn-sup--speaking');
+    micState();
+    voiceStatus('APA is speaking', 'live');
+
+    var finish = function () {
+      if (token !== speakToken) return;       // cut off: whoever cut it off owns the state
+      speaking = false;
+      if (el.root) el.root.classList.remove('cbn-sup--speaking');
+      micState();
+    };
+
+    if (neuralDown && Date.now() - neuralDownAt > 300000) neuralDown = false;   // try again after five minutes
+    var wantNeural = !neuralDown && (!speech || speech.engine !== 'device');
+    if (!wantNeural) return speakOnDevice(sentences, lang, token).then(finish, finish);
+
+    /* Every sentence is requested at once; they play in order. The first
+       one gets a deadline, because a slow first word is what feels broken. */
+    var ctrl = global.AbortController ? new AbortController() : null;
+    var jobs = sentences.map(function (s) { return fetchSentenceAudio(s, ctrl); });
+    jobs.forEach(function (j) { j.catch(function () { /* handled where awaited */ }); });
+    var abortAll = function () { if (ctrl) { try { ctrl.abort(); } catch (e) { /* done */ } } };
+
+    var firstReady = Promise.race([
+      jobs[0],
+      new Promise(function (_, rej) { setTimeout(function () { rej(new Error('first_audio_slow')); }, FIRST_AUDIO_MS); }),
+    ]);
+
+    return firstReady.then(function () {
+      var chain = Promise.resolve(true);
+      sentences.forEach(function (_, idx) {
+        chain = chain.then(function (cont) {
+          if (!cont || token !== speakToken) return false;
+          return jobs[idx].then(function (url) { return playUrl(url, token); });
+        });
+      });
+      return chain;
+    }).catch(function (err) {
+      /* Neural voice failed or was too slow. Say the rest on the device;
+         remember it so the next replies do not wait on a dead service. */
+      abortAll();
+      if (token !== speakToken) return;
+      if (!(err && err.message === 'first_audio_slow')) { neuralDown = true; neuralDownAt = Date.now(); }
+      return speakOnDevice(sentences, lang, token);
+    }).then(finish, finish);
+  }
+
+  /* ── listening ──────────────────────────────────────────────────── */
   function stopListening() {
     listening = false;
     micState();
     if (recog) { try { recog.abort ? recog.abort() : recog.stop(); } catch (e) { /* already stopped */ } }
   }
 
-  /* ── Hands-free ─────────────────────────────────────────────────
-     The loop is: listen until they stop talking, send, speak the reply,
-     then listen again. Two things make it survivable rather than
-     maddening:
-
-       · APA never listens while she is talking. Recognition is stopped
-         for the duration of the utterance and resumed after, so she
-         does not hear herself and answer her own sentence.
-       · Barge-in. Speaking or typing while she talks cuts her off
-         immediately, because waiting politely for a wrong answer to
-         finish is the worst part of every voice assistant ever built.
-  ── */
   function startHandsFree() {
     if (!VOICE_IN) { toast('This browser cannot listen. Type instead.', '🎙'); return; }
+    unlockAudio();
     handsFree = true;
+    silentCycles = 0;
     micState();
-    toast('Hands-free on. Just talk — tap the mic to stop.', '🎧');
+    voiceStatus('Listening…', 'live');
     listen();
   }
 
@@ -276,15 +495,15 @@
     handsFree = false;
     clearTimeout(restartTimer);
     stopListening();
-    try { if (VOICE_OUT) global.speechSynthesis.cancel(); } catch (e) { /* nothing playing */ }
-    speaking = false;
+    stopSpeech();
     micState();
-    if (!quiet) toast('Hands-free off.', '🎙');
+    if (el.name) reflectStatus();
+    if (!quiet) { cue('end'); toast('Voice conversation ended. Tap the mic to talk again.', '🎙'); }
   }
 
   function listen() {
-    if (!VOICE_IN || listening || speaking || sending) return;
-    try { recog = new SR(); } catch (e) { toast('Dictation is not available here.', '🎙'); return; }
+    if (!VOICE_IN || !handsFree || listening || speaking || sending) return;
+    try { recog = new SR(); } catch (e) { toast('Voice is not available here.', '🎙'); stopHandsFree(true); return; }
 
     recog.lang = speechLang();
     recog.interimResults = true;
@@ -292,16 +511,17 @@
     recog.maxAlternatives = 1;
 
     var finalText = '';
+    var heard = false;
 
     recog.onresult = function (ev) {
       var interim = '';
+      heard = true;
       for (var i = ev.resultIndex; i < ev.results.length; i++) {
         var r = ev.results[i];
         if (r.isFinal) finalText += r[0].transcript;
         else interim += r[0].transcript;
       }
-      /* Show it landing as they speak, so they can see what was heard
-         and correct it before it goes. */
+      /* Show it landing as they speak, so they can see what was heard. */
       if (el.input) {
         el.input.value = (finalText + interim).replace(/^\s+/, '');
         autosize();
@@ -318,28 +538,46 @@
         toast('Microphone blocked. Allow it in the address bar, or type.', '🎙');
         return;
       }
-      /* Silence is not a failure in hands-free — it is a pause. Go
-         round again rather than dropping them out of the mode. */
-      if (handsFree && why !== 'aborted') restartTimer = setTimeout(listen, 700);
+      /* onend follows and decides what to do next. */
     };
 
     recog.onend = function () {
       listening = false;
       micState();
+      if (!handsFree) return;
       var said = String(finalText || '').trim();
       if (said) {
-        spokeLast = true;
+        silentCycles = 0;
         if (el.input) { el.input.value = ''; autosize(); }
+        if (END_PHRASE.test(said)) { stopHandsFree(); return; }
+        spokeLast = true;
         submit(said);
-        return;   /* the reply handler resumes listening once she has spoken */
+        return;                     /* the reply handler hands the mic back once she has spoken */
       }
-      if (handsFree) restartTimer = setTimeout(listen, 600);
+      if (el.input && !heard) { el.input.value = ''; autosize(); }
+      silentCycles++;
+      if (silentCycles >= SILENT_END_AT) {
+        /* Nobody there. Step back quietly rather than listen forever. */
+        stopHandsFree(true);
+        cue('end');
+        toast('I’ll pause here. Tap the mic whenever you want to talk.', '🎙');
+        return;
+      }
+      if (silentCycles === SILENT_NUDGE_AT) {
+        speakReply(null, 'Still there? Take your time, I’m listening.').then(function () {
+          if (handsFree) restartTimer = setTimeout(listen, 200);
+        });
+        return;
+      }
+      restartTimer = setTimeout(listen, 250);
     };
 
     try {
       recog.start();
       listening = true;
       micState();
+      voiceStatus('Listening…', 'live');
+      cue('start');
       if (el.input) { el.input.value = ''; autosize(); }
     } catch (e) {
       listening = false;
@@ -348,71 +586,28 @@
     }
   }
 
+  /* The microphone button. Starts a conversation, ends one, or — while
+     she is talking — cuts her off and takes the floor. */
   function toggleListen() {
     if (!VOICE_IN) return;
+    if (handsFree && speaking) { bargeIn(); clearTimeout(restartTimer); restartTimer = setTimeout(listen, 120); return; }
     if (handsFree) { stopHandsFree(); return; }
-    if (listening) { stopListening(); return; }
-    listen();
+    startHandsFree();
   }
 
-  /* Read a reply aloud when the guest spoke to us, or whenever
-     hands-free is running. Volunteering audio to someone typing quietly
-     in an office is a bug; withholding it in hands-free is a broken
-     feature. */
-  function say(text, onDone) {
-    var wanted = spokeLast || handsFree;
-    spokeLast = false;
-    if (!VOICE_OUT || !wanted) { if (onDone) onDone(); return; }
-
-    var clean = String(text || '')
-      .replace(/\[([^\]]{1,80})\]\([^)]*\)/g, '$1')   // link text only
-      .replace(/[*_`#>]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 600);
-    if (!clean) { if (onDone) onDone(); return; }
-
-    try {
-      global.speechSynthesis.cancel();
-      var u = new global.SpeechSynthesisUtterance(clean);
-      u.lang = speechLang();
-      u.rate = 1.04;
-      u.pitch = 1.0;
-      speaking = true;
-      if (el.root) el.root.classList.add('cbn-sup--speaking');
-      var finish = function () {
-        if (!speaking) return;
-        speaking = false;
-        if (el.root) el.root.classList.remove('cbn-sup--speaking');
-        if (onDone) onDone();
-      };
-      u.onend = finish;
-      u.onerror = finish;
-      global.speechSynthesis.speak(u);
-      /* Some mobile engines never fire onend. A ceiling derived from
-         the text length keeps the loop alive rather than stranding it
-         mid-conversation. */
-      setTimeout(finish, Math.min(30000, 2500 + clean.length * 70));
-    } catch (e) {
-      speaking = false;
-      if (el.root) el.root.classList.remove('cbn-sup--speaking');
-      if (onDone) onDone();
-    }
-  }
-
-  /* Cut her off. Called when the guest starts typing or talking over
-     her — their input always outranks her sentence. */
+  /* Cut her off. Their input always outranks her sentence. */
   function bargeIn() {
     if (!speaking) return;
-    try { if (VOICE_OUT) global.speechSynthesis.cancel(); } catch (e) { /* nothing playing */ }
-    speaking = false;
-    if (el.root) el.root.classList.remove('cbn-sup--speaking');
+    stopSpeech();
   }
 
-  /* After she has finished a reply: keep the loop turning. */
-  function afterReply(text) {
-    say(text, function () {
-      if (handsFree && !sending) restartTimer = setTimeout(listen, 350);
+  /* After she has finished a reply: hand the microphone back. */
+  function afterReply(text, speech, viaVoice, endAfter) {
+    var wanted = handsFree || viaVoice;
+    if (!wanted) return;
+    speakReply(speech, text).then(function () {
+      if (endAfter) { stopHandsFree(true); return; }
+      if (handsFree && !sending) restartTimer = setTimeout(listen, 250);
     });
   }
 
@@ -478,7 +673,7 @@
       +   '<footer class="cbn-sup-foot">'
       +     '<form class="cbn-sup-form" id="cbn-sup-form">'
       +       '<textarea id="cbn-sup-input" rows="1" placeholder="Ask anything, or tell us what went wrong…" aria-label="Message Cabana support" maxlength="3000"></textarea>'
-      +       (VOICE_IN ? '<button class="cbn-sup-mic" id="cbn-sup-mic" type="button" aria-label="Dictate a message" title="Speak instead of typing">' + SVG.mic + '</button>' : '')
+      +       (VOICE_IN ? '<button class="cbn-sup-mic" id="cbn-sup-mic" type="button" aria-label="Talk with APA" title="Tap to talk with APA">' + SVG.mic + '</button>' : '')
       +       '<button class="cbn-sup-send" id="cbn-sup-send" type="submit" aria-label="Send" disabled>' + SVG.send + '</button>'
       +     '</form>'
       +     '<div class="cbn-sup-legal">APA answers instantly · <button type="button" id="cbn-sup-human">talk to a person</button></div>'
@@ -713,7 +908,7 @@
        discover a long-press on a microphone to find out they can. */
     if (VOICE_IN) {
       html += '<button class="cbn-sup-talkcta" type="button" data-cbn-talk-inline>'
-        + SVG.mic + '<span>Or just talk to me — hands-free</span></button>';
+        + SVG.mic + '<span>Or just talk to me</span></button>';
     }
     html += '</div>';
     return html;
@@ -864,32 +1059,12 @@
     });
 
     if (el.mic) {
-      /* One tap dictates. A long press or a double tap turns on the
-         continuous loop — discoverable by trying, and reversible by
-         the same button, so nobody gets stuck in a mode. */
-      var held = null;
-      el.mic.addEventListener('click', function (e) {
-        if (el.mic.getAttribute('data-longpress') === '1') {
-          el.mic.removeAttribute('data-longpress');
-          return;                     /* the press already acted */
-        }
-        if (e.detail >= 2) { bargeIn(); startHandsFree(); return; }
-        bargeIn();
-        toggleListen();
+      /* One tap starts a voice conversation, another ends it; tapping
+         while APA is talking cuts her off and gives you the floor. */
+      el.mic.addEventListener('click', function () { toggleListen(); });
+      doc.addEventListener('visibilitychange', function () {
+        if (doc.hidden && handsFree) stopHandsFree(true);   // never listen from a hidden tab
       });
-      var beginHold = function () {
-        clearTimeout(held);
-        held = setTimeout(function () {
-          el.mic.setAttribute('data-longpress', '1');
-          bargeIn();
-          if (handsFree) stopHandsFree(); else startHandsFree();
-        }, 550);
-      };
-      var endHold = function () { clearTimeout(held); };
-      el.mic.addEventListener('pointerdown', beginHold);
-      el.mic.addEventListener('pointerup', endHold);
-      el.mic.addEventListener('pointerleave', endHold);
-      el.mic.addEventListener('pointercancel', endHold);
     }
 
     el.input.addEventListener('keydown', function (e) {
@@ -1039,6 +1214,8 @@
     if (navTimer) { clearTimeout(navTimer); navTimer = null; }
     bargeIn();
 
+    var viaVoice = spokeLast;       // this line was spoken, so the answer is spoken back
+    spokeLast = false;
     var local = { role: 'user', body: text, at: new Date().toISOString(), meta: {} };
     appendLocal(local);
 
@@ -1056,6 +1233,7 @@
          before it reaches a row — the browser proposes, the server
          decides, same as everywhere else. */
       clientData: clientData || undefined,
+      voice: (viaVoice || handsFree) ? true : undefined,
     };
     nextContext = null;
     try { global.dispatchEvent(new CustomEvent('cabana:apa-message')); } catch (e) { /* Compass is optional */ }
@@ -1095,6 +1273,7 @@
             at: new Date().toISOString(), meta: {},
           });
           schedulePoll(true);
+          if (handsFree) restartTimer = setTimeout(listen, 400);
           return;
         }
 
@@ -1102,7 +1281,9 @@
         if (d.chips && d.chips.length) meta.chips = d.chips;
         if (d.reply) {
           appendLocal({ role: 'apa', name: 'APA', body: d.reply, at: new Date().toISOString(), meta: meta });
-          afterReply(d.reply);
+          afterReply(d.reply, d.speech, viaVoice, d.end);
+        } else if (handsFree) {
+          restartTimer = setTimeout(listen, 400);
         }
         if (meta.chips) paintChips(meta.chips);
 
@@ -1143,7 +1324,7 @@
         /* A dropped send must not silently end hands-free: the guest is
            still sitting there talking to a microphone that stopped
            listening. Say it, then keep the loop turning. */
-        afterReply('That did not reach us. Your connection dropped — say it again when you are ready.');
+        afterReply('That did not reach us. Your connection dropped. Say it again when you are ready.', null, viaVoice);
       });
   }
 

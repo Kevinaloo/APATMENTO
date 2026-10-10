@@ -235,7 +235,7 @@ test('a refused payment is reported, not retried', () => {
 /* ── Hands-free voice ───────────────────────────────────────────────── */
 
 test('APA does not listen to herself', () => {
-  assert.match(CLIENT, /if \(!VOICE_IN \|\| listening \|\| speaking \|\| sending\) return;/,
+  assert.match(CLIENT, /if \(!VOICE_IN \|\| !handsFree \|\| listening \|\| speaking \|\| sending\) return;/,
     'listening must not start while she is speaking or a send is in flight');
 });
 
@@ -247,8 +247,10 @@ test('the guest can always cut her off', () => {
 });
 
 test('a speech engine that never reports completion cannot strand the loop', () => {
-  assert.match(CLIENT, /setTimeout\(finish, Math\.min\(30000/,
+  assert.match(CLIENT, /setTimeout\(fin, Math\.min\(15000/,
     'there must be a ceiling on waiting for onend');
+  assert.match(CLIENT, /first_audio_slow/,
+    'a slow neural voice must hand over to the device voice');
 });
 
 test('a dropped send keeps hands-free alive', () => {

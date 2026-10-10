@@ -86,8 +86,8 @@ test('OpenAI Responses requests are private, bounded, and privacy identified', a
 });
 
 test('defaults stay operational without premium OpenAI or Gemini models', () => {
-  assert.deepEqual(__test.providerOrder(), ['gateway', 'groq', 'gemini', 'openai']);
-  assert.deepEqual(__test.defaultProviderOrder, ['gateway', 'groq', 'gemini', 'openai']);
+  assert.deepEqual(__test.providerOrder(), ['gateway', 'groq', 'cloudflare', 'gemini', 'openai']);
+  assert.deepEqual(__test.defaultProviderOrder, ['gateway', 'groq', 'cloudflare', 'gemini', 'openai']);
   assert.deepEqual(__test.defaultModels.gateway, [
     'google/gemini-3.5-flash-lite',
     'openai/gpt-5.6-luna',
